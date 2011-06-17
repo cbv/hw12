@@ -36,11 +36,11 @@ struct
   val compare_scores = ListUtil.bysecond Real.compare
 
 
-  infix --
+  infix 9 --
   val op -- = Apply
   val $ = Var
   fun \ x exp = Lambda (x, exp)
-  infixr 9 `
+  infixr 1 `
   fun a ` b = a b
 
   (* Takes an expression of object type unit.
@@ -79,7 +79,11 @@ struct
         (* val prog = dec *)
     in
         Kompiler.compile prog ATTACK_SLOT
-    end
+    end handle (e as Kompiler.Kompiler s) =>
+        let in
+            eprint ("Kompilation failed: " ^ s ^ "\n");
+            raise e
+        end
 
   val n = ref 0
   val mode = ref FindTarget
@@ -130,7 +134,7 @@ struct
                        (* Otherwise keep attacking. *)
                    else 
                        let in
-                           LTG.enable_trace true;
+                           (* LTG.enable_trace true; *)
                            LTG.RightApply (ATTACK_SLOT, LTG.I)
                        end
                end

@@ -237,6 +237,10 @@ struct
                            else (case semantics of
                                      NORMAL => 
                                          let in
+                                             if !tracing
+                                             then eprint ("DEC " ^ Int.toString i ^
+                                                          "\n")
+                                             else ();
                                              incr propstats curslot #damage_done;
                                              Array.update (oppv, oppi, vit - 1)
                                          end
@@ -460,8 +464,8 @@ struct
                             | EvalLimit => VFn VI
                in
                    if !tracing
-                   then eprint ("Result of eval: \n" ^
-                                valtos result)
+                   then eprint ("Result of eval:\n" ^
+                                valtos result ^ "\n")
                    else ();
                    Array.update (propf, i, result)
                end

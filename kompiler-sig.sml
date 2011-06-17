@@ -1,6 +1,8 @@
 signature KOMPILER =
 sig
 
+  exception Kompiler of string
+
   datatype src =
       Var of string
     | Lambda of string * src
