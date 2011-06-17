@@ -1,15 +1,18 @@
 structure Timecube =
 struct
   open Kompiler
-  
-  (* \x -> x + {1,2} respectively *)
-  val a = Lambda ("f", Lambda ("x", Apply (Card Card.Succ, Apply (Var "f", Var "x"))));
-  val b = Lambda ("f", Lambda ("x", Apply (Card Card.Succ, Apply (Card Card.Succ, Apply (Var "f", Var "x")))));
-  
+
   val f = Card Card.Put
   val t = Card Card.K
   val s = Card Card.S
+  val sc = Card Card.Succ
   val i = Card Card.I
+
+  fun comp x y = Apply(Apply(s, Apply(t, x)), y)
+
+  (* \x -> x + {1,2} respectively *)
+  val a = Apply (s, Apply(t, sc))
+  val b = comp a a
 
   val basefour =
       Lambda("x",
