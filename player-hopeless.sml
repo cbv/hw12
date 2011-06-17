@@ -1,5 +1,5 @@
 structure Player:> PLAYER = struct
-
+ 
    type state = unit
 
    fun init _ = (LTG.LeftApply (LTG.I, 0), ())
