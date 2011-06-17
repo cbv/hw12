@@ -51,8 +51,11 @@ type process = {pid: PIO.pid,
 fun report (n, play) =
    let 
       val swapped = n mod 2 = 1
-   in
-      print ("Turn " ^ Int.toString (n div 2 + 1))
+      val () = if n mod 20000 = 0 
+               then print ("Turn " ^ Int.toString (n div 2) ^ "...\n")
+               else ()
+   in ()
+      (* print ("Turn " ^ Int.toString (n div 2 + 1))
       ; print (": player " ^ (if swapped then "1" else "0") ^ " ran ")
       ; case play of 
            LTG.LeftApply (card, slot) => 
@@ -61,11 +64,11 @@ fun report (n, play) =
          | LTG.RightApply (slot, card) =>
            print ("slot " ^ Int.toString slot 
                   ^ " with argument of card " ^ LTGParse.str card)
-      ; print "\n" 
+       ; print "\n" *)
    end
 
 fun continue (n, player: process, opponent: process) =
-   if n = 200000 then () else
+   if n = 200000 then print "Done.\n" else
    let
       (* val _ = TextIO.inputLine TextIO.stdIn *)
       val () = debug "Receiving in tutor"
