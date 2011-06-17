@@ -66,23 +66,25 @@ fun rcv instream =
          raise LTGIO ("Broken pipe?")
    end
 
+fun out (outstream, string) = (TextIO.output (outstream, string); TextIO.flushOut outstream)
+
 fun send outstream move = 
    case move of 
       LTG.LeftApply (card, slot) =>
       (debug ("Sending left apply")
-       ; TextIO.output (outstream, "1\n")
+       ; out (outstream, "1\n")
        ; err ("Sent: 1")
-       ; TextIO.output (outstream, str card ^ "\n")
+       ; out (outstream, str card ^ "\n")
        ; err ("Sent: " ^ str card)
-       ; TextIO.output (outstream, Int.toString slot ^ "\n")
+       ; out (outstream, Int.toString slot ^ "\n")
        ; err ("Sent: " ^ Int.toString slot ^ "\n"))
     | LTG.RightApply (slot, card) => 
       (debug ("Sending left apply")
-       ; TextIO.output (outstream, "2\n")
+       ; out (outstream, "2\n")
        ; err ("Sent: 2")
-       ; TextIO.output (outstream, Int.toString slot ^ "\n")
+       ; out (outstream, Int.toString slot ^ "\n")
        ; err ("Sent: " ^ Int.toString slot)
-       ; TextIO.output (outstream, str card ^ "\n")
+       ; out (outstream, str card ^ "\n")
        ; err ("Sent: " ^ str card))
 
 end
