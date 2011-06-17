@@ -63,7 +63,7 @@ struct
            without exceeding 1000. *)
         val dec = Apply (Card LTG.Dec, Int target)
         val prog = returnself dec
-        (* val prog = dec *)
+        val prog = dec
     in
         Kompiler.compile prog ATTACK_SLOT
     end
