@@ -10,6 +10,21 @@ sig
     | Card of Card.card
     | Int of int
 
+  (*
+   Copy these into your file for shorter syntax, e.g.
+
+    \x.f (\y. x x y)
+                                              
+    val w = \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
+
+  infix 9 --
+  val op -- = Apply
+  val $ = Var
+  fun \ x exp = Lambda (x, exp)
+  infixr 1 `
+  fun a ` b = a b
+   *)
+
   (* a fixed point combinator, e.g.
       compile (fix (Lambda ("self", Lambda ("x", ...)))) slot
   *)
