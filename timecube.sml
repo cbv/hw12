@@ -12,7 +12,7 @@ struct
 
   (* \x -> x + {1,2} respectively *)
   val a = Apply (s, Apply(t, sc))
-  val b = comp a a
+  val b = Apply (s, Apply(t, comp sc sc))
 
   val basefour =
       Lambda("x",
