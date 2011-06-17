@@ -13,6 +13,8 @@ struct
   (* Using vector since every field of stat is mutable. *)
   type stats = stat Vector.vector
 
+  fun eprint s = TextIO.output (TextIO.stdErr, s)
+
   fun initialstat () = { left_applications = ref 0,
                          right_applications = ref 0,
                          damage_done = ref 0.0,
