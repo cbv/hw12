@@ -2,4 +2,5 @@ group is
    ltg.cm
    combos.sml
    player-sig.sml
-   player-hopeless.sml
+   player.sml
+   playerio.sml

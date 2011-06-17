@@ -25,3 +25,4 @@ group is
   sml-lib/util/growarray.sml
 
   ltg.sml
+  ltg-parse.sml
