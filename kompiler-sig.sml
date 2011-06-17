@@ -25,16 +25,31 @@ sig
   fun a ` b = a b
    *)
 
-  (* a fixed point combinator, e.g.
-      compile (fix (Lambda ("self", Lambda ("x", ...)))) slot
-  *)
-  val fix : src -> src
+  (* Helpful operators *)
 
-  (* compiles a source expression into a turn-list that will create
+  (* A fixed point combinator, e.g.
+      compile (fix (Lambda ("self", Lambda ("x", ...)))) slot *)
+  val fix : src -> src
+  (* Takes an expression of type unit.  Wraps in a function that ignores its
+     single argument, evaluates the expression, and then returns itself. *)
+  val run_and_return_self : src -> src
+
+  (* Compiles a source expression into a turn-list that will create
     that expression in the given slot *)
   val compile : src -> int -> LTG.turn list
 
-  (* run the tests and print results *)
+
+  (* Internal utilities *)
+
+  (* Kombinator internal language *)
+  datatype kil = KApply of kil * kil
+               | KCard of Card.card
+	       | KVar of string
+
+  (* First translate from lambda calculus to Kombinators. *)
+  val src2kil : src -> kil
+
+  (* Run the tests and print results *)
   val test : unit -> unit
 
 end

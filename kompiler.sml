@@ -11,7 +11,7 @@ datatype src =
 exception Kompiler of string
 
 (* Y' = S S K (S (K (S S (S (S S K)))) K) *)
-(*
+(* XXX spoons this should be faster, but seems buggy
 fun fix s = let
   val S = Card Card.S
   val K = Card Card.K
@@ -24,27 +24,27 @@ in
 end
 *)
 
-  infix 9 --
-  val op -- = Apply
-  val $ = Var
-  fun \ x exp = Lambda (x, exp)
-  infixr 1 `
-  fun a ` b = a b
+infix 9 --
+val op -- = Apply
+val $ = Var
+fun \ x exp = Lambda (x, exp)
+infixr 1 `
+fun a ` b = a b
 
-  fun fix s = let
-          val minifix =
-              \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
-          val Z = \"f" ` minifix -- minifix
-      in
-          Apply (Z, s)
-      end
+fun fix s = let
+  val minifix = \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
+  val Z = \"f" ` minifix -- minifix (* " make fontify happy *)
+in
+  Apply (Z, s)
+end
 
+fun run_and_return_self src =
+  fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
 
-(* kombinator internal language *)
 datatype kil = KApply of kil * kil
              | KCard of Card.card
 	     | KVar of string
-
+                       
 (* first translate from lambda calculus to kombinators *)
 fun src2kil s =
     let
