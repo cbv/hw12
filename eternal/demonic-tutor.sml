@@ -65,10 +65,34 @@ fun winner (proponent, opponent) = false
 fun report (n, proponent, opponent) =
    if n mod 20000 <> 0 then () else
    let
+      fun playerData player = 
+         let 
+            val vita = #2 (#state player) 
+
+            val (vitality, live, dead, zombie) = Array.foldr 
+               (fn (x, (vitality, live, dead, zombie)) => 
+                   if x > 0 
+                   then (vitality + IntInf.fromInt x, live + 1, dead, zombie)
+                   else if x = 0
+                   then (vitality, live, dead + 1, zombie)
+                   else (vitality, live, dead, zombie + 1)) (0, 0, 0, 0) vita
+         in
+            print ("DEAD: " ^ Int.toString dead)
+            ; print (" / ZOMB: " ^ Int.toString zombie)
+            ; print (" / LIVE: " ^ Int.toString live 
+                     ^ " (average vitality " 
+                     ^ IntInf.toString (vitality div IntInf.fromInt live) 
+                     ^ ")\n")
+         end
+
       val (player0, player1) = 
          if n mod 2 = 0 then (proponent, opponent) else (opponent, proponent)
    in 
       print ("Turn " ^ Int.toString (n div 2) ^ "...\n")
+      ; print "PLAYER 0 -- "
+      ; playerData player0
+      ; print "PLAYER 1 -- "
+      ; playerData player1
    end
 
 fun continue (n, proponent: process, opponent: process) =
