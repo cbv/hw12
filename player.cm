@@ -1,6 +1,5 @@
 group is
    ltg.cm
-   combos.sml
    player-sig.sml
    layer-sig.sml
    layer.sml
