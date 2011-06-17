@@ -68,7 +68,7 @@ end
 
 fun compile s i = kil2turns (src2kil s) i
 
-val print = eprint
+val print = EPrint.eprint
 
 fun test () = (
     print (kil2str (src2kil (Lambda("x", Var "x"))));
