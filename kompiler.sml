@@ -10,6 +10,17 @@ datatype src =
 
 exception Kompiler of string
 
+(* Y' = S S K (S (K (S S (S (S S K)))) K) *)
+val fix = let
+  val S = Card Card.S
+  val K = Card Card.K
+in
+  Apply (Apply (Apply (S, S), K),
+         Apply (Apply (S, Apply (K, Apply (Apply (S, S), 
+                                           Apply (S, Apply (
+                                                     Apply (S, S), K))))), K))
+end
+
 (* kombinator internal language *)
 datatype kil = KApply of kil * kil
              | KCard of Card.card
