@@ -16,7 +16,7 @@ tutor:
 # changes?
 .PHONY: player-*
 player-%:
-	@echo > player.sml
+	@rm -f player.sml
 	@echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
 	@echo >> player.sml
 	@cat $@.sml >> player.sml
