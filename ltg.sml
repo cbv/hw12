@@ -65,6 +65,30 @@ struct
      App of exp * exp
    | V of value
 
+  fun valtos (VInt i) = Int.toString i
+    | valtos (VFn f) = ftos f
+  and ftos f =
+   (case f of
+       VI => "I"
+     | VSucc => "Succ"
+     | VDbl => "Dbl"
+     | VGet => "Get"
+     | VPut => "Put"
+     | VS nil => "S"
+     | VS l => "(S " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VK nil => "K"
+     | VK l => "(K " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VInc => "Inc"
+     | VDec => "Dec"
+     | VAttack nil => "Attack"
+     | VAttack l => "(Attack " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VHelp nil => "Help"
+     | VHelp l => "(Help " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VCopy => "Copy"
+     | VRevive => "Revive"
+     | VZombie nil => "Zombie"
+     | VZombie l => "(Zombie " ^ StringUtil.delimit " " (map valtos l) ^ ")")
+
   (* Parallel arrays (always size 256) for field and vitality.
      Vitality is always in [-1, 65535]. *)
   type side = value Array.array * int Array.array
@@ -103,6 +127,8 @@ struct
     | inc (SOME r) i f = ++ (f (Vector.sub (r, i)))
   fun incr r i f = incbyr r i f 1.0
 
+  val tracing = ref false
+  fun enable_trace b = tracing := b
 
   fun clamp n = if n > 65535
                 then 65535
@@ -112,11 +138,11 @@ struct
 
   datatype semantics = NORMAL | ZOMBIE
 
-  exception EvalError and EvalLimit
+  exception EvalError of string and EvalLimit
   fun expectslotnumber (VInt n) =
       if n >= 0 andalso n <= 255
-      then n else raise EvalError
-    | expectslotnumber _ = raise EvalError
+      then n else raise EvalError ("Bad slot number " ^ Int.toString n)
+    | expectslotnumber _ = raise EvalError ("Slot number non-numeric")
 
   (* Evaluate an expression, returning its
      value. May raise exception EvalError. May
@@ -151,23 +177,24 @@ struct
                  step ();
                  inc propstats curslot #iterations;
                  case v1 of
-                   VInt _ => raise EvalError
+                   VInt i => raise EvalError ("int " ^ Int.toString i ^
+                                              " in application position")
                  | VFn f =>
                   (case f of
                      VI => v2
                    | VSucc =>
                       (case v2 of
                            VInt n => VInt (clamp (n + 1))
-                         | _ => raise EvalError)
+                         | _ => raise EvalError "argument to succ not int")
                    | VDbl =>
                       (case v2 of
                            VInt n => VInt (clamp (n * 2))
-                         | _ => raise EvalError)
+                         | _ => raise EvalError "argument to dbl not int")
                    | VGet => 
                       let val i = expectslotnumber v2
                           val vit = Array.sub(propv, i)
                       in if isdead vit
-                         then raise EvalError
+                         then raise EvalError "get on dead slot"
                          else Array.sub(propf, i)
                       (* XXX gotten stats *)
                       end
@@ -222,7 +249,7 @@ struct
 
                                 val vitp = Array.sub (propv, i)
                                 val () = if n > vitp
-                                         then raise EvalError
+                                         then raise EvalError "attack too big"
                                          else ()
                                 val () = Array.update (propv, i, vitp - n);
 
@@ -254,7 +281,7 @@ struct
                                      end);
                                 VFn VI
                             end
-                      | _ => raise EvalError)
+                      | _ => raise EvalError "attack arg not int")
                    | VAttack l => VFn (VAttack (v2 :: l))
                    | VHelp [j, i] =>
                        (case v2 of
@@ -263,7 +290,7 @@ struct
 
                                     val vitp = Array.sub (propv, i)
                                     val () = if n > vitp
-                                             then raise EvalError
+                                             then raise EvalError "help too big"
                                              else ()
                                     val () = Array.update (propv, i, vitp - n)
 
@@ -291,7 +318,7 @@ struct
                                           end);
                                     VFn VI
                                 end
-                          | _ => raise EvalError)
+                          | _ => raise EvalError "help arg not int")
                    | VHelp l => VFn (VHelp (v2 :: l))
                    | VCopy =>
                        let val i = expectslotnumber v2
@@ -319,7 +346,7 @@ struct
                            (if isdead vito
                             then (Array.update (oppv, oppi, ~1);
                                   Array.update (oppf, oppi, v2))
-                            else raise EvalError);
+                            else raise EvalError "zombie on living slot");
                            VFn VI
                        end
                    | VZombie l => VFn (VZombie (v2 :: l)))
@@ -369,7 +396,7 @@ struct
                       (ignore (evalwithstate ZOMBIE ((prop, NONE), 
                                                      (opp, NONE)) 
                                              j zombie)
-                       handle EvalError => ()
+                       handle EvalError s => ()
                             | EvalLimit => ());
                       (* Always reset to identity and regular-dead. *)
                       Array.update (propf, j, VFn VI);
@@ -420,9 +447,20 @@ struct
                    val result = 
                        evalwithstate NORMAL ((prop, propstats), 
                                              (opp, oppstats)) i init
-                       handle EvalError => VFn VI
+                       handle EvalError s => 
+                           let in
+                               if !tracing
+                               then eprint ("Evaluation ended with error: " ^
+                                            s ^ "\n")
+                               else ();
+                               VFn VI
+                           end
                             | EvalLimit => VFn VI
                in
+                   if !tracing
+                   then eprint ("Result of eval: \n" ^
+                                valtos result)
+                   else ();
                    Array.update (propf, i, result)
                end
       end

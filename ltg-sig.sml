@@ -52,6 +52,9 @@ sig
       App of exp * exp 
     | V of value
 
+  val valtos : value -> string
+  val ftos : function -> string
+
   (* Parallel arrays (always size 256) for field and vitality.
      Vitality is always in [-1, 65535]. *)
   type side = value array * int array
@@ -59,6 +62,9 @@ sig
   val evalcard : card -> value
 
   datatype semantics = NORMAL | ZOMBIE
+
+  (* If tracing is enabled, then print out steps of evaluation. *)
+  val enable_trace : bool -> unit
 
   val initialside : unit -> side
   val initialstate : unit -> side * side

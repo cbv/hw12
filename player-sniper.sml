@@ -33,6 +33,14 @@ struct
 
   val compare_scores = ListUtil.bysecond Real.compare
 
+
+  infix --
+  val op -- = Apply
+  val $ = Var
+  fun \ x exp = Lambda (x, exp)
+  infixr 9 `
+  fun a ` b = a b
+
   (* Takes an expression of object type unit.
      Wraps in a function that ignores its single argument,
      evaluates the expression, and then returns itself. 
@@ -41,18 +49,21 @@ struct
      *)
   fun returnself src =
       let val recursive =
-          Lambda ("self",
-                  Lambda ("x",
-                          Apply (Apply (Card LTG.Put,
-                                        src),
-                                 Var "self")))
+          \"self" ` 
+          \"unused" `
+          Card LTG.Put -- src -- $"self"
 
+          (* this one won't work; it's call-by-name.
           val minifix =
               Lambda ("x",
                       Apply (Var "f", Apply (Var "x", Var "x")))
           val fix =
               Lambda ("f",
-                      Apply (minifix, minifix))
+                      Apply (minifix, minifix)) *)
+
+          val minifix =
+              \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
+          val fix = \"f" ` minifix -- minifix
       in
           Apply (fix, recursive)
       end
@@ -79,6 +90,8 @@ struct
                 eprint "Theirs:\n";
                 GS.printstats (GS.theirstats gs))
           else ();
+
+          LTG.enable_trace false;
 
           case !mode of
               FindTarget =>
@@ -113,7 +126,11 @@ struct
                          mode := FindTarget;
                          taketurn gs)
                        (* Otherwise keep attacking. *)
-                   else LTG.RightApply (ATTACK_SLOT, LTG.I)
+                   else 
+                       let in
+                           LTG.enable_trace true;
+                           LTG.RightApply (ATTACK_SLOT, LTG.I)
+                       end
                end
       end
 end
