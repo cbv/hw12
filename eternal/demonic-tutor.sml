@@ -28,7 +28,7 @@ datatype player_file = CUR of string | REV of string * int
 exception BadPlayer
 
 fun parse_player_arg s =
-   case String.tokens (fn x => x = #";") s of
+   case String.tokens (fn x => x = #":") s of
       [] => raise BadPlayer
     | [name] => CUR name
     | [name, num] => (case Int.fromString num of NONE => raise BadPlayer
