@@ -3,11 +3,25 @@ sig
   datatype card = datatype Card.card
 
   (* Keeps various counters for the slots. *)
+  type stat
   type stats
+
   val initialstats : unit -> stats
 
   (* Expensive! Don't call except when in debugging modes. *)
   val statstostring : stats -> string
+
+  (* Get the stat in the slot, which must be in [0, 255] *)
+  val statfor : stats -> int -> stat
+
+  (* Accessors for the stat fields.
+     TODO(tom7): document *)
+  val stat_left_applications : stat -> int
+  val stat_right_applications : stat -> int
+  val stat_damage_done : stat -> real
+  val stat_healing_done : stat -> real
+  val stat_iterations : stat -> int
+  val stat_gotten : stat -> int
 
   (* All possible primitive functions, including partial 
      applications. For partial applications, the argument

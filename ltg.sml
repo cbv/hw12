@@ -22,6 +22,15 @@ struct
 
   fun initialstats () = Vector.tabulate (256, fn _ => initialstat ())
 
+  fun statfor s i = Vector.sub (s, i)
+
+  fun stat_left_applications (s : stat) = ! (#left_applications s)
+  fun stat_right_applications (s : stat) = ! (#right_applications s)
+  fun stat_damage_done (s : stat) = ! (#damage_done s)
+  fun stat_healing_done (s : stat) = ! (#healing_done s)
+  fun stat_iterations (s : stat) = ! (#iterations s)
+  fun stat_gotten (s : stat) = ! (#gotten s)
+
   (* Cards are atomic actions *)
   datatype card = datatype Card.card
 
