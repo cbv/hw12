@@ -83,7 +83,7 @@ end
 
 structure Play:> sig
   type state = {proponent: Field.field, opponent: Field.field}
-  val apply: state * Card.term * Card.term -> state * Card.term option
+  val apply: bool -> state * Card.term * Card.term -> state * Card.term option
 end = struct
   open Card
 
@@ -135,7 +135,7 @@ end = struct
      then if vit - amount < 0 then 0 else vit - amount
      else vit
 
-  fun apply (state, function, arg) = 
+  fun apply isZombie (state, function, arg) = 
      case function of
         Card I => (state, SOME arg)
 
@@ -159,9 +159,9 @@ end = struct
       | Card S => (state, SOME (S1 arg))
       | S1 term => (state, SOME (S2 (term, arg)))
       | S2 (f, g) => 
-        apply (state, f, arg) >>= (fn (state, h) => 
-        apply (state, g, arg) >>= (fn (state, y) =>
-        apply (state, h, y)))
+        apply isZombie (state, f, arg) >>= (fn (state, h) => 
+        apply isZombie (state, g, arg) >>= (fn (state, y) =>
+        apply isZombie (state, h, y)))
 
       | Card K => (state, SOME (K1 arg))
       | K1 term => (state, SOME term)
@@ -170,14 +170,16 @@ end = struct
         (state, getIndex arg) >>= (fn (state, x) =>
         (state, Field.getV (#proponent state) x) >>= (fn (state, vit) =>
         (w_proponent state
-            (Field.putV (#proponent state) x (doInc 1 vit)), 
+            (Field.putV (#proponent state) x 
+               (if isZombie then doDec 1 vit else doInc 1 vit)), 
          SOME (Card I))))
 
       | Card dec => 
         (state, getIndex arg) >>= (fn (state, x) => 
         (state, Field.getV (#opponent state) (255-x)) >>= (fn (state, vit) =>
         (w_opponent state 
-            (Field.putV (#opponent state) x (doDec 1 vit)), 
+            (Field.putV (#opponent state) x 
+               (if isZombie then doInc 1 vit else doDec 1 vit)), 
          SOME (Card I))))
 
       | Card attack => (state, SOME (attack1 arg))
@@ -193,10 +195,28 @@ end = struct
         (state, Field.getV (#opponent state) defender) >>= (fn (state, vitd) =>
         (w_opponent state
             (Field.putV (#opponent state) defender 
-                (doDec ((damage * 9) div 10) vitd)),
+                (if isZombie 
+                 then doInc ((damage * 9) div 10) vitd
+                 else doDec ((damage * 9) div 10) vitd)),
          SOME (Card I)))))))
 
       | Card help => (state, SOME (help1 arg))
       | help1 term1 => (state, SOME (help2 (term1, arg)))
+      | help2 (i, j) =>
+        (state, getIndex i) >>= (fn (state, doctor) =>
+        (state, Field.getV (#proponent state) doctor) >>= (fn (state, vitd) =>
+        (state, getInt arg) >>= (fn (state, undamage) =>
+        if undamage > vitd then (state, NONE)
+        else (w_proponent state
+                 (Field.putV (#proponent state) doctor (vitd - undamage)),
+              getIndex j) >>= (fn (state, patient) =>
+        (state, Field.getV (#proponent state) patient) >>= (fn (state, vitp) =>
+        (w_proponent state
+            (Field.putV (#proponent state) patient
+                (if isZombie
+                 then doDec ((undamage * 11) div 10) vitp
+                 else doInc ((undamage * 11) div 10) vitp)),
+         SOME (Card I)))))))
+
 
 end
