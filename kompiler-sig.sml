@@ -51,5 +51,6 @@ sig
 
   (* Run the tests and print results *)
   val test : unit -> unit
+  val tomtest : unit -> unit
 
 end

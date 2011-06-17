@@ -110,6 +110,7 @@ in
 
         fun opt (KApply (KApply (KCard S, KCard K), KCard K)) = KCard I
           | opt (KApply (KCard I, exp)) = opt exp
+          | opt (KApply (KCard K, KCard I)) = KCard Put
             (* ... *)
           | opt (KApply (i1, i2)) = KApply (opt i1, opt i2)
           | opt (KVar v) = raise Kompiler ("unbound var in optimizer? " ^ v)
@@ -148,6 +149,12 @@ fun test () = (
     print (LTG.turns2str (compile (Lambda("x", Int 4)) 1));
     print "\n";
     ())
+
+fun tomtest () =
+    let in
+        eprint (kil2str (src2kil (Lambda("x", Lambda ("y", Var "y")))));
+        eprint "\n"
+    end
 
 end
 
