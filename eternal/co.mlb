@@ -1,0 +1,12 @@
+ann
+   "allowFFI true"
+   "allowPrim true"  
+   "warnUnused true"
+in 
+   $(MLTON_ROOT)/basis/basis.mlb
+   $(MLTON_ROOT)/basis/mlton.mlb
+   ../sml-lib/util/util.mlb
+   ../sml-lib/mlton/mysql/mysql-sig.sml
+   ../sml-lib/mlton/mysql/mysql.sml
+   ../sml-lib/mlton/mysql/test.sml
+end

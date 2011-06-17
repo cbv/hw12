@@ -88,7 +88,7 @@ fun report (n, proponent, opponent) =
       val (player0, player1) = 
          if n mod 2 = 0 then (proponent, opponent) else (opponent, proponent)
    in 
-      print ("Turn " ^ Int.toString (n div 2) ^ "...\n")
+      print ("After " ^ Int.toString (n div 2) ^ " turns...\n")
       ; print "PLAYER 0 -- "
       ; playerData player0
       ; print "PLAYER 1 -- "
@@ -143,7 +143,7 @@ fun go args =
    in
       continue (0, process0, process1)
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
-                          ; OS.Process.exit OS.Process.failure)
+                                   ; OS.Process.exit OS.Process.failure)
 
 val () = go (Params.docommandline ())
 
