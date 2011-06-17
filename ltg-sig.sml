@@ -1,21 +1,6 @@
 signature LTG =
 sig
-  datatype card = 
-      Attack
-    | Copy
-    | Dbl
-    | Dec
-    | Get
-    | Help
-    | I
-    | Inc
-    | K
-    | Put
-    | Revive
-    | S
-    | Succ
-    | Zero
-    | Zombie
+  datatype card = datatype Card.card
 
   (* All possible primitive functions, including partial 
      applications. For partial applications, the argument
@@ -38,9 +23,10 @@ sig
     | VSucc
     | VZombie of value list
 
-  datatype value = 
+  and value = 
       VFn of function 
     | VInt of int
+
   datatype exp = 
       App of exp * exp 
     | V of value

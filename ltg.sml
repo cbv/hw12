@@ -1,24 +1,9 @@
 (* Imperative implementation of Lambda The Gathering games. *)
-structure LTG =
+structure LTG :> LTG =
 struct
 
   (* Cards are atomic actions *)
-  datatype card =
-     I
-   | Zero
-   | Succ
-   | Dbl
-   | Get
-   | Put
-   | S
-   | K
-   | Inc
-   | Dec
-   | Attack
-   | Help
-   | Copy
-   | Revive
-   | Zombie
+  datatype card = datatype Card.card
 
   (* All possible primitive functions, including partial 
      applications. For partial applications, the argument

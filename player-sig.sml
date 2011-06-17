@@ -8,7 +8,7 @@ signature PLAYER = sig
     * gets called with init SOME (other-player's-first-move) *)
    val init: LTG.turn option -> LTG.turn * state
 
-   (* In each round, we get the competetitor's move and our previous state
+   (* In each round, we get the competitor's move and our previous state
     * and have to give a new move and a new state *)
    val round: LTG.turn * state -> LTG.turn * state 
 end
