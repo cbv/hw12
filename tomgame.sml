@@ -1,5 +1,4 @@
-(* I just started writing my own, sorry. *)
-
+(* Imperative implementation of games. *)
 structure Game =
 struct
 
@@ -157,8 +156,10 @@ struct
                            val vit = Array.sub(propv, i)
                        in (if isdead vit
                            then ()
-                           else Array.update (propv, i,
-                                              clamp (vit + 1)));
+                           else (case semantics of
+                                     NORMAL => Array.update (propv, i,
+                                                             clamp (vit + 1))
+                                   | ZOMBIE => Array.update (propv, i, vit - 1)));
                            VFn VI
                        end
                    | VDec => 
@@ -167,7 +168,10 @@ struct
                            val vit = Array.sub(oppv, oppi)
                        in (if isdead vit
                            then ()
-                           else Array.update (oppv, oppi, vit - 1));
+                           else (case semantics of
+                                     NORMAL => Array.update (oppv, oppi, vit - 1)
+                                   | ZOMBIE => Array.update (oppv, oppi,
+                                                             clamp (vit + 1))));
                            VFn VI
                        end
                    | VAttack [j, i] =>
@@ -183,12 +187,17 @@ struct
 
                                     val j = expectslotnumber j
                                     val oppj = 255 - j
+                                    (* aka w *)
                                     val vito = Array.sub (oppv, oppj)
                                     val dmg = (n * 9) div 10
-                                    val newvito = if dmg > vito
-                                                  then 0
-                                                  else vito - dmg
-
+                                    val newvito = 
+                                        (case semantics of
+                                             NORMAL =>
+                                                 if dmg > vito
+                                                 then 0
+                                                 else vito - dmg
+                                           | ZOMBIE => 
+                                                 clamp (vito + dmg))
                                 in
                                     (if isdead vito
                                      then ()
@@ -209,9 +218,16 @@ struct
                                     val () = Array.update (propv, i, vitp - n)
 
                                     val j = expectslotnumber j
+                                    (* aka w *)
                                     val witp = Array.sub (propv, j)
                                     val heal = (n * 11) div 10
-                                    val newwitp = clamp (witp + heal)
+                                    val newwitp = 
+                                        (case semantics of
+                                             NORMAL => clamp (witp + heal)
+                                           | ZOMBIE => 
+                                               if heal > witp
+                                               then 0
+                                               else witp - heal)
                                 in
                                     (if isdead witp
                                      then ()
