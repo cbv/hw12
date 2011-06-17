@@ -29,7 +29,7 @@ struct
       (idx,
        (* XXX weighted! *)
        if LTG.slotisdead side idx
-       then 0.0
+       then ~1000.0
        else real (LTG.stat_left_applications s) +
             real (LTG.stat_right_applications s) +
             LTG.stat_damage_done s +
@@ -132,7 +132,7 @@ struct
                in
                    if health <= 0
                    then (eprint ("Success! Killed slot " ^
-                                 Int.toString i);
+                                 Int.toString i ^ "\n");
                          mode := FindTarget;
                          taketurn gs)
                        (* Otherwise keep attacking. *)
