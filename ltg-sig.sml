@@ -2,6 +2,13 @@ signature LTG =
 sig
   datatype card = datatype Card.card
 
+  (* Keeps various counters for the slots. *)
+  type stats
+  val initialstats : unit -> stats
+
+  (* Expensive! Don't call except when in debugging modes. *)
+  val statstostring : stats -> string
+
   (* All possible primitive functions, including partial 
      applications. For partial applications, the argument
      are stored in reverse order in the list. Probably
@@ -55,5 +62,8 @@ sig
      conditions (all dead; ran out of turns); that should
      be handled by the caller. *)
   val taketurn : side * side -> turn -> unit
+
+  (* Same, but optionally accumulate stats. *)
+  val taketurnex : (side * stats option) * (side * stats option) -> turn -> unit
 
 end

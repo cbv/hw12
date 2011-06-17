@@ -17,6 +17,13 @@ sig
   val first_player : gamestate -> bool
 
   (* ... *)
+  val mystats : gamestate -> LTG.stats
+  val theirstats : gamestate -> LTG.stats
+
+  (* Prints out all stats, for debugging. 
+     This should not be called in submissions, just for debugging! *)
+  val printstats : LTG.stats -> unit
+
   
   (* These are used internally to update and create
      states. You probably shouldn't call them from

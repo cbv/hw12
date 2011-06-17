@@ -2,6 +2,26 @@
 structure LTG :> LTG =
 struct
 
+  (* TODO: Zombies? Not clear how to account
+     for a zombie since it may be my own property... *)
+  type stat = { left_applications : int ref,
+                right_applications : int ref,
+                damage_done : real ref,
+                healing_done : real ref,
+                iterations : int ref,
+                gotten : int ref }
+  (* Using vector since every field of stat is mutable. *)
+  type stats = stat Vector.vector
+
+  fun initialstat () = { left_applications = ref 0,
+                         right_applications = ref 0,
+                         damage_done = ref 0.0,
+                         healing_done = ref 0.0,
+                         iterations = ref 0,
+                         gotten = ref 0 }
+
+  fun initialstats () = Vector.tabulate (256, fn _ => initialstat ())
+
   (* Cards are atomic actions *)
   datatype card = datatype Card.card
 
@@ -59,6 +79,19 @@ struct
    | Copy => VFn VCopy
    | Revive => VFn VRevive
    | Zombie => VFn (VZombie nil)
+
+  fun ++ r = r := !r + 1
+  infix += +==
+  fun r += (n : int) = r := !r + n
+  fun r +== (d : real) = r := !r + d
+
+  fun inc NONE _ _ = ()
+    | inc (SOME r) i f = ++ (f (Vector.sub (r, i)))
+      
+  fun incby NONE _ _ _ = ()
+    | incby (SOME r) i f n = (f (Vector.sub (r, i))) += n
+  fun incbyr NONE _ _ _ = ()
+    | incbyr (SOME r) i f n = (f (Vector.sub (r, i))) +== n
 
   fun clamp n = if n > 65535
                 then 65535
@@ -258,6 +291,8 @@ struct
       LeftApply of card * int
     | RightApply of int * card
 
+  exception SlotOutOfBoundsOrDead
+
   fun turn2str (LeftApply (c, i))
     = "(" ^ Card.card2str c ^ ", " ^ Int.toString i ^ ")"
     | turn2str (RightApply (i, c))
@@ -268,22 +303,17 @@ struct
 
   fun aliveslot (propf, propv) i =
       if i < 0 orelse i > 255 orelse isdead (Array.sub (propv, i))
-      then raise EvalError
+      then raise SlotOutOfBoundsOrDead
       else Array.sub (propf, i)
 
   (* Take a turn. Without loss of generality, pass in the proponent as
      the player taking the turn. *)
-  fun taketurn (prop as (propf, propv), opp) turn =
+  fun taketurnex ((prop as (propf, propv), propstats : stats option),
+                  (opp, oppstats : stats option)) turn =
       let 
-          (* Figure out what expression we're going to evaluate, and
-             get the index so that we can write back to it. *)
-          val (init, i) =
-          case turn of
-              LeftApply (c, i) => (App (V (evalcard c), V (aliveslot prop i)), i)
-            | RightApply (i, c) => (App (V (aliveslot prop i), V (evalcard c)), i)
-
           (* Do the auto-application to zombies, which is anything
              that has vitality -1. *)
+          (* TODO: Do we want to keep stats on zombie work? *)
           fun auto j =
               if Array.sub (propv, j) = ~1
               then
@@ -299,18 +329,81 @@ struct
                   end
               else ()
 
+          (* PERF: Can keep this as a bitmask/list of zombies, so that we
+             don't have to loop over every slot every turn? *)
           val () = Util.for 0 255 auto
 
-          (* Evaluate the expression normally. If we have to stop because 
-             we ran out of iterations or encountered some error, then we fill
-             the slot with the identity. Otherwise it gets the
-             resulting value from evaluation. *)
-          val result = 
-              evalwithstate NORMAL (prop, opp) init
-              handle EvalError => VFn VI
-                   | EvalLimit => VFn VI
+
+          (* Figure out what expression we're going to evaluate, and
+             get the index so that we can write back to it. Also updates
+             the stats if the turn was legal. 
+
+             TODO: Could increment contempt in the case that the opponent
+             tries to execute a dead slot, because there should be no
+             reason to ever do that (we have exact info about the
+             vitality of each slot). *)
+          fun getturn turn =
+              (case turn of
+                   LeftApply (c, i) => 
+                       let 
+                           val f = aliveslot prop i
+                       in
+                           inc propstats i #left_applications;
+                           SOME (App (V (evalcard c), V f), i)
+                       end
+                 | RightApply (i, c) => 
+                       let 
+                           val f = aliveslot prop i
+                       in
+                           inc propstats i #right_applications;
+                           SOME (App (V f, V (evalcard c)), i)
+                       end)
+                   handle SlotOutOfBoundsOrDead => NONE
       in
-          Array.update (propf, i, result)
+          case getturn turn of
+              NONE => ()
+            | SOME (init, i) =>
+               let
+                   (* Evaluate the expression normally. If we have to stop because 
+                      we ran out of iterations or encountered some error, then we fill
+                      the slot with the identity. Otherwise it gets the
+                      resulting value from evaluation. *)
+                   val result = 
+                       evalwithstate NORMAL (prop, opp) init
+                       handle EvalError => VFn VI
+                            | EvalLimit => VFn VI
+               in
+                   Array.update (propf, i, result)
+               end
       end
+
+  fun taketurn (prop, opp) turn = taketurnex ((prop, NONE), (opp, NONE)) turn
+
+
+  val itos = Int.toString
+  val rtos = Real.fmt (StringCvt.FIX (SOME 2))
+
+  fun statstostring stats =
+    let
+        fun stattostring {left_applications : int ref,
+                          right_applications : int ref,
+                          damage_done : real ref,
+                          healing_done : real ref,
+                          iterations : int ref,
+                          gotten : int ref } =
+              "la: " ^ itos (!left_applications) ^
+              " ra: " ^ itos (!right_applications) ^
+              " dmg: " ^ rtos (!damage_done) ^
+              " heal: " ^ rtos (!healing_done) ^
+              " it: " ^ itos (!iterations) ^
+              " got: " ^ itos (!gotten)
+
+        val l = Vector.foldri 
+            (fn (idx, stat, l) =>
+             (* XXX not if default? *)
+             (("[" ^ itos idx ^ "] " ^ stattostring stat) :: l)) nil stats
+    in
+        StringUtil.delimit "\n" l
+    end
 
 end

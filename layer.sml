@@ -4,12 +4,16 @@ struct
 
   exception GameState of string
 
+  type stats = LTG.stats
+
   datatype gamestate = 
       G of { first_player : bool ref,
              is_my_turn : bool ref,
              my_side : LTG.side,
-             their_side : LTG.side
+             their_side : LTG.side,
              (* TODO number of turns, scores, etc. *)
+             my_stats : stats,
+             their_stats : stats
              }
 
   fun first_player (G { first_player = ref b, ... }) = b
@@ -18,7 +22,15 @@ struct
       G { first_player = ref fp,
           is_my_turn = ref fp,
           my_side = LTG.initialside (),
-          their_side = LTG.initialside () }
+          their_side = LTG.initialside (),
+          my_stats = LTG.initialstats (),
+          their_stats = LTG.initialstats () }
+
+  fun mystats (G { my_stats, ... }) = my_stats
+  fun theirstats (G { their_stats, ... }) = their_stats
+
+  fun printstats stats =
+      TextIO.output (TextIO.stdErr, LTG.statstostring stats ^ "\n")
 
   (* XXX These need to take care of the number of
      turns, ending conditions (?), etc. *)
@@ -38,6 +50,7 @@ struct
           myturn := true
       end
     | their_turn _ _ = raise GameState "it's not their turn!"
+
 
 end
 
