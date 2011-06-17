@@ -1,0 +1,3 @@
+structure dbquery = struct
+
+end
