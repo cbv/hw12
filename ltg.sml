@@ -250,8 +250,8 @@ struct
         eval exp
     end
 
-  fun initialside () = (Array.array (255, VFn VI),
-                        Array.array (255, 10000))
+  fun initialside () = (Array.array (256, VFn VI),
+                        Array.array (256, 10000))
   fun initialstate () = (initialside (), initialside ())
 
   datatype turn =
