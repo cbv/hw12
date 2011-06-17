@@ -84,14 +84,16 @@ struct
   infix += +==
   fun r += (n : int) = r := !r + n
   fun r +== (d : real) = r := !r + d
-
-  fun inc NONE _ _ = ()
-    | inc (SOME r) i f = ++ (f (Vector.sub (r, i)))
-      
+     
   fun incby NONE _ _ _ = ()
     | incby (SOME r) i f n = (f (Vector.sub (r, i))) += n
   fun incbyr NONE _ _ _ = ()
     | incbyr (SOME r) i f n = (f (Vector.sub (r, i))) +== n
+
+  fun inc NONE _ _ = ()
+    | inc (SOME r) i f = ++ (f (Vector.sub (r, i)))
+  fun incr r i f = incbyr r i f 1.0
+
 
   fun clamp n = if n > 65535
                 then 65535
@@ -112,6 +114,8 @@ struct
      have side effects. *)
   fun evalwithstate semantics (((propf, propv) : side, propstats : stats option), 
                                ((oppf,  oppv) : side, oppstats : stats option))
+                    (* Only used for collecting stats. *)
+                    (curslot : int)
                     (exp : exp) : value =
     let
       (* XXX Definitely a potential for off-by-one errors here.
@@ -136,6 +140,7 @@ struct
                     constitutes a "function call." for example,
                     does it go before the recursive calls? *)
                  step ();
+                 inc propstats curslot #iterations;
                  case v1 of
                    VInt _ => raise EvalError
                  | VFn f =>
@@ -155,6 +160,7 @@ struct
                       in if isdead vit
                          then raise EvalError
                          else Array.sub(propf, i)
+                      (* XXX gotten stats *)
                       end
                    | VPut => VFn VI
                    | VS [g, f] =>
@@ -176,8 +182,11 @@ struct
                        in (if isdead vit
                            then ()
                            else (case semantics of
-                                     NORMAL => Array.update (propv, i,
-                                                             clamp (vit + 1))
+                                     NORMAL =>
+                                      let in
+                                          incr propstats curslot #healing_done;
+                                          Array.update (propv, i, clamp (vit + 1))
+                                      end
                                    | ZOMBIE => Array.update (propv, i, vit - 1)));
                            VFn VI
                        end
@@ -188,42 +197,55 @@ struct
                        in (if isdead vit
                            then ()
                            else (case semantics of
-                                     NORMAL => Array.update (oppv, oppi, vit - 1)
+                                     NORMAL => 
+                                         let in
+                                             incr propstats curslot #damage_done;
+                                             Array.update (oppv, oppi, vit - 1)
+                                         end
                                    | ZOMBIE => Array.update (oppv, oppi,
                                                              clamp (vit + 1))));
                            VFn VI
                        end
                    | VAttack [j, i] =>
                        (case v2 of
-                            VInt n =>
-                                let val i = expectslotnumber i
+                        VInt n =>
+                            let val i = expectslotnumber i
 
-                                    val vitp = Array.sub (propv, i)
-                                    val () = if n > vitp
-                                             then raise EvalError
-                                             else ()
-                                    val () = Array.update (propv, i, vitp - n);
+                                val vitp = Array.sub (propv, i)
+                                val () = if n > vitp
+                                         then raise EvalError
+                                         else ()
+                                val () = Array.update (propv, i, vitp - n);
 
-                                    val j = expectslotnumber j
-                                    val oppj = 255 - j
-                                    (* aka w *)
-                                    val vito = Array.sub (oppv, oppj)
-                                    val dmg = (n * 9) div 10
-                                    val newvito = 
-                                        (case semantics of
-                                             NORMAL =>
-                                                 if dmg > vito
-                                                 then 0
-                                                 else vito - dmg
-                                           | ZOMBIE => 
-                                                 clamp (vito + dmg))
-                                in
-                                    (if isdead vito
-                                     then ()
-                                     else Array.update (oppv, oppj, newvito));
-                                    VFn VI
-                                end
-                          | _ => raise EvalError)
+                                val j = expectslotnumber j
+                                val oppj = 255 - j
+                                (* aka w *)
+                                val vito = Array.sub (oppv, oppj)
+                                val dmg = (n * 9) div 10
+                                val newvito = 
+                                    (case semantics of
+                                         NORMAL =>
+                                             if dmg > vito
+                                             then 0
+                                             else vito - dmg
+                                       | ZOMBIE => 
+                                             clamp (vito + dmg))
+                            in
+                                (if isdead vito
+                                 then ()
+                                 else 
+                                     let in
+                                         (* XXX, this assumes we are not
+                                            in zombie semantics. *)
+                                         if semantics = NORMAL
+                                         then incbyr propstats curslot 
+                                                 #damage_done (real (vito - newvito))
+                                         else ();
+                                         Array.update (oppv, oppj, newvito)
+                                     end);
+                                VFn VI
+                            end
+                      | _ => raise EvalError)
                    | VAttack l => VFn (VAttack (v2 :: l))
                    | VHelp [j, i] =>
                        (case v2 of
@@ -250,7 +272,14 @@ struct
                                 in
                                     (if isdead witp
                                      then ()
-                                     else Array.update (propv, j, newwitp));
+                                     else let in
+                                            if semantics = NORMAL
+                                            then incbyr propstats curslot 
+                                                   #healing_done 
+                                                   (real (newwitp - witp))
+                                            else ();
+                                            Array.update (propv, j, newwitp)
+                                          end);
                                     VFn VI
                                 end
                           | _ => raise EvalError)
@@ -263,7 +292,13 @@ struct
                        let val i = expectslotnumber v2
                            val vit = Array.sub (propv, i)
                        in (if isdead vit
-                           then Array.update (propv, i, 1)
+                           then 
+                               let in
+                                   (* Does increment health. Maybe should
+                                      be a separate counter too though? *)
+                                   incr propstats curslot #healing_done;
+                                   Array.update (propv, i, 1)
+                               end
                            else ());
                           VFn VI
                        end
@@ -323,7 +358,8 @@ struct
                       (* Just evaluating for effects. Not computing
                          stats. *)
                       (ignore (evalwithstate ZOMBIE ((prop, NONE), 
-                                                     (opp, NONE)) zombie)
+                                                     (opp, NONE)) 
+                                             j zombie)
                        handle EvalError => ()
                             | EvalLimit => ());
                       (* Always reset to identity and regular-dead. *)
@@ -374,7 +410,7 @@ struct
                       evaluation. *)
                    val result = 
                        evalwithstate NORMAL ((prop, propstats), 
-                                             (opp, oppstats)) init
+                                             (opp, oppstats)) i init
                        handle EvalError => VFn VI
                             | EvalLimit => VFn VI
                in
