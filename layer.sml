@@ -35,18 +35,22 @@ struct
   (* XXX These need to take care of the number of
      turns, ending conditions (?), etc. *)
   fun my_turn (G { is_my_turn = myturn as ref true,
-                   my_side, their_side, ... }) turn =
+                   my_side, their_side, 
+                   my_stats, their_stats, ... }) turn =
       let in
-          LTG.taketurn (my_side, their_side) turn;
+          LTG.taketurnex ((my_side, SOME my_stats), 
+                          (their_side, SOME their_stats)) turn;
           myturn := false
       end
     | my_turn _ _ = raise GameState "it's not my turn!"
                    
   fun their_turn (G { is_my_turn = myturn as ref false,
-                      my_side, their_side, ... }) turn =
+                      my_side, their_side, 
+                      my_stats, their_stats, ... }) turn =
       let in
           (* (with perspective swapped) *)
-          LTG.taketurn (their_side, my_side) turn;
+          LTG.taketurnex ((their_side, SOME their_stats),
+                          (my_side, SOME my_stats)) turn;
           myturn := true
       end
     | their_turn _ _ = raise GameState "it's not their turn!"
