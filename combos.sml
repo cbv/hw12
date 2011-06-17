@@ -57,4 +57,23 @@ struct
       (* S(K(S(Ky))) t u v *)
     = T (T (T (L ("S", L ("K", L ("S", L ("K", y)))), t), u), v)
 
+
+  (* compiles e into slot i *)
+  fun compile (e : LTG.exp) i = 
+    let
+      val L = LTG.LeftApply
+      val R = LTG.RightApply
+
+      fun cpl (acc, Value (Card.card c)) = R (i, c) :: acc
+        | cpl (acc, App (Card.card c, t)) 
+          (* S(Kacc) c t *)
+        = cpl (R (L ("S", L("K", acc)), c), t)
+        | cpl (acc, App (App (t, u), v))
+          (* S(K(S(Kacc))) t u v *)
+        = cpl (cpl (cpl (L ("S", L ("K", L ("S", L ("K", acc)))), t), u), v)
+    in
+      rev (cpl (L(Card.Put, i), e))
+    end
+
+
 end

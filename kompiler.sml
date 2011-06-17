@@ -68,8 +68,7 @@ fun test () = (
     print "\n";
     print (kil2str (src2kil (Lambda("x", Lambda ("y", Var "x")))));
     print "\n";
-    app (fn t => (print (LTG.turn2str t); print " "))
-      (compile (Lambda("x", Lambda ("y", Var "x"))) 13);
+    print (LTG.turns2str (compile (Lambda("x", Lambda ("y", Var "x"))) 13));
     print "\n";
     ()
   )

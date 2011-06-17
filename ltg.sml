@@ -263,6 +263,9 @@ struct
     | turn2str (RightApply (i, c))
     = "(" ^ Int.toString i ^ ", " ^ Card.card2str c ^ ")"
 
+  fun turns2str (t :: nil) = turn2str t
+   |  turns2str ts = foldl (fn (t, s) => turn2str t ^ " " ^ s) "" ts
+
   fun aliveslot (propf, propv) i =
       if i < 0 orelse i > 255 orelse isdead (Array.sub (propv, i))
       then raise EvalError
