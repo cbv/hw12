@@ -398,10 +398,23 @@ struct
               " it: " ^ itos (!iterations) ^
               " got: " ^ itos (!gotten)
 
+        fun isdefault { left_applications = ref 0,
+                        right_applications = ref 0,
+                        iterations = ref 0,
+                        gotten = ref 0, 
+                        (* can't damage or heal without
+                           iterations. *)
+                        damage_done = _,
+                        healing_done = _ } = true
+          | isdefault _ = false
+                        
+
         val l = Vector.foldri 
             (fn (idx, stat, l) =>
-             (* XXX not if default? *)
-             (("[" ^ itos idx ^ "] " ^ stattostring stat) :: l)) nil stats
+             if isdefault stat
+             then l
+             else (("[" ^ itos idx ^ "] " ^ 
+                    stattostring stat) :: l)) nil stats
     in
         StringUtil.delimit "\n" l
     end
