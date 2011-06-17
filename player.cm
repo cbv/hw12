@@ -27,6 +27,9 @@ group is
    kompiler-sig.sml
    kompiler.sml
 
+  kompiler-sig.sml
+  kompiler.sml
+
    player-sig.sml
    layer-sig.sml
    layer.sml

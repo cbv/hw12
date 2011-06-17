@@ -6,7 +6,7 @@ sig
     | Lambda of string * src
     | Apply of src * src
     | Card of Card.card
-    (* | Int of int *)
+    | Int of int
 
   (* compiles a source expression into a turn-list that will create
     that expression in the given slot *)
