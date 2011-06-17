@@ -5,11 +5,13 @@ open LTGParse
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
 fun debug x = TextIO.output (TextIO.stdErr, x ^ "\n")
 
+val x = ref ""
+
 fun continue (turn, state) = 
    let in
-      debug "Send"
+      debug ("Sending in player " ^ !x)
       ; send TextIO.stdOut turn
-      ; debug "Recv"
+      ; debug ("Receiving in player " ^ !x) 
       ; continue (Player.round (rcv TextIO.stdIn, state))
    end
 
@@ -19,8 +21,12 @@ val () =
       val args = Params.docommandline ()
       val seed =
          case args of 
-            [ "0" ] => (debug "Player 0"; Player.init NONE)
-          | [ "1" ] => (debug "Player 1"; Player.init (SOME (rcv TextIO.stdIn)))
+            [ "0" ] => (debug "Player 0"
+                        ; x := "0"
+                        ; Player.init NONE)
+          | [ "1" ] => (debug "Player 1"
+                        ; x := "1"
+                        ; Player.init (SOME (rcv TextIO.stdIn)))
           | [] => 
             (err ("No main argument given!")
              ; err ("Usage: " ^ CommandLine.name () ^ " {0, 1}")

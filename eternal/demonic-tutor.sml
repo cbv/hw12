@@ -12,7 +12,7 @@ fun mkInstream in_file_desc =
     (TextIO.StreamIO.mkInstream 
      (PIO.mkTextReader {fd = in_file_desc, 
                              name = "Reader from the pipe",
-                             initBlkMode = false}, ""))
+                             initBlkMode = true}, ""))
 
 fun mkOutstream out_file_desc = 
    TextIO.mkOutstream
@@ -20,7 +20,7 @@ fun mkOutstream out_file_desc =
      (PIO.mkTextWriter {fd = out_file_desc,
                              name = "Writer to the pipe",
                              initBlkMode = true,
-                             chunkSize = 1,
+                             chunkSize = 1024,
                              appendMode = false}, IO.LINE_BUF))
 
 fun setupPlayer exe arg = 
@@ -67,12 +67,15 @@ fun report (n, play) =
 fun continue (n, player: process, opponent: process) =
    if n = 200000 then () else
    let
-      val () = debug "A\n"
+      val _ = TextIO.inputLine TextIO.stdIn
+      val () = debug "Receiving in tutor"
       val play = LTGParse.rcv (#instream player)
-      val () = debug "B\n"
+      val () = debug "Done receiving in tutor"
    in
       report (n, play)
+      ; debug "Sending in tutor"
       ; LTGParse.send (#outstream opponent) play
+      ; debug "Done sending in tutor"
       ; continue (n+1, opponent, player)
    end
 

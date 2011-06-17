@@ -1,5 +1,8 @@
 structure LTGParse = struct
 
+fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
+fun debug x = TextIO.output (TextIO.stdErr, x ^ "\n")
+
 val cardcard = 
    [ ("I", LTG.I),
      ("zero", LTG.Zero),
@@ -32,9 +35,16 @@ exception LTGIO of string
 
 fun rcv instream = 
    let 
+      fun trim NONE = "nothing"
+        | trim (SOME x) = String.substring (x, 0, size x - 1)
+
+      val () = debug "Receiving"
       val move = TextIO.inputLine instream
+      val () = debug ("Received " ^ trim move)
       val fst = TextIO.inputLine instream
+      val () = debug ("Received " ^ trim fst)
       val snd = TextIO.inputLine instream
+      val () = debug ("Received " ^ trim snd)
    in
       case (move, fst, snd) of 
          (SOME "1\n", SOME card, SOME slot) =>
@@ -59,13 +69,21 @@ fun rcv instream =
 fun send outstream move = 
    case move of 
       LTG.LeftApply (card, slot) =>
-      (TextIO.output (outstream, "1\n")
+      (debug ("Sending left apply")
+       ; TextIO.output (outstream, "1\n")
+       ; err ("Sent: 1")
        ; TextIO.output (outstream, str card ^ "\n")
-       ; TextIO.output (outstream, Int.toString slot ^ "\n"))
-    | LTG.RightApply (slot, card) => 
-      (TextIO.output (outstream, "2\n")
+       ; err ("Sent: " ^ str card)
        ; TextIO.output (outstream, Int.toString slot ^ "\n")
-       ; TextIO.output (outstream, str card ^ "\n"))
+       ; err ("Sent: " ^ Int.toString slot ^ "\n"))
+    | LTG.RightApply (slot, card) => 
+      (debug ("Sending left apply")
+       ; TextIO.output (outstream, "2\n")
+       ; err ("Sent: 2")
+       ; TextIO.output (outstream, Int.toString slot ^ "\n")
+       ; err ("Sent: " ^ Int.toString slot)
+       ; TextIO.output (outstream, str card ^ "\n")
+       ; err ("Sent: " ^ str card))
 
 end
      
