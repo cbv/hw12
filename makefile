@@ -23,5 +23,7 @@ player-%:
 	echo >> player.sml
 	echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
 	echo >> player.sml
+	svn info | ./embedversion.pl > version.sml
 	mlton -const "Exn.keepHistory true" -output $@.exe player.cm
 	rm player.sml
+	rm version.sml

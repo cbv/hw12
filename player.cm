@@ -9,4 +9,5 @@ group is
       player-whatever.sml.
       You shouldn't read or edit it. *)
    player.sml
+   version.sml
    playerio.sml
