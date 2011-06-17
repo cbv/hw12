@@ -44,6 +44,7 @@ struct
    | VZombie of value list
 
   and value =
+     (* Always in [0, 65535]. *)
      VInt of int
    | VFn of function
 
@@ -51,7 +52,8 @@ struct
      App of exp * exp
    | V of value
 
-  (* Parallel arrays (always size 256) for field and vitality. *)
+  (* Parallel arrays (always size 256) for field and vitality.
+     Vitality is always in [-1, 65535]. *)
   type side = value Array.array * int Array.array
 
   type game = side * side
@@ -180,7 +182,54 @@ struct
                                 end
                           | _ => raise EvalError)
                    | VAttack l => VFn (VAttack (v2 :: l))
-                            (* XXX in progress... *)
+                   | VHelp [j, i] =>
+                       (case v2 of
+                            VInt n =>
+                                let val i = expectslotnumber i
+
+                                    val vitp = Array.sub (propv, i)
+                                    val () = if n > vitp
+                                             then raise EvalError
+                                             else ()
+                                    val () = Array.update (propv, i, vitp - n)
+
+                                    val j = expectslotnumber j
+                                    val witp = Array.sub (propv, j)
+                                    val heal = (n * 11) div 10
+                                    val newwitp = clamp (witp + heal)
+                                in
+                                    (if isdead witp
+                                     then ()
+                                     else Array.update (propv, j, newwitp));
+                                    VFn VI
+                                end
+                          | _ => raise EvalError)
+                   | VHelp l => VFn (VHelp (v2 :: l))
+                   | VCopy =>
+                       let val i = expectslotnumber v2
+                       in Array.sub (oppf, i)
+                       end
+                   | VRevive =>
+                       let val i = expectslotnumber v2
+                           val vit = Array.sub (propv, i)
+                       in (if isdead vit
+                           then Array.update (propv, i, 1)
+                           else ());
+                          VFn VI
+                       end
+                   | VZombie [i] =>
+                       let val i = expectslotnumber i
+                           val oppi = 255 - i
+                           val vito = Array.sub (oppv, oppi)
+                       in
+                           (if isdead vito
+                            then (Array.update (oppv, oppi, ~1);
+                                  Array.update (oppf, oppi, v2))
+                            else raise EvalError);
+                           VFn VI
+                       end
+                   | VZombie l => VFn (VZombie (v2 :: l))
+ 
 )
 
                end
