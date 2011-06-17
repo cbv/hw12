@@ -22,16 +22,20 @@ struct
          then find a new target. *)
     | Attacking of int
 
-  fun scoreslot (idx : int, s : LTG.stat) =
+  (* Maybe should have a lower bound on what it will
+     consider valuable, and just heal/revive if there
+     are no current high-value targets. *)
+  fun scoreslot side (idx : int, s : LTG.stat) =
       (idx,
        (* XXX weighted! *)
-       (* XXX probably should be low priority if already dead :) *)
-       real (LTG.stat_left_applications s) +
-       real (LTG.stat_right_applications s) +
-       LTG.stat_damage_done s +
-       LTG.stat_healing_done s +
-       real (LTG.stat_iterations s) +
-       real (LTG.stat_gotten s))
+       if LTG.slotisdead side idx
+       then 0.0
+       else real (LTG.stat_left_applications s) +
+            real (LTG.stat_right_applications s) +
+            LTG.stat_damage_done s +
+            LTG.stat_healing_done s +
+            real (LTG.stat_iterations s) +
+            real (LTG.stat_gotten s))
 
   val compare_scores = ListUtil.bysecond Real.compare
 
@@ -55,14 +59,7 @@ struct
           \"unused" `
           Card LTG.Put -- src -- $"self"
 
-          (* this one won't work; it's call-by-name.
-          val minifix =
-              Lambda ("x",
-                      Apply (Var "f", Apply (Var "x", Var "x")))
-          val fix =
-              Lambda ("f",
-                      Apply (minifix, minifix)) *)
-
+          (* CBV fix-point operator. *)
           val minifix =
               \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
           val fix = \"f" ` minifix -- minifix
@@ -70,6 +67,8 @@ struct
           Apply (fix, recursive)
       end
 
+  (* Makes a program that attacks the target slot index,
+     and then returns itself (so it sticks around). *)
   fun attackprogram target =
     let
         (* XXX should dec as much as we can in this turn,
@@ -80,7 +79,6 @@ struct
 
         val dec = Apply (Card LTG.Dec, Int revtarget)
         val prog = returnself dec
-        (* val prog = dec *)
     in
         Kompiler.compile prog ATTACK_SLOT
     end handle (e as Kompiler.Kompiler s) =>
@@ -106,13 +104,14 @@ struct
           case !mode of
               FindTarget =>
                let
+                 val theirside = GS.theirside gs
                  (* Find the highest-value slot in the
                     opponent's state, according to the
                     stats *)
                  val stats = GS.theirstats gs
                  val slots = List.tabulate (256, fn i =>
                                             (i, LTG.statfor stats i))
-                 val slots = map scoreslot slots
+                 val slots = map (scoreslot theirside) slots
 
                  val (best, _) = ListUtil.max compare_scores slots
 
