@@ -62,8 +62,10 @@ struct
         (* XXX should dec as much as we can in this turn,
            without exceeding 1000. *)
         val dec = Apply (Card LTG.Dec, Int target)
+        val prog = returnself dec
+        (* val prog = dec *)
     in
-        Kompiler.compile dec ATTACK_SLOT
+        Kompiler.compile prog ATTACK_SLOT
     end
 
 
@@ -82,9 +84,12 @@ struct
 
              val (best, _) = ListUtil.max compare_scores slots
 
+             val prog = attackprogram best
+             val () = eprint ("Program: " ^ LTG.turns2str prog ^ "\n")
+                
            in
              eprint ("New target: " ^ Int.toString best ^ "\n");
-             mode := Emit (best, attackprogram best);
+             mode := Emit (best, prog);
              taketurn gs
            end
         | Emit (_, nil) => (mode := FindTarget; taketurn gs)
