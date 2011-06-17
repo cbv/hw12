@@ -8,6 +8,8 @@ struct
      game state. *)
   fun init gs = ()
 
+  fun eprint s = TextIO.output (TextIO.stdErr, s)
+
   (* Hard to kill. *)
   val ATTACK_SLOT = 0
 
