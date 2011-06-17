@@ -11,7 +11,7 @@ sig
   (* a fixed point combinator, e.g.
       compile (fix (Lambda ("self", Lambda ("x", ...)))) slot
   *)
-  val fix : src
+  val fix : src -> src
 
   (* compiles a source expression into a turn-list that will create
     that expression in the given slot *)
