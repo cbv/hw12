@@ -1,4 +1,5 @@
 
+structure QuietDownNJ = struct end
 
 datatype 'seriously don't_call_print = It'sNoGoodForYou of 'seriously don't_call_print
 exception WeUseStdOutToCommunicate
