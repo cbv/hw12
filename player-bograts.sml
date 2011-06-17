@@ -22,18 +22,23 @@ struct
 
   val target = ref 0
   val targethealth = ref 10000
-  val instructions = ref [LTG.RightApply (0, LTG.Zero)]
+  val instructions = ref [LTG.RightApply (0, LTG.Zero),
+                          LTG.RightApply (1, LTG.Zero)
+                          ]
   fun taketurn gs =
     let
-      fun makezero () = LTG.RightApply (0, LTG.Zero)
       val ins = case (!instructions)    
                  of nil => 
                    (targethealth := (!targethealth) - 1;
                     if (!targethealth) = 0
-                    then (target := (!target) + 1; targethealth := 10000)
-                    else ();
-                    instructions := loadn (!target) 0;
-                    LTG.LeftApply (LTG.Dec, 0))
+                    then (target := (!target) + 1; 
+                          targethealth := 10000;
+                          instructions := (loadn (!target) 0) @ [RightApply(1,Zero),
+                                                                 LeftApply (Get,1)];
+                          LTG.LeftApply (LTG.Dec, 1))
+                    else (instructions := [ RightApply (1,Zero) ,LeftApply (Get,1)];
+                          LTG.LeftApply (LTG.Dec, 1))
+                      )
                  | ins::inses =>      
                       (instructions := inses;
                        ins)
