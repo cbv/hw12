@@ -1,4 +1,4 @@
-structure Dungeon = struct
+structure DemonicTutor = struct
 
 structure PFS = Posix.FileSys
 structure PP = Posix.Process
@@ -31,7 +31,7 @@ fun getExe base =
       filename
    end
 
-fun setupPlayer player arg = 
+fun setupPlayer player arg state = 
    let 
       val exe = getExe player
 
@@ -51,67 +51,73 @@ fun setupPlayer player arg =
        | SOME pid => (* Return the pipes to children *)
          {pid = pid, 
           instream = mkInstream inServer, 
-          outstream = mkOutstream outServer}
+          outstream = mkOutstream outServer,
+          state = state}
    end
 
 type process = {pid: PIO.pid, 
                 instream: TextIO.instream,
-                outstream: TextIO.outstream}
+                outstream: TextIO.outstream,
+                state: LTG.side}
 
-fun report (n, play) =
-   let 
-      val swapped = n mod 2 = 1
-      val () = if n mod 20000 = 0 
-               then print ("Turn " ^ Int.toString (n div 2) ^ "...\n")
-               else ()
-   in ()
-      (* print ("Turn " ^ Int.toString (n div 2 + 1))
-      ; print (": player " ^ (if swapped then "1" else "0") ^ " ran ")
-      ; case play of 
-           LTG.LeftApply (card, slot) => 
-           print ("card " ^ LTGParse.str card 
-                  ^ " with argument of slot " ^ Int.toString slot)
-         | LTG.RightApply (slot, card) =>
-           print ("slot " ^ Int.toString slot 
-                  ^ " with argument of card " ^ LTGParse.str card)
-       ; print "\n" *)
+fun winner (proponent, opponent) = false
+
+fun report (n, proponent, opponent) =
+   if n mod 20000 <> 0 then () else
+   let
+      val (player0, player1) = 
+         if n mod 2 = 0 then (proponent, opponent) else (opponent, proponent)
+   in 
+      print ("Turn " ^ Int.toString (n div 2) ^ "...\n")
    end
 
-fun continue (n, player: process, opponent: process) =
-   if n = 200000 then print "Done.\n" else
-   let
+fun continue (n, proponent: process, opponent: process) =
+   if n = 200000 orelse winner (proponent, opponent)
+   then (report (n, proponent, opponent); print "Done.\n")
+   else let
+      val () = if n = 0 orelse n mod 20000 <> 0 then ()  
+               else report (n, proponent, opponent) 
       (* val _ = TextIO.inputLine TextIO.stdIn *)
+
+      (* GET THE MOVE *)
       val () = debug "Receiving in tutor"
-      val play = LTGParse.rcv (#instream player)
+      val play = LTGParse.rcv (#instream proponent)
       val () = debug "Done receiving in tutor"
+
+      (* SEND THE MOVE *)
+      val () = debug "Sending in tutor"
+      val () = LTGParse.send (#outstream opponent) play
+      val () = debug "Done sending in tutor"
+
+      (* DO YOU WANT TO PLAY A GAME? *)
+      val () = LTG.taketurn (#state proponent, #state opponent) play
    in
-      report (n, play)
-      ; debug "Sending in tutor"
-      ; LTGParse.send (#outstream opponent) play
-      ; debug "Done sending in tutor"
-      ; continue (n+1, opponent, player)
+      continue (n+1, opponent, proponent)
    end
 
 (* args are the result of Params.docommandline *)
 fun go args = 
    let 
       val () = print "Starting...\n"
-      val (process1, process2) = 
+      val state0 = LTG.initialside ()
+      val state1 = LTG.initialside ()
+      val (process0, process1) = 
          case args of 
-            [ player1, player2 ] => 
-            (setupPlayer player1 "0", setupPlayer player2 "1")
+            [ player0, player1 ] => 
+            (setupPlayer player0 "0" state0, 
+             setupPlayer player1 "1" state1)
           | [] => 
             (err ("No main argument given!")
-             ; err ("Usage: " ^ CommandLine.name () ^ " player1 player2")
+             ; err ("Usage: " ^ CommandLine.name () ^ " player0 player1")
              ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
              ; OS.Process.exit OS.Process.failure) 
           | _ =>
             (err ("Wrong number of arguments given!")
-             ; err ("Usage: " ^ CommandLine.name () ^ " player1 player2")
+             ; err ("Usage: " ^ CommandLine.name () ^ " player0 player1")
              ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
              ; OS.Process.exit OS.Process.failure)
    in
-      continue (0, process1, process2)
+      continue (0, process0, process1)
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
                           ; OS.Process.exit OS.Process.failure)
 
