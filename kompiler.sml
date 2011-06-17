@@ -11,6 +11,7 @@ datatype src =
 exception Kompiler of string
 
 (* Y' = S S K (S (K (S S (S (S S K)))) K) *)
+(*
 fun fix s = let
   val S = Card Card.S
   val K = Card Card.K
@@ -21,6 +22,23 @@ in
                           A (S, A (A (S, S), K))))), K)),
      s)
 end
+*)
+
+  infix 9 --
+  val op -- = Apply
+  val $ = Var
+  fun \ x exp = Lambda (x, exp)
+  infixr 1 `
+  fun a ` b = a b
+
+  fun fix s = let
+          val minifix =
+              \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
+          val Z = \"f" ` minifix -- minifix
+      in
+          Apply (Z, s)
+      end
+
 
 (* kombinator internal language *)
 datatype kil = KApply of kil * kil
