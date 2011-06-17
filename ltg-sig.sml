@@ -46,6 +46,8 @@ sig
       LeftApply of card * int 
     | RightApply of int * card
 
+  val turn2str : turn -> string
+
   (* Take a turn. Without loss of generality, pass in the proponent as
      the player taking the turn.
      Updates in place. Doesn't check for game-ending

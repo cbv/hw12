@@ -258,6 +258,11 @@ struct
       LeftApply of card * int
     | RightApply of int * card
 
+  fun turn2str (LeftApply (c, i))
+    = "(" ^ Card.card2str c ^ ", " ^ Int.toString i ^ ")"
+    | turn2str (RightApply (i, c))
+    = "(" ^ Int.toString i ^ ", " ^ Card.card2str c ^ ")"
+
   fun aliveslot (propf, propv) i =
       if i < 0 orelse i > 255 orelse isdead (Array.sub (propv, i))
       then raise EvalError
