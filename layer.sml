@@ -29,6 +29,9 @@ struct
   fun mystats (G { my_stats, ... }) = my_stats
   fun theirstats (G { their_stats, ... }) = their_stats
 
+  fun myside (G { my_side, ... }) = my_side
+  fun theirside (G { their_side, ... }) = their_side
+
   fun printstats stats =
       TextIO.output (TextIO.stdErr, LTG.statstostring stats ^ "\n")
 

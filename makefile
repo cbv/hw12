@@ -16,14 +16,16 @@ tutor:
 # changes?
 .PHONY: player-*
 player-%:
-	echo > player.sml
-	echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
-	echo >> player.sml
-	cat $@.sml >> player.sml
-	echo >> player.sml
-	echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
-	echo >> player.sml
-	svn info | ./embedversion.pl > version.sml
+	@echo > player.sml
+	@echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
+	@echo >> player.sml
+	@cat $@.sml >> player.sml
+	@echo >> player.sml
+	@echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
+	@echo >> player.sml
+	@svn info | ./embedversion.pl > version.sml
+	@chmod a-w player.sml # try to prevent user from editing
 	mlton -const "Exn.keepHistory true" -output $@.exe player.cm
-	rm player.sml
-	rm version.sml
+	@chmod u+w player.sml
+	@rm -f player.sml
+	@rm version.sml

@@ -20,6 +20,9 @@ sig
   val mystats : gamestate -> LTG.stats
   val theirstats : gamestate -> LTG.stats
 
+  val myside : gamestate -> LTG.side
+  val theirside : gamestate -> LTG.side
+
   (* Prints out all stats, for debugging. 
      This should not be called in submissions, just for debugging! *)
   val printstats : LTG.stats -> unit
