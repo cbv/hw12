@@ -218,5 +218,22 @@ end = struct
                  else doInc ((undamage * 11) div 10) vitp)),
          SOME (Card I)))))))
 
+      | Card copy => 
+        (state, getIndex arg) >>= (fn (state, x) =>
+        (state, Field.getT (#opponent state) x))
 
+      | Card revive =>
+        (state, getIndex arg) >>= (fn (state, x) =>
+        (state, Field.getV (#proponent state) x) >>= (fn (state, vit) =>
+        if vit > 0 then (state, SOME (Card I))
+        else (w_proponent state (Field.putV (#proponent state) x 1),
+              SOME (Card I))))
+
+      | Card zombie => (state, SOME (zombie1 arg))
+      | zombie1 i => 
+        (state, getIndexFLIP arg) >>= (fn (state, corpse) =>
+        (state, Field.getV (#opponent state) corpse) >>= (fn (state, vit) =>
+        if vit > 0 then (state, NONE) 
+        else (w_opponent state (Field.put (#opponent state) corpse (arg, ~1)), 
+              SOME (Card I))))
 end
