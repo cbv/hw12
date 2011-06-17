@@ -38,3 +38,4 @@ group is
 
   kompiler-sig.sml
   kompiler.sml
+  timecube.sml
