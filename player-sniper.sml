@@ -68,45 +68,54 @@ struct
         Kompiler.compile prog ATTACK_SLOT
     end
 
-
+  val n = ref 0
   val mode = ref FindTarget
   fun taketurn gs =
-      case !mode of
-          FindTarget =>
-           let
-             (* Find the highest-value slot in the
-                opponent's state, according to the
-                stats *)
-             val stats = GS.theirstats gs
-             val slots = List.tabulate (256, fn i =>
-                                        (i, LTG.statfor stats i))
-             val slots = map scoreslot slots
+      let in
+          n := !n + 1;
+          if !n mod 1000 = 0
+          then (eprint ("Turn #" ^ Int.toString (!n) ^ ". Stats:\n");
+                GS.printstats (GS.mystats gs);
+                eprint "Theirs:\n";
+                GS.printstats (GS.theirstats gs))
+          else ();
 
-             val (best, _) = ListUtil.max compare_scores slots
+          case !mode of
+              FindTarget =>
+               let
+                 (* Find the highest-value slot in the
+                    opponent's state, according to the
+                    stats *)
+                 val stats = GS.theirstats gs
+                 val slots = List.tabulate (256, fn i =>
+                                            (i, LTG.statfor stats i))
+                 val slots = map scoreslot slots
 
-             val prog = attackprogram best
-             val () = eprint ("Program: " ^ LTG.turns2str prog ^ "\n")
-                
-           in
-             eprint ("New target: " ^ Int.toString best ^ "\n");
-             mode := Emit (best, prog);
-             taketurn gs
-           end
-        | Emit (i, nil) => (mode := Attacking i; taketurn gs)
-        | Emit (i, (t :: rest)) => (mode := Emit (i, rest); t)
+                 val (best, _) = ListUtil.max compare_scores slots
 
-        | Attacking i =>
-           let val theirside = GS.theirside gs
-           in
-               if Array.sub (#2 theirside, i) <= 0
-               then (eprint ("Success! Killed slot " ^
-                             Int.toString i);
-                     mode := FindTarget;
-                     taketurn gs)
-                   (* Otherwise keep attacking. *)
-               else LTG.RightApply (ATTACK_SLOT, LTG.I)
-           end
+                 val prog = attackprogram best
+                 val () = eprint ("Program: " ^ LTG.turns2str prog ^ "\n")
 
+               in
+                 eprint ("New target: " ^ Int.toString best ^ "\n");
+                 mode := Emit (best, prog);
+                 taketurn gs
+               end
+            | Emit (i, nil) => (mode := Attacking i; taketurn gs)
+            | Emit (i, (t :: rest)) => (mode := Emit (i, rest); t)
+
+            | Attacking i =>
+               let val theirside = GS.theirside gs
+               in
+                   if Array.sub (#2 theirside, i) <= 0
+                   then (eprint ("Success! Killed slot " ^
+                                 Int.toString i);
+                         mode := FindTarget;
+                         taketurn gs)
+                       (* Otherwise keep attacking. *)
+                   else LTG.RightApply (ATTACK_SLOT, LTG.I)
+               end
+      end
 end
 
 structure Player = LayerFn(Sniper)
