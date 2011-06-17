@@ -1,4 +1,5 @@
 group is
    ltg.cm
+   combos.sml
    player-sig.sml
-   player.sml
+   player-hopeless.sml
