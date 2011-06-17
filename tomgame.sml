@@ -82,7 +82,9 @@ struct
 
   fun isdead vit = vit <= 0
 
-  exception EvalError
+  datatype semantics = NORMAL | ZOMBIE
+
+  exception EvalError and EvalLimit
   fun expectslotnumber (VInt n) =
       if n >= 0 andalso n <= 255
       then n else raise EvalError
@@ -91,11 +93,19 @@ struct
   (* Evaluate an expression, returning its
      value. May raise exception EvalError. May
      have side effects. *)
-  (* TODO: Need arguments to do side effect.
-     Need to know what counts as a function call. *)
-  fun evalwithstate ((propf, propv) : side, 
-                     (oppf,  oppv) : side) exp : value =
+  fun evalwithstate semantics ((propf, propv) : side, 
+                               (oppf,  oppv) : side) exp : value =
     let
+      (* XXX Definitely a potential for off-by-one errors here.
+         Need to validate against the reference simulator? *)
+      val steps = ref 0
+      fun step () =
+          let val s = !steps + 1
+          in if s > 1000
+             then raise EvalLimit
+             else steps := s
+          end
+
       fun eval (exp : exp) : value =
           case exp of
               V v => v (* VVV *)
@@ -103,6 +113,11 @@ struct
                let val v1 = eval e1
                    val v2 = eval e2
                in
+                 (* XXX don't know where this goes, because
+                    the spec is not totally clear on what
+                    constitutes a "function call." for example,
+                    does it go before the recursive calls? *)
+                 step ();
                  case v1 of
                    VInt _ => raise EvalError
                  | VFn f =>
@@ -228,12 +243,65 @@ struct
                             else raise EvalError);
                            VFn VI
                        end
-                   | VZombie l => VFn (VZombie (v2 :: l))
- 
-)
-
+                   | VZombie l => VFn (VZombie (v2 :: l)))
                end
     in
         eval exp
     end
+
+  fun initialside () = (Array.array (255, VFn VI),
+                        Array.array (255, 10000))
+  fun initialstate () = (initialside (), initialside ())
+
+  datatype turn =
+      LeftApply of card * int
+    | RightApply of int * card
+
+  fun aliveslot (propf, propv) i =
+      if i < 0 orelse i > 255 orelse isdead (Array.sub (propv, i))
+      then raise EvalError
+      else Array.sub (propf, i)
+
+  (* Take a turn. Without loss of generality, pass in the proponent as
+     the player taking the turn. *)
+  fun taketurn (prop as (propf, propv), opp) turn =
+      let 
+          (* Figure out what expression we're going to evaluate, and
+             get the index so that we can write back to it. *)
+          val (init, i) =
+          case turn of
+              LeftApply (c, i) => (App (V (evalcard c), V (aliveslot prop i)), i)
+            | RightApply (i, c) => (App (V (aliveslot prop i), V (evalcard c)), i)
+
+          (* Do the auto-application to zombies, which is anything
+             that has vitality -1. *)
+          fun auto j =
+              if Array.sub (propv, j) = ~1
+              then
+                  let val zombie = App (V (Array.sub (propf, j)), V (VFn VI))
+                  in
+                      (* Just evaluating for effects. *)
+                      (ignore (evalwithstate ZOMBIE (prop, opp) zombie)
+                       handle EvalError => ()
+                            | EvalLimit => ());
+                      (* Always reset to identity and regular-dead. *)
+                      Array.update (propf, j, VFn VI);
+                      Array.update (propv, j, 0)
+                  end
+              else ()
+
+          val () = Util.for 0 255 auto
+
+          (* Evaluate the expression normally. If we have to stop because 
+             we ran out of iterations or encountered some error, then we fill
+             the slot with the identity. Otherwise it gets the
+             resulting value from evaluation. *)
+          val result = 
+              evalwithstate NORMAL (prop, opp) init
+              handle EvalError => VFn VI
+                   | EvalLimit => VFn VI
+      in
+          Array.update (propf, i, result)
+      end
+
 end
