@@ -513,4 +513,6 @@ struct
         StringUtil.delimit "\n" l
     end
 
+  fun slotisdead (_, vitalities) i = Array.sub(vitalities, i) <= 0
+
 end

@@ -69,6 +69,8 @@ sig
   val initialside : unit -> side
   val initialstate : unit -> side * side
 
+  val slotisdead : side -> int -> bool
+
   datatype turn = 
       LeftApply of card * int 
     | RightApply of int * card
