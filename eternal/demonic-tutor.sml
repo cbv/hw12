@@ -80,7 +80,7 @@ fun report (n, proponent, opponent) =
             print ("DEAD: " ^ Int.toString dead)
             ; print (" / ZOMB: " ^ Int.toString zombie)
             ; print (" / LIVE: " ^ Int.toString live 
-                     ^ " (average vitality " 
+                     ^ " (average vitality of living: " 
                      ^ IntInf.toString (vitality div IntInf.fromInt live) 
                      ^ ")\n")
          end
