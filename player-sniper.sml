@@ -116,7 +116,7 @@ struct
                  val (best, _) = ListUtil.max compare_scores slots
 
                  val prog = attackprogram best
-                 val () = eprint ("Program: " ^ LTG.turns2str prog ^ "\n")
+                 (* val () = eprint ("Program: " ^ LTG.turns2str prog ^ "\n") *)
 
                in
                  eprint ("New target: " ^ Int.toString best ^ "\n");

@@ -35,7 +35,7 @@ sig
   val run_and_return_self : src -> src
 
   (* Compiles a source expression into a turn-list that will create
-    that expression in the given slot *)
+     that expression in the given slot *)
   val compile : src -> int -> LTG.turn list
 
 
@@ -44,7 +44,7 @@ sig
   (* Kombinator internal language *)
   datatype kil = KApply of kil * kil
                | KCard of Card.card
-	       | KVar of string
+               | KVar of string
 
   (* First translate from lambda calculus to Kombinators. *)
   val src2kil : src -> kil

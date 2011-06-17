@@ -119,7 +119,7 @@ struct
 
                  val prog = attackprogram best
                  val () = eprint ("Program: " ^ LTG.turns2str prog ^ "\n")
-
+                 val () = eprint ("Attack Program size: " ^ Int.toString (length prog) ^ "\n")
                in
                  eprint ("New target: " ^ Int.toString best ^ "\n");
                  mode := Emit (best, prog);

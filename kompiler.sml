@@ -43,7 +43,7 @@ fun run_and_return_self src =
 
 datatype kil = KApply of kil * kil
              | KCard of Card.card
-	     | KVar of string
+             | KVar of string
                        
 (* first translate from lambda calculus to kombinators *)
 fun src2kil s =
@@ -51,8 +51,8 @@ fun src2kil s =
       (* helper function to encode numbers *)
       fun T_int 0 = KCard Card.Zero
         | T_int n = if n mod 2 = 0 then
-	               KApply (KCard Card.Dbl, T_int (n div 2))
-	             else KApply (KCard Card.Succ, T_int (n - 1))
+                       KApply (KCard Card.Dbl, T_int (n div 2))
+                     else KApply (KCard Card.Succ, T_int (n - 1))
 
       fun T (Lambda (x, s)) = A (x, T s)
         | T (Apply (s1, s2)) = KApply (T s1, T s2)
@@ -70,10 +70,8 @@ fun src2kil s =
     end
 
 fun kil2str (KCard c) = Card.card2str c
-  | kil2str (KApply (KCard c1, KCard c2))
-    = Card.card2str c1 ^ " " ^ Card.card2str c2
   | kil2str (KApply (k1, k2))
-    = "(" ^ kil2str k1 ^ ") (" ^ kil2str k2 ^ ")"
+    = "(" ^ kil2str k1 ^ " " ^ kil2str k2 ^ ")"
   | kil2str (KVar x) = x
 
 fun kil2turns k i = let
@@ -96,7 +94,45 @@ in
   rev (f ([L(Card.Put, i)], k))
 end
 
-fun compile s i = kil2turns (src2kil s) i
+(* Tom's peephole optimizer. 
+   XXX This keeps going until no more optimizations can be applied,
+   but this could sometimes cause us to blow our time bounds. Probably
+   should have a timer for the worst case scenarios. *)
+local
+open Card
+in
+  fun optimize il =
+    let
+        (* True if evaluating the argument will have no effects.
+           This can be massively expanded! *)
+        fun effectless (KCard _) = true
+          | effectless _ = false
+
+        fun opt (KApply (KApply (KCard S, KCard K), KCard K)) = KCard I
+          | opt (KApply (KCard I, exp)) = opt exp
+            (* ... *)
+          | opt (KApply (i1, i2)) = KApply (opt i1, opt i2)
+          | opt (KVar v) = raise Kompiler ("unbound var in optimizer? " ^ v)
+          | opt (KCard c) = KCard c
+
+        fun loop il =
+            let val il' = opt il
+            in
+                if il = il'
+                then il
+                else
+                    let in
+                        eprint ("Optimized to\n" ^ kil2str il' ^ "\n");
+                        loop il'
+                    end
+            end
+    in
+        eprint ("OPTIMIZE:\n" ^ kil2str il ^ "\n");
+        loop il
+    end
+end
+
+fun compile s i = kil2turns (optimize (src2kil s)) i
 
 val print = EPrint.eprint
 
