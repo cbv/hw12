@@ -1,46 +1,29 @@
-
-structure Prisoner0 :> LAYER =
+structure Player :> PLAYER =
 struct
-  structure GS = GameState
+  open Kompiler
 
-  (* This one doesn't pay any attention to the
-     game state. *)
-  fun init gs = ()
+  type state = LTG.turn list
 
-  structure K = Kompiler
-
-  fun makeN 0 = K.Card Card.Zero
-    | makeN n = K.Apply (K.Card Card.Inc, (makeN (n-1)))
+  fun makeN 0 = Card Card.Zero
+    | makeN n = Apply (Card Card.Succ, makeN (n-1))
 
   fun maketurnlist () =
+    (*
+    (compile (Lambda("x", Int 7)) 13) @ [LTG.RightApply (13, LTG.Zero)]
+    *)
     let
-      (*
-      fun makezero () = LTG.RightApply (0, LTG.Zero)
-      fun poke () = LTG.LeftApply (LTG.Dec, 255)
-      fun heal () = LTG.LeftApply (LTG.Inc, 0)
-      *)
-      val one = K.Apply (K.Card Card.Inc, K.Card Card.Zero)
-      val two55 = makeN 255
-      val stab = K.Apply (K.Card Card.Dec, two55)
-      val heal = K.Apply (K.Card Card.Inc, K.Card Card.Zero)
+      val one = Apply (Card Card.Succ, Card Card.Zero)
+      val attackpos = makeN 4
+      val dec = Apply (Card Card.Dec, attackpos)
+      val inc = Apply (Card Card.Inc, Card Card.Zero)
     in
-      (K.compile heal 0) @ (K.compile stab 1)
+      (compile inc 0) @ (compile dec 1)
     end
 
-  val turnlist = ref []
+  fun init _ = let val l = maketurnlist () in (hd l, tl l) end
 
-  fun taketurn gs =
-  let val (turn, turns) =
-    case (!turnlist) of
-         [] => let val l = maketurnlist() in
-                (case l of [] => (LTG.LeftApply (LTG.I, 0), [])
-                   | (t::ts) => (t, ts))
-               end
-       | (turn::turns) => (turn, turns)
-  in
-    (turnlist := turns; turn)
-  end
+  fun round (_, turns) =
+    if null turns then init NONE
+    else (hd turns, tl turns)
 
 end
-
-structure Player = LayerFn(Prisoner0)
