@@ -103,12 +103,12 @@ fun go args =
           | [] => 
             (err ("No main argument given!")
              ; err ("Usage: " ^ CommandLine.name () ^ " player1 player2")
-             ; err ("Both players are names of executables")
+             ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
              ; OS.Process.exit OS.Process.failure) 
           | _ =>
             (err ("Wrong number of arguments given!")
              ; err ("Usage: " ^ CommandLine.name () ^ " player1 player2")
-             ; err ("Both players are names of executables")
+             ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
              ; OS.Process.exit OS.Process.failure)
    in
       continue (0, process1, process2)
