@@ -27,17 +27,16 @@ subst e1 x e2@(App e3 e4) = App (subst e1 x e3) (subst e1 x e4)
 
 -- eval
 eval :: Exp -> Exp
+eval (Succ e) = Succ $ eval e
 eval (App e1 e2) =
     case eval e1 of
-        Lam x e1' -> subst (eval e2) x e1'
+        Lam x e1' -> eval $ subst (eval e2) x e1'
         e1' -> error $ "tried to eval " ++ show e1
-eval (Succ e) = Succ $ eval e
 eval e = e
 
 -- basic combinators/etc
 
-s = Lam "a" $ Lam "b" $ Lam "c" $ App (App (Var "a") (Var "c"))
-                                      (App (Var "b") (Var "c"))
+s = Lam "a" $ Lam "b" $ Lam "c" $ Var "a" $$ Var "c" $$ (Var "b" $$ Var "c")
 
 i = Lam "x" $ Var "x"
 
