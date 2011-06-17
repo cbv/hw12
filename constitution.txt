@@ -9,6 +9,7 @@
 Signed,
 
  x Robert J. Simmons, Carnegie Mellon University, Bangalore, India
+ x Dr. Tom Murphy VII, Ph.D., tom7.org foundation, Pittsburgh, PA, USA
 
 Please sign with real name, affiliation, and location - this is requested
 in the final submission.

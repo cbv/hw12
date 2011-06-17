@@ -1,5 +1,5 @@
-(* Imperative implementation of games. *)
-structure Game =
+(* Imperative implementation of Lambda The Gathering games. *)
+structure LTG =
 struct
 
   (* Cards are atomic actions *)

@@ -24,4 +24,4 @@ group is
   sml-lib/util/growarray-sig.sml
   sml-lib/util/growarray.sml
 
-  tomgame.sml
+  ltg.sml
