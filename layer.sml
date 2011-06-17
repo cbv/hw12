@@ -20,10 +20,24 @@ struct
           my_side = LTG.initialside (),
           their_side = LTG.initialside () }
 
-(*   fun my_turn (G { is_my_turn = ref true, *)
+  (* XXX These need to take care of the number of
+     turns, ending conditions (?), etc. *)
+  fun my_turn (G { is_my_turn = myturn as ref true,
+                   my_side, their_side, ... }) turn =
+      let in
+          LTG.taketurn (my_side, their_side) turn;
+          myturn := false
+      end
+    | my_turn _ _ = raise GameState "it's not my turn!"
                    
-  fun my_turn _ = raise GameState "unimplemented"   
-  fun their_turn _ = raise GameState "unimplemented"   
+  fun their_turn (G { is_my_turn = myturn as ref false,
+                      my_side, their_side, ... }) turn =
+      let in
+          (* (with perspective swapped) *)
+          LTG.taketurn (their_side, my_side) turn;
+          myturn := true
+      end
+    | their_turn _ _ = raise GameState "it's not their turn!"
 
 end
 

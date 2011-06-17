@@ -11,6 +11,9 @@ tutor:
 # since if player.sml doesn't compile, it reports errors there
 # and tempts you to make edits to it, which are then lost when
 # you do make again. We can probably improve it... -tom7
+#
+# XXX: Also this doesn't seem to rebuild if anything but player-*.sml
+# changes?
 .PHONY: player-*
 player-%:
 	echo > player.sml
