@@ -14,13 +14,12 @@ exception Kompiler of string
 fun fix s = let
   val S = Card Card.S
   val K = Card Card.K
+  val A = Apply
 in
-  Apply (
-    Apply (Apply (Apply (S, S), K),
-           Apply (Apply (S, Apply (K, Apply (Apply (S, S), 
-                                             Apply (S, Apply (
-                                                       Apply (S, S), K))))), K)),
-    s)
+  A (A (A (A (S, S), K),
+        A (A (S, A (K, A (A (S, S), 
+                          A (S, A (A (S, S), K))))), K)),
+     s)
 end
 
 (* kombinator internal language *)
