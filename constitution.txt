@@ -11,7 +11,7 @@ Signed,
  x Robert J. Simmons, Carnegie Mellon University, Bangalore, India
  x Dr. Tom Murphy VII, Ph.D., tom7.org foundation, Pittsburgh, PA, USA
  x Mlle. Christopher Robin Martens, Carnegie Mellon University, Paris, France
- x Daniel (spoons) Spoonhower, Ph.D., unaffiliated, Brooklyn, NY, USA
+ x Daniel (spoons) Spoonhower, Ph.D., Magic Chocolate Factory, Brooklyn, NY, USA
  X Jason Reed, Ph.D., unaffiliated, Brooklyn, NY, USA
  x Glenn Willen, unaffiliated, Pittsburgh, PA, USA
 
