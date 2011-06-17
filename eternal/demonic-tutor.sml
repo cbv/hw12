@@ -5,7 +5,7 @@ structure PP = Posix.Process
 structure PIO = Posix.IO
 
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
-fun debug x = TextIO.output (TextIO.stdErr, x ^ "\n")
+fun debug x = () (* TextIO.output (TextIO.stdErr, x ^ "\n") *)
 
 fun mkInstream in_file_desc = 
    TextIO.mkInstream
@@ -53,13 +53,13 @@ fun report (n, play) =
       val swapped = n mod 2 = 1
    in
       print ("Turn " ^ Int.toString (n div 2 + 1))
-      ; print (": player " ^ (if swapped then "1" else "0" ^ " ran "))
+      ; print (": player " ^ (if swapped then "1" else "0") ^ " ran ")
       ; case play of 
            LTG.LeftApply (card, slot) => 
-           print (" card " ^ LTGParse.str card 
+           print ("card " ^ LTGParse.str card 
                   ^ " with argument of slot " ^ Int.toString slot)
          | LTG.RightApply (slot, card) =>
-           print (" slot " ^ Int.toString slot 
+           print ("slot " ^ Int.toString slot 
                   ^ " with argument of card " ^ LTGParse.str card)
       ; print "\n" 
    end

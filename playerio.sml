@@ -3,7 +3,7 @@ structure PlayerIO = struct
 open LTGParse
 
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
-fun debug x = TextIO.output (TextIO.stdErr, x ^ "\n")
+fun debug x = () (* TextIO.output (TextIO.stdErr, x ^ "\n") *)
 
 val x = ref ""
 

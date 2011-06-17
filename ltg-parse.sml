@@ -1,7 +1,7 @@
 structure LTGParse = struct
 
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
-fun debug x = TextIO.output (TextIO.stdErr, x ^ "\n")
+fun debug x = () (* TextIO.output (TextIO.stdErr, x ^ "\n") *)
 
 val cardcard = 
    [ ("I", LTG.I),
@@ -74,24 +74,24 @@ fun send outstream move =
       (debug ("Sending left apply")
        ; out (outstream, "1\n")
        ; TextIO.flushOut outstream
-       ; err ("Sent: 1")
+       ; debug ("Sent: 1")
        ; out (outstream, str card ^ "\n")
        ; TextIO.flushOut outstream
-       ; err ("Sent: " ^ str card)
+       ; debug ("Sent: " ^ str card)
        ; out (outstream, Int.toString slot ^ "\n")
        ; TextIO.flushOut outstream
-       ; err ("Sent: " ^ Int.toString slot ^ "\n"))
+       ; debug ("Sent: " ^ Int.toString slot ^ "\n"))
     | LTG.RightApply (slot, card) => 
       (debug ("Sending left apply")
        ; out (outstream, "2\n")
        ; TextIO.flushOut outstream
-       ; err ("Sent: 2")
+       ; debug ("Sent: 2")
        ; out (outstream, Int.toString slot ^ "\n")
        ; TextIO.flushOut outstream
-       ; err ("Sent: " ^ Int.toString slot)
+       ; debug ("Sent: " ^ Int.toString slot)
        ; out (outstream, str card ^ "\n")
        ; TextIO.flushOut outstream
-       ; err ("Sent: " ^ str card))
+       ; debug ("Sent: " ^ str card))
 
 end
      
