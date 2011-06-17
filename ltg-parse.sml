@@ -73,18 +73,24 @@ fun send outstream move =
       LTG.LeftApply (card, slot) =>
       (debug ("Sending left apply")
        ; out (outstream, "1\n")
+       ; TextIO.flushOut outstream
        ; err ("Sent: 1")
        ; out (outstream, str card ^ "\n")
+       ; TextIO.flushOut outstream
        ; err ("Sent: " ^ str card)
        ; out (outstream, Int.toString slot ^ "\n")
+       ; TextIO.flushOut outstream
        ; err ("Sent: " ^ Int.toString slot ^ "\n"))
     | LTG.RightApply (slot, card) => 
       (debug ("Sending left apply")
        ; out (outstream, "2\n")
+       ; TextIO.flushOut outstream
        ; err ("Sent: 2")
        ; out (outstream, Int.toString slot ^ "\n")
+       ; TextIO.flushOut outstream
        ; err ("Sent: " ^ Int.toString slot)
        ; out (outstream, str card ^ "\n")
+       ; TextIO.flushOut outstream
        ; err ("Sent: " ^ str card))
 
 end
