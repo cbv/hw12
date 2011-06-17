@@ -125,8 +125,9 @@ struct
 
             | Attacking i =>
                let val theirside = GS.theirside gs
+                   val health = Array.sub (#2 theirside, i)
                in
-                   if Array.sub (#2 theirside, i) <= 0
+                   if health <= 0
                    then (eprint ("Success! Killed slot " ^
                                  Int.toString i);
                          mode := FindTarget;
@@ -134,7 +135,8 @@ struct
                        (* Otherwise keep attacking. *)
                    else 
                        let in
-                           (* LTG.enable_trace true; *)
+                           eprint ("Target " ^ Int.toString i ^ 
+                                   "'s health: " ^ health ^ "\n");
                            LTG.RightApply (ATTACK_SLOT, LTG.I)
                        end
                end
