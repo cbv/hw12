@@ -23,8 +23,18 @@ fun mkOutstream out_file_desc =
                         chunkSize = 1024,
                         appendMode = true}, IO.NO_BUF))
 
-fun setupPlayer exe arg = 
+fun getExe base = 
    let 
+      val filename = OS.Path.joinDirFile {dir = OS.FileSys.getDir (),
+                                          file = "player-" ^ base ^ ".exe"}
+   in
+      filename
+   end
+
+fun setupPlayer player arg = 
+   let 
+      val exe = getExe player
+
       (* Set up two pipes *)
       val {infd = inServer, outfd = outPlayer} = PIO.pipe ()
       val {infd = inPlayer, outfd = outServer} = PIO.pipe ()
