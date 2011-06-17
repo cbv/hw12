@@ -1,4 +1,11 @@
-- Should the arena assume programs are deterministic?
+Should the arena assume programs are deterministic?
+
+ROB'S PLAN:
+1) wrap a dumbass strategy so that it plays according to the file interface
+2) make a way of automatically running two stategies 'gainst one another
+3) populate strategy submissions/revisions in a database
+4) ensure that the two implementations are compatible
+5) implement a client-server interaction for automating test running
 
 - Should the arena automatically handle binary creation and storage in 
   a submission-compatible format? (I'm thinking not, at least at first)
