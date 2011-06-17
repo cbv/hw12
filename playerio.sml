@@ -3,10 +3,13 @@ structure PlayerIO = struct
 open LTGParse
 
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
+fun debug x = TextIO.output (TextIO.stdErr, x ^ "\n")
 
 fun continue (turn, state) = 
    let in
-      send TextIO.stdOut turn
+      debug "Send"
+      ; send TextIO.stdOut turn
+      ; debug "Recv"
       ; continue (Player.round (rcv TextIO.stdIn, state))
    end
 
@@ -16,20 +19,25 @@ val () =
       val args = Params.docommandline ()
       val seed =
          case args of 
-            [] => 
-            (print ("No main argument given!\n")
-             ; print ("Usage: " ^ CommandLine.name () ^ " {0, 1}\n")
-             ; print ("0 is the first player, 1 is the second player\n")
+            [ "0" ] => (debug "Player 0"; Player.init NONE)
+          | [ "1" ] => (debug "Player 1"; Player.init (SOME (rcv TextIO.stdIn)))
+          | [] => 
+            (err ("No main argument given!")
+             ; err ("Usage: " ^ CommandLine.name () ^ " {0, 1}")
+             ; err ("0 is the first player, 1 is the second player")
              ; OS.Process.exit OS.Process.failure) 
-          | [ "0" ] => Player.init NONE
-          | [ "1" ] => Player.init (SOME (rcv TextIO.stdIn))
+          | [ s ] => 
+            (err ("Bad argument: " ^ s)
+             ; err ("Usage: " ^ CommandLine.name () ^ " {0, 1}")
+             ; err ("0 is the first player, 1 is the second player")
+             ; OS.Process.exit OS.Process.failure)
           | _ => 
-            (print ("Bad argument or too many arguments given!\n")
-             ; print ("Usage: " ^ CommandLine.name () ^ " {0, 1}\n")
-             ; print ("0 is the first player, 1 is the second player\n")
+            (err ("Bad argument or too many arguments given!")
+             ; err ("Usage: " ^ CommandLine.name () ^ " {0, 1}")
+             ; err ("0 is the first player, 1 is the second player")
              ; OS.Process.exit OS.Process.failure)
    in
       continue seed
-   end handle LTGIO s => (err ("Error: " ^ s ^ "\n")
+   end handle LTGIO s => (err ("Error: " ^ s)
                           ; OS.Process.exit OS.Process.failure)
 end
