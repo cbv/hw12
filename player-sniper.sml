@@ -92,7 +92,7 @@ struct
              mode := Emit (best, prog);
              taketurn gs
            end
-        | Emit (_, nil) => (mode := FindTarget; taketurn gs)
+        | Emit (i, nil) => (mode := Attacking i; taketurn gs)
         | Emit (i, (t :: rest)) => (mode := Emit (i, rest); t)
 
         | Attacking i =>
