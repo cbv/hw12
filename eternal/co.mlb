@@ -8,5 +8,5 @@ in
    ../sml-lib/util/util.mlb
    ../sml-lib/mlton/mysql/mysql-sig.sml
    ../sml-lib/mlton/mysql/mysql.sml
-   ../sml-lib/mlton/mysql/test.sml
+   co.sml
 end
