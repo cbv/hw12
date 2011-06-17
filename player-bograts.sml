@@ -22,7 +22,7 @@ struct
 
   val target = ref 0
   val targethealth = ref 10000
-  val instructions = ref [LTG.RightApply (0, LTG.Zero),
+  val instructions = ref [
                           LTG.RightApply (1, LTG.Zero)
                           ]
   fun taketurn gs =
@@ -36,7 +36,10 @@ struct
                           instructions := (loadn (!target) 0) @ [RightApply(1,Zero),
                                                                  LeftApply (Get,1)];
                           LTG.LeftApply (LTG.Dec, 1))
-                    else (instructions := [ RightApply (1,Zero) ,LeftApply (Get,1)];
+                    else (instructions := 
+                           (if(!target) = 0
+                            then [RightApply (1, Zero)]
+                            else [ RightApply (1, Zero) ,LeftApply (Get,1)]);
                           LTG.LeftApply (LTG.Dec, 1))
                       )
                  | ins::inses =>      
