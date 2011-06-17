@@ -74,7 +74,11 @@ struct
     let
         (* XXX should dec as much as we can in this turn,
            without exceeding 1000. *)
-        val dec = Apply (Card LTG.Dec, Int target)
+
+        (* Numbers are reversed when attacking opponent. *)
+        val revtarget = 255 - target
+
+        val dec = Apply (Card LTG.Dec, Int revtarget)
         val prog = returnself dec
         (* val prog = dec *)
     in
@@ -135,8 +139,10 @@ struct
                        (* Otherwise keep attacking. *)
                    else 
                        let in
+(*
                            eprint ("Target " ^ Int.toString i ^ 
-                                   "'s health: " ^ health ^ "\n");
+                                   "'s health: " ^ Int.toString health ^ "\n");
+*)
                            LTG.RightApply (ATTACK_SLOT, LTG.I)
                        end
                end

@@ -21,12 +21,14 @@ struct
     in
       (* Sorry, should be leaner now... *)
       n := !n + 1;
+(*
       if !n mod 1000 = 0
       then (eprint ("Turn #" ^ Int.toString (!n) ^ ". Stats:\n");
             GS.printstats (GS.mystats gs);
             eprint "Theirs:\n";
             GS.printstats (GS.theirstats gs))
       else ();
+*)
       parity := not (!parity);
       turn
     end
