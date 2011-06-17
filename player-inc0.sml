@@ -18,6 +18,7 @@ struct
           then heal ()
           else makezero ()
     in
+      GS.printstats (GS.mystats gs);
       parity := not (!parity);
       turn
     end
