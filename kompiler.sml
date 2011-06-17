@@ -1,6 +1,8 @@
 structure Kompiler : KOMPILER =
 struct
 
+  val print = eprint
+
   datatype src =
       Var of string
     | Lambda of string * src
@@ -12,7 +14,7 @@ struct
   (* kombinator internal language *)
   datatype kil = KApply of kil * kil
                | KCard of Card.card
-	       | KVar of string
+               | KVar of string
 
   (* first translate from lambda calculus to kombinators *)
   fun src2kil s =
@@ -20,7 +22,7 @@ struct
       fun T (Lambda (x, s)) = A (x, T s)
         | T (Apply (s1, s2)) = KApply (T s1, T s2)
         | T (Card c) = KCard c
-	| T (Var x) = KVar x
+        | T (Var x) = KVar x
 
      and A (x, KVar y) = if x = y then KCard Card.I
                          else KApply (KCard Card.K, KVar y)
@@ -52,9 +54,9 @@ struct
           = f (f (f (L(Card.S, i) :: L(Card.K, i) 
                      :: L(Card.S, i) :: L(Card.K, i) :: acc, t), u), v)
         | f (acc, KApply (KVar x, _))
-	  = raise (Kompiler ("unbound variable: " ^ x))
+          = raise (Kompiler ("unbound variable: " ^ x))
         | f (acc, KVar x)
-	  = raise (Kompiler ("unbound variable: " ^ x))
+          = raise (Kompiler ("unbound variable: " ^ x))
     in
       rev (f ([L(Card.Put, i)], k))
     end

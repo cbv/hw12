@@ -1,6 +1,32 @@
 group is
-   ltg.cm
-   kompiler.cm
+
+   prelude.sml
+
+   sml-lib/util/util-sig.sml
+   sml-lib/util/util.sml
+
+   sml-lib/util/listutil-sig.sml
+   sml-lib/util/listutil.sml
+
+   sml-lib/util/stringutil-sig.sml
+   sml-lib/util/stringutil.sml
+
+   sml-lib/misc/params-sig.sml
+   sml-lib/misc/params.sml
+
+   sml-lib/util/growarray-sig.sml
+   sml-lib/util/growarray.sml
+
+   (* Shared datatypes. *)
+   card.sml
+
+   ltg-sig.sml
+   ltg.sml
+   ltg-parse.sml
+
+   kompiler-sig.sml
+   kompiler.sml
+
    player-sig.sml
    layer-sig.sml
    layer.sml

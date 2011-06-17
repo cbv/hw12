@@ -110,8 +110,9 @@ struct
   (* Evaluate an expression, returning its
      value. May raise exception EvalError. May
      have side effects. *)
-  fun evalwithstate semantics ((propf, propv) : side, 
-                               (oppf,  oppv) : side) exp : value =
+  fun evalwithstate semantics (((propf, propv) : side, propstats : stats option), 
+                               ((oppf,  oppv) : side, oppstats : stats option))
+                    (exp : exp) : value =
     let
       (* XXX Definitely a potential for off-by-one errors here.
          Need to validate against the reference simulator? *)
@@ -319,8 +320,10 @@ struct
               then
                   let val zombie = App (V (Array.sub (propf, j)), V (VFn VI))
                   in
-                      (* Just evaluating for effects. *)
-                      (ignore (evalwithstate ZOMBIE (prop, opp) zombie)
+                      (* Just evaluating for effects. Not computing
+                         stats. *)
+                      (ignore (evalwithstate ZOMBIE ((prop, NONE), 
+                                                     (opp, NONE)) zombie)
                        handle EvalError => ()
                             | EvalLimit => ());
                       (* Always reset to identity and regular-dead. *)
@@ -365,11 +368,13 @@ struct
             | SOME (init, i) =>
                let
                    (* Evaluate the expression normally. If we have to stop because 
-                      we ran out of iterations or encountered some error, then we fill
-                      the slot with the identity. Otherwise it gets the
-                      resulting value from evaluation. *)
+                      we ran out of iterations or encountered some error,
+                      then we fill the slot with the identity.
+                      Otherwise it gets the resulting value from
+                      evaluation. *)
                    val result = 
-                       evalwithstate NORMAL (prop, opp) init
+                       evalwithstate NORMAL ((prop, propstats), 
+                                             (opp, oppstats)) init
                        handle EvalError => VFn VI
                             | EvalLimit => VFn VI
                in
