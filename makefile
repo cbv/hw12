@@ -5,7 +5,7 @@ default:
 
 .PHONY: tutor
 tutor:
-	mlton -output tutor eternal/demonic-tutor.cm
+	mlton -const "Exn.keepHistory true" -output tutor eternal/demonic-tutor.cm
 
 # TODO: I think this strategy of building is kind of confusing,
 # since if player.sml doesn't compile, it reports errors there
@@ -23,5 +23,5 @@ player-%:
 	echo >> player.sml
 	echo '(* DO NOT EDIT! Instead edit source' $@.sml '! *)' >> player.sml
 	echo >> player.sml
-	mlton -output $@.exe player.cm
+	mlton -const "Exn.keepHistory true" -output $@.exe player.cm
 	rm player.sml
