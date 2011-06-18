@@ -1,13 +1,24 @@
 
 (* current story: broken; attacks opponent's slot 0 once and zombies it. Working on making the zombie do something. *)
 
+val print = EPrint.eprint
+
 structure Gwillen1 :> LAYER =
 struct
   structure GS = GameState
 
+  open Kompiler
+
   (* This one doesn't pay any attention to the
      game state. *)
-  fun init _ = ()
+  fun init _ = let
+        val exp = Lambda("_", Apply(Apply(Apply(Card Card.Attack, Card Card.Zero), Apply(Card Card.Succ, Card Card.Zero)), Apply(Card Card.Copy, Card Card.Zero)))
+        val _ = print ((Kompiler.src2str exp) ^ "\n")
+        val x = Kompiler.compile exp 3
+        val _ = print ((LTG.turns2str x) ^ "\n")
+     in
+        ()
+     end
 
   fun curry2 f x y = f(x, y)
   fun rep n x = List.concat (List.tabulate (n, fn _ => x))
@@ -37,7 +48,7 @@ struct
                  (* zombies are applied to ID! *)
                  (* We want: Attack 0 1 8192 which will heal 0 and 1 *)
 		 (* We will implement this as: Attack 0 1 (Copy 0) *)
-                 fastload 3 
+                 (*fastload 3 *)
                  fastzero 2 @
 	         twofivefive 2 @ (* slot 2 holds 255 *)
 

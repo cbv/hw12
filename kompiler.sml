@@ -8,6 +8,12 @@ datatype src =
        | Card of Card.card
        | Int of int
 
+fun src2str (Var x) = x
+  | src2str (Int i) = Int.toString i
+  | src2str (Lambda (var, src)) = "(\\" ^ var ^ (src2str src) ^ ")"
+  | src2str (Apply (x, y)) = "(" ^ (src2str x) ^ " " ^ (src2str y) ^ ")"
+  | src2str (Card c) = Card.card2str c
+
 exception Kompiler of string
 
 (* Y' = S S K (S (K (S S (S (S S K)))) K) *)

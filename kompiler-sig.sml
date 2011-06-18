@@ -10,6 +10,8 @@ sig
     | Card of Card.card
     | Int of int
 
+  val src2str : src -> string
+
   (*
    Copy these into your file for shorter syntax, e.g.
 
