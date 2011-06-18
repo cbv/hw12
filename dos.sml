@@ -74,6 +74,11 @@ struct
 
   (* Indexed by pid. *)
   val processes = GA.empty () : process GA.growarray
+  fun getpriority (D { pid, ... }) =
+      let val P { priority, ... } = GA.sub processes pid
+      in !priority
+      end
+
   fun spawn parent (priority, f) =
       let 
           val min_charge = ref (NONE : real option)

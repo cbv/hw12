@@ -74,18 +74,29 @@ struct
                      val (best, _) = ListUtil.max compare_scores slots
 
                      val prog = attackprogram best prog_slot
+
+                     val (stat, dom) = EmitProgram prog
+
+                    (* Ignore child pid since we never kill it. *)
+                     val child_pid = DOS.spawn (SOME (DOS.getpid dos))
+                         (DOS.getpriority dos, dom)
                    in
                      eprint ("New target: " ^ Int.toString best ^ "\n");
-                     mode := Emit { myslot = prog_slot,
-                                    target = best, 
-                                    turns = prog };
-                     taketurn dos
+
+                     mode := Waiting { myslot = prog_slot,
+                                       target = best, 
+                                       status = stat };
+                     Can'tRun
                    end)
-              | Emit { myslot, target, turns = nil } => 
+              | Waiting { status = ref (Progress _), ... } => Can'tRun
+              | Waiting { status = ref Done, ... } =>
                  let in
                      mode := Attacking { myslot = myslot, target = target };
                      taketurn dos
                  end
+              (* Optimistically hope that someone will heal it? *)
+              | Waiting { status = ref (Paused _), ... } => Can'tRun
+
               | Emit { myslot, target, turns = t :: rest } =>
                  let in
                      mode := Emit { myslot = myslot,

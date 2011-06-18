@@ -34,6 +34,7 @@ sig
 
   (* Get my own pid. *)
   val getpid : dos -> pid
+  val getpriority : dos -> real
 
   val gamestate : dos -> GameState.gamestate
 
@@ -64,19 +65,6 @@ sig
      parent dominator's pid is supplied, then if the parent is killed,
      so will this dominator be. *)
   val spawn : pid option -> real * dominator -> pid
-
-  datatype emit_turns_status =
-      (* in [0, 1) *)
-      ET_Progress of real
-      (* Can't continue, because the next cell in the
-         program (given) is dead. *)
-    | ET_Paused of int
-      (* Finished emitting. *)
-    | ET_Done
-
-  (* Tell the operating system to start making these turns
-     for me. The status is updated while the emit takes place. *)
-  val emit_turns : dos -> LTG.turn list -> emit_turns_status ref * pid
 
   (* TODO 
       - add new dominator
