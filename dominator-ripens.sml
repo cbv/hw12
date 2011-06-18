@@ -63,12 +63,6 @@ struct
                       NONE => DOS.Can'tRun
                     | SOME prog_slot =>
                    let
-                     val theirside = GS.theirside gs
-
-                     (* Find the highest-value slot in the
-                        opponent's state, according to the
-                        stats *)
-                     val stats = GS.theirstats gs
                      val slots = List.tabulate (256, fn i =>
                                                 (i, GS.scoreopponentslot gs i))
 

@@ -35,6 +35,8 @@ struct
   fun printstats stats =
       TextIO.output (TextIO.stdErr, LTG.statstostring stats ^ "\n")
 
+  (* TODO: Could also count how often the number of the slot has appeared
+     in a cell? *)
   fun scoreopponentslot_sniper (G { their_side, their_stats, ... }) idx =
       let val s = LTG.statfor their_stats idx
       in

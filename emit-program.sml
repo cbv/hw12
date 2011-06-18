@@ -29,6 +29,8 @@ struct
                   in
                       if LTG.slotisdead (GS.theirside gs) slot
                       then (status := Paused slot;
+                            (* Someone might still revive this slot,
+                               but we'll be blocked until then. *)
                             DOS.Can'tRun)
                       else (progress := !progress + icr;
                             status := Progress (!progress);
