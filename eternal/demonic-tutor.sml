@@ -189,7 +189,6 @@ fun match player0 player1 =
 
       (* Run *)
       val (rounds, final0, final1) = continue (0, process0, process1)
-      val () = print ("\n")
   
       val tok = String.tokens (fn c => c = #":")
    in
@@ -222,6 +221,7 @@ fun match player0 player1 =
              end
            | _ => ())
        | _ => () 
+      ; print "\nDone.\n\n"
    end
       
 (* uses time as a substitute for randomness *)
