@@ -25,7 +25,7 @@ player-%.tar.gz: player-%.exe
 	@mkdir -p $<-build
 	@cp $< $<-build/run
 	@echo '#!/bin/sh' > $<-build/install
-	@echo 'exit 0' > $<-build/install
+	@echo 'exit 0' >> $<-build/install
 	@chmod +x $<-build/install
 	@mkdir $<-build/src
 	@echo '*** THIS IS OKAY FOR THE ARENA, BUT WE MUST COPY SOURCE IN FOR THE FINAL SUBMISSION! ***'
