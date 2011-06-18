@@ -18,18 +18,24 @@ struct
   val Z = Zero
   val Su = Succ
 
-  fun rap n = [L K n, L S n] (* reverse apply *)
-  (*val apply_to_slot_0 n = (rap n) @ [R n Get, R n Z] (* apply cell to "get 0", i.e. contents of cell zero *)*)
-  fun apply_slot_to_slot n m = (rap n) @ [R n Get] @ (rep m ((rap n) @ [R n Succ])) @ [R n Z]
-  fun dbl n = [L Dbl n]
-  fun succ n = [L Su n]
-  fun fastload n card = [R n card] (* n must hold ID! *)
-  fun fastzero n = fastload n Z (* n must hold ID! *)
-  fun apply a b = [R a b]
-  fun twofivefive n = succ n @ (rep 7 ((dbl n) @ (succ n))) (* n must hold 0! *)
+  (* cost *)
+  (*      2 *) fun rap n = [L K n, L S n] (* reverse apply *)
+  (* 3m + 4 *) fun apply_slot_to_slot n m = (rap n) @ [R n Get] @ (rep m ((rap n) @ [R n Succ])) @ [R n Z]
+  (* 3m + 1 *) fun apply_slot_to_int n m = (rap n) @ [R n Succ] @ (rep (m-1) ((rap n) @ [R n Succ])) @ [R n Z] (* Min m is 1! *)
+  (*      1 *) fun dbl n = [L Dbl n]
+  (*      1 *) fun succ n = [L Su n]
+  (*      1 *) fun fastload n card = [R n card] (* n must hold ID! *)
+  (*      1 *) fun fastzero n = fastload n Z (* n must hold ID! *)
+  (*      1 *) fun apply a b = [R a b]
+  (*     15 *) fun twofivefive n = succ n @ (rep 7 ((dbl n) @ (succ n))) (* n must hold 0! *)
 
   val strategy = ref (
 
+                 (* build our zombie function in slot 3 *)
+                 (* zombies are applied to ID! *)
+                 (* We want: Attack 0 1 8192 which will heal 0 and 1 *)
+		 (* We will implement this as: Attack 0 1 (Copy 0) *)
+                 fastload 3 
                  fastzero 2 @
 	         twofivefive 2 @ (* slot 2 holds 255 *)
 
@@ -37,7 +43,7 @@ struct
                  succ 0 @ (* slot 0 holds 1 *)
 
                  fastload 1 Attack @
-		 apply_slot_to_slot 1 0 @
+		 apply_slot_to_int 1 1 @
 		 apply_slot_to_slot 1 2 @ (* slot 1 holds (Attack 1 255 ...) *)
 		 rep 13 (dbl 0) @ (* slot 0 holds 8192 *)
 		 apply_slot_to_slot 1 0 @ (* executes Attack 1 255 8192 *)
