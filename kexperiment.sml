@@ -14,7 +14,7 @@ fun rapp (ts, KCard c) = TRApp (ts, c)
 
 (* rappho : kil -> (twig -> twig) -> twig *)
 fun rappho (KCard c) r = r (TCard c)
-  | rappho (KApply (KCard c, t)) r = rappho (fn tt => r (c <@ tt), t)
+  | rappho (KApply (KCard c, t)) r = rappho t (fn tt => r (c <@ tt))
   | rappho (KApply (KApply (t, u), v)) r =
         rappho t (fn tt =>
         rappho u (fn uu =>
