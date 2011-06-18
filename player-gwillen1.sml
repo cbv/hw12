@@ -12,14 +12,14 @@ struct
   (* This one doesn't pay any attention to the
      game state. *)
   fun init _ = let
-        (*val _ = print "HELLO WORLD\n"
-        val exp = Lambda("_", Apply(Apply(Apply(Card Card.Attack, Card Card.Zero), Apply(Card Card.Succ, Card Card.Zero)), Apply(Card Card.Copy, Card Card.Zero)))  *)
+        val _ = print "HELLO WORLD\n"
+        val exp = Lambda("_", Apply(Apply(Apply(Card Card.Attack, Card Card.Zero), Apply(Card Card.Succ, Card Card.Zero)), Apply(Card Card.Copy, Card Card.Zero)))  
 (*
         val exp = Lambda("X", Apply(Var("A"), Apply(Var "X", Var "B")))
+*)
         val _ = print ((Kompiler.src2str exp) ^ "\n")
         val x = Kompiler.compile exp 3
         val _ = print ((LTG.turns2str x) ^ "\n")
-*)
      in
         ()
      end
