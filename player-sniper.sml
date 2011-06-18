@@ -79,6 +79,10 @@ struct
 
         val dec = Apply (Card LTG.Dec, Int revtarget)
         val prog = returnself dec
+(*        val _ = eprint ` " PROGRAM SIZE = " ^ 
+          (Int.toString ` List.length (Kompiler.compile prog 0)) ^ "\n"
+ = 185 or so
+*)
     in
         Kompiler.compile prog ATTACK_SLOT
     end handle (e as Kompiler.Kompiler s) =>

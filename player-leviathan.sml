@@ -110,6 +110,14 @@ struct
           val slots = map (scoreslot theirside) slots
           val scratch = 69
           val (best, _) = ListUtil.max compare_scores slots
+(*
+          val (h0,h1,h2) = (Array.sub (#2 myside, 0),
+                            Array.sub (#2 myside, 1),
+                            Array.sub (#2 myside, 2))
+          val _ = eprint ` Int.toString h0 ^ ", " ^ Int.toString h1 ^ ", " ^ Int.toString h2 ^ "\n"
+          val _ = eprint ` Int.toString  (Array.sub (#2 myside, scratch)) ^ "\n"
+*)
+
       in
           if slotisdead myside 0 andalso not (!reviving)
           then ( reviving := true;
@@ -135,8 +143,9 @@ struct
                               LeftApply (Revive, scratch)] )
                       else (
                           if List.null (!instructions)    
-                          then instructions := 
-                               ((compile (Int (255 - best)) 0) @ (copyregs2 1) @ applyregs)
+                          then ( (* eprint "restarting instructions\n";  *)
+                              instructions := 
+                                ((compile (Int (255 - best)) 0) @ (copyregs2 1) @ applyregs) )
                           else () ) ) )
       end
 
