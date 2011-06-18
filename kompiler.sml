@@ -37,7 +37,13 @@ fun \ x exp = Lambda (x, exp)
 infixr 1 `
 fun a ` b = a b
 
-fun seq a b = (\"x" ` b) -- a
+fun seq a b = (\"_" ` b) -- a
+
+(* seqlist : src list -> src
+*  seqlist [x1...xn] implements (x1; ... ; xn) *)
+fun seqlist [] = Card (Card.I)
+  | seqlist [a] = a
+  | seqlist (a::ays) = (\"_" ` (seqlist ays)) -- a 
 
 fun fix s = let
   val minifix = \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
