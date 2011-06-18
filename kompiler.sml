@@ -47,6 +47,9 @@ end
 fun run_and_return_self src =
   fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
 
+fun for g = fix (\ "f" ` \ "x" ` (Card Card.Put) 
+                   -- (g -- $"x") -- (\ "q" ` $"f" -- (Card Card.Succ -- $"x")))
+
 datatype kil = KApply of kil * kil
              | KCard of Card.card
              | KVar of string
