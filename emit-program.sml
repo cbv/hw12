@@ -27,7 +27,7 @@ struct
                           LTG.LeftApply (_, i) => i
                         | LTG.RightApply (i, _) => i
                   in
-                      if LTG.slotisdead (GS.theirside gs) slot
+                      if LTG.slotisdead (GS.myside gs) slot
                       then (status := Paused slot;
                             (* Someone might still revive this slot,
                                but we'll be blocked until then. *)
