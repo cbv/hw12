@@ -28,10 +28,10 @@ struct
   fun get_backup ({ dest, moves }) =
     if List.null (!moves) then SOME dest else NONE
 
-  fun get_backup_slot ({ dest, moves }) = dest
-
   fun need_restore dos src =
     LTG.slotisdead (GameState.myside (DOS.gamestate dos)) src 
+
+  fun backup_got_killed dos ({ dest, moves }) = need_restore dos dest
 
   fun release_backup dos ({ dest, moves }) = DOS.release_slot dos dest
 

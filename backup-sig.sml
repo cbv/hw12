@@ -23,12 +23,11 @@ sig
   (* returns the slot number the backup is in, IF the backup is valid *)
   val get_backup : backup -> int option
 
-  (* returns the slot number for the backup (useful to tell if the backup itself
-   * has died) *)
-  val get_backup_slot : backup -> int
-
   (* did the mans get killed (pass in the slot number) *)
   val need_restore : DOS.dos -> int -> bool
+
+  (* did the backup itself get killed *)
+  val backup_got_killed : DOS.dos -> backup -> bool
 
   (* need to release resources -- if you switch to using the backup slot as your
    * new slot, do not call this, but if you're going away entirely or otherwise
