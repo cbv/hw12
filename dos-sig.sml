@@ -16,31 +16,51 @@ sig
      a process id. *)
   type dos
 
+  datatype dosturn =
+(*    
+     ReserveSlot of  { status: ??? }
+     EmitProgram of { turns : LTG.turn list, dst : int, status : ??? }
+     
+*)
+      Turn of LTG.turn
+    (* If you can't take a turn this round, just return Can'tRun.
+       The operating system will take a turn for some other dominator,
+       internal operation, or if none can run, idle. *)
+    | Can'tRun
+
   (* An individual thread that runs in DOS 3.1 *)
   type dominator = 
-      { taketurn : dos -> LTG.turn }
+      { taketurn : dos -> dosturn }
 
   val gamestate : dos -> GameState.gamestate
 
-  (* Get a slot that's not currently being used. Tends to
-     be a high slot because these are not as useful for the
-     below function. The slot may have arbitrary content in it,
-     but won't be dead. *)
-  val reserve_slot : dos -> int
+  (* Get a slot that's not currently being used, right now. Tends to be
+     a high slot because these are not as useful for the below
+     function. The slot may have arbitrary content in it, but won't be
+     dead. *)
+  val reserve_slot : dos -> int option
 
-  (* Get a slot that's not currently being used. The slot
+  (* Get a slot that's not currently being used, right now. The slot
      is cheap to load as a literal, which are typically slots
      with few 1-bits. These are rarer than the ones returned
      by reserve_slot, so only use this if you need to be able
      to quickly load the slot number as a literal. The slot
      may have arbitrary content in it, but won't be dead. *)
-  val reserve_addressable_slot : dos -> int
+  val reserve_addressable_slot : dos -> int option
 
   (* Indicate that we no longer need the slot, so it can be
      returned by reserve_*_slot. Doesn't change the contents
      or anything like that. *)
   val release_slot : dos -> int -> unit
 
+  (* TODO 
+      - add new dominator
+      - change priority
+     val change_priority : dos -> real -> unit
+      - give me a slot that contains a number N
+     val slot_with_number : dos -> int -> int opt
+      - enable backups
+     *)
 
   (* Creates the two functions in the LAYER signature by
      scheduling the argument dominators according to its

@@ -55,30 +55,32 @@ struct
         in
             case !mode of
                 FindTarget =>
-                 let
-                   val theirside = GS.theirside gs
+                 (case DOS.reserve_addressable_slot dos of 
+                      NONE => DOS.Can'tRun
+                    | SOME prog_slot =>
+                   let
+                     val theirside = GS.theirside gs
 
-                   (* Find the highest-value slot in the
-                      opponent's state, according to the
-                      stats *)
-                   val stats = GS.theirstats gs
-                   val slots = List.tabulate (256, fn i =>
-                                              (i, GS.scoreopponentslot gs i))
+                     (* Find the highest-value slot in the
+                        opponent's state, according to the
+                        stats *)
+                     val stats = GS.theirstats gs
+                     val slots = List.tabulate (256, fn i =>
+                                                (i, GS.scoreopponentslot gs i))
 
-                   (* Maybe should have a lower bound on what it will
-                      consider valuable, and just heal/revive if there
-                      are no current high-value targets. *)
-                   val (best, _) = ListUtil.max compare_scores slots
+                     (* Maybe should have a lower bound on what it will
+                        consider valuable, and just heal/revive if there
+                        are no current high-value targets. *)
+                     val (best, _) = ListUtil.max compare_scores slots
 
-                   val prog_slot = DOS.reserve_addressable_slot dos
-                   val prog = attackprogram best prog_slot
-                 in
-                   eprint ("New target: " ^ Int.toString best ^ "\n");
-                   mode := Emit { myslot = prog_slot,
-                                  target = best, 
-                                  turns = prog };
-                   taketurn dos
-                 end
+                     val prog = attackprogram best prog_slot
+                   in
+                     eprint ("New target: " ^ Int.toString best ^ "\n");
+                     mode := Emit { myslot = prog_slot,
+                                    target = best, 
+                                    turns = prog };
+                     taketurn dos
+                   end)
               | Emit { myslot, target, turns = nil } => 
                  let in
                      mode := Attacking { myslot = myslot, target = target };
@@ -89,7 +91,7 @@ struct
                      mode := Emit { myslot = myslot,
                                     target = target,
                                     turns = rest }; 
-                     t
+                     DOS.Turn t
                  end
 
               | Attacking { myslot, target } =>
@@ -108,7 +110,7 @@ struct
                      else 
                          let in
                              (* Otherwise keep attacking. *)
-                             LTG.RightApply (myslot, LTG.I)
+                             DOS.Turn (LTG.RightApply (myslot, LTG.I))
                          end
                  end
         end
