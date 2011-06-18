@@ -113,18 +113,21 @@ fun playerData player =
     end
 
 fun export (n, proponent, opponent) =
-    let 
-	val (_, plive, _, _) = playerData proponent
-	val (_, olive, _, _) = playerData opponent
-	fun defeat (w, l) =
-	    let val s = "curl 'http://localhost:1337/match?win=" ^ w ^ "&lose=" ^ l ^ "'"
-	    in print s; OS.Process.system s; () end
-    in
-	case Int.compare (plive, olive) of
-	    GREATER => defeat (#name proponent, #name opponent)
-	  | LESS => defeat (#name opponent, #name proponent)
-	  | EQUAL => ()
-    end
+    (case !cardfax of 
+	 SOME server =>
+	 let 
+	     val (_, plive, _, _) = playerData proponent
+	     val (_, olive, _, _) = playerData opponent
+	     fun defeat (w, l) =
+		 let val s = "curl 'http://" ^ server ^ "/match?win=" ^ w ^ "&lose=" ^ l ^ "'\n"
+		 in print s; OS.Process.system s; () end
+	 in
+	     case Int.compare (plive, olive) of
+		 GREATER => defeat (#name proponent, #name opponent)
+	       | LESS => defeat (#name opponent, #name proponent)
+	       | EQUAL => ()
+	 end
+       | NONE => ())
 
 fun report (n, proponent, opponent) =
    if n mod 20000 <> 0 then () else
@@ -181,7 +184,7 @@ fun go args =
       val state1 = LTG.initialside ()
       fun go' args = 
          case args of 
-	    ("--server" :: s :: args) => (cardfax := SOME s; go' args)
+	    ("--server" :: s :: args) => (cardfax := SOME s; go' args) (* TODO: use standard flag library *)
           | [ player0, player1 ] => 
             (setupPlayer player0 "0" state0, 
              setupPlayer player1 "1" state1)
