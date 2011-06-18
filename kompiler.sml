@@ -108,7 +108,7 @@ fun src2kil s =
                optimizer is allowed to optimize away errors. -tom7)
 
               all other terms are pure. *)
-            (* XXX OBSOLETE *)
+            (* XXX OBSOLETE -- the current optimizer does not use this -wjl *)
             fun pure (KApply (KCard Card.Get, _)) = false
               | pure (KApply (KCard Card.Inc, _)) = false
               | pure (KApply (KCard Card.Dec, _)) = false
@@ -181,6 +181,14 @@ in
   rev (f (init, k))
 end
 
+(**** wjl version of kil2turns -- differently biased than spoons version ****)
+
+(* in particular, it seems really good for right-nested things like numbers,
+   but it performs *very* poorly on some other kinds of terms with a bit of
+   left nesting, like timecube.  spoons's kil2turns is slightly poorer on
+   numbers, but much better on timecube.  below, we implement kil2turns by
+   running both and picking the smaller of the two. *)
+
 (* a twig is a tree where no branch leaves the main trunk for more than a
    single step.  this is the kind of thing that can be easily put into a
    slot by left and right applications. *)
@@ -197,15 +205,14 @@ fun ts @> c = TRApp (ts, c)
 fun twigapp (TCard c, ts) = c <@ ts
   | twigapp (ts, TCard c) = ts @> c
   (*
-  | twigapp (TLApp (c, us), ts) = twigapp (Card.S <@ c <@ Card.K <@ ts, us)
+  | twigapp (TLApp (c, us), ts) = ???
         (c us) ts
-        (c us) (K ts us)
-        ===> S c (K ts) us
+     == (c us) (K ts us)
+     == S c (K ts) us   // XXX not in twig form yet :(
   | twigapp (TRApp (us, c), ts) =
   *)
   | twigapp (ts, TLApp (c, us)) = twigapp (Card.S <@ (Card.K <@ ts) @> c, us)
   | twigapp (ts, TRApp (us, c)) = twigapp (Card.S <@ (Card.K <@ ts), us) @> c
-
     (*
         ts @ (c us)
         K ts us (c us)
@@ -225,6 +232,8 @@ fun twig2turns twig i =
     end
 
 fun kil2turns_wjl init k i = init @ twig2turns (kil2twig k) i
+
+(**** end wjl version of kil2turns ****)
 
 (* XXX experimental: try both, take the smaller.  performance problem? *)
 fun kil2turns init k i =
@@ -247,7 +256,7 @@ in
     let
         (* True if evaluating the argument will have no effects.
            This can be massively expanded! *)
-        (* c.f. pure below -- but that turned out not to be useful for my
+        (* c.f. pure above -- but that turned out not to be useful for my
            purposes -wjl *)
         fun effectless (KCard _) = true
           | effectless _ = false
