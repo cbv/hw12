@@ -169,11 +169,12 @@ fun usage stat =
    ; err ("       "^CommandLine.name()^" [options] --mode auto")
    ; err ("The argument 'foo' runs (building if needed) player-foo.exe")
    ; err ("The argument 'foo:12' runs (building if needed) player-foo-12.exe")
+   ; err ("WARNING: ALWAYS CHECK IN BEFORE USING 'player:rev' arguments!\n")
    ; err (Params.usage ())
    ; OS.Process.exit stat)
 
 (* Runs a single match between two players *)
-fun match (player0, player1) = 
+fun match player0 player1 = 
    let 
       val () = printquiet ("Starting " ^ player0 ^ " vs " ^ player1)
 
@@ -226,13 +227,23 @@ fun go args =
                else usage OS.Process.success
    in
       case (!flagMode, args) of
-         ("duel", [ player0, player1 ]) => match (player0, player1)
+         ("duel", [ player0, player1 ]) => match player0 player1
+
+       | ("stress", [ player0 ]) => 
+         let 
+            val contestants = 
+               String.tokens Char.isSpace
+                  (RPC.rpc "http://R_E_D_A_C_T_E_D/arena/contestants.php" [])
+         in 
+            List.app (match player0) contestants
+         end
+
        | ("duel", _) => 
          (err "Wrong number of arguments (duel)"; usage OS.Process.failure)
        | ("stress", _) => 
-         (err "Not ready yet"; usage OS.Process.success)
+         (err "Wrong number of arguments (stress)"; usage OS.Process.success)
        | ("auto", _) => 
-         (err "Not ready yet"; usage OS.Process.success)
+         (err "Wrong number of argumetns (auto)"; usage OS.Process.success)
        | (mode, _) => 
          (err ("Invalid mode '" ^ mode ^ "'"); usage OS.Process.success)
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
