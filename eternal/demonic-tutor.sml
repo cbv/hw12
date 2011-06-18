@@ -178,10 +178,10 @@ fun go args =
       val (rounds, final0, final1) = continue (0, process0, process1)
    in
       case report of 
-         NONE => print "Done..."
+         NONE => print "Done."
        | SOME (name0, rev0, name1, rev1) => 
          let
-            val () = print "Reporting..."
+            val () = print "Reporting versioned match to server...\n"
             fun vit vit' live' = 
                if live' = 0 then "0"
                else IntInf.toString (vit' div IntInf.fromInt live')
@@ -193,7 +193,8 @@ fun go args =
                 ("player0rev", Int.toString rev0),
                 ("player1", name1),
                 ("player1rev", Int.toString rev1) ]
-         end
+            ; print "\nDone.\n"
+         end  
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
                                    ; OS.Process.exit OS.Process.failure)
 
