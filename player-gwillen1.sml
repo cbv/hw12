@@ -26,36 +26,8 @@ struct
 
   val _ = init ()
 
-  fun curry2 f x y = f(x, y)
-  fun rep n x = List.concat (List.tabulate (n, fn _ => x))
-
+  open Macros
   open LTG
-
-  val L = curry2 LTG.LeftApply
-  val R = curry2 LTG.RightApply
-
-  val Z = Zero
-  val Su = Succ
-
-  (* cost *)
-  (*      2 *) fun rap n = [L K n, L S n] (* reverse apply *)
-  (* 3m + 4 *) fun apply_slot_to_slot n m = (rap n) @ [R n Get] @ (rep m ((rap n) @ [R n Succ])) @ [R n Z]
-  (* 3m + 1 *) fun apply_slot_to_int n 0 = [R n Z]
-                 | apply_slot_to_int n m = (rap n) @ [R n Succ] @ (rep (m-1) ((rap n) @ [R n Succ])) @ [R n Z]
-  (*      1 *) fun dbl n = [L Dbl n]
-  (*      1 *) fun succ n = [L Su n]
-  (*      1 *) fun fastload n card = [R n card] (* n must hold ID! *)
-  (*      1 *) fun fastzero n = fastload n Z (* n must hold ID! *)
-  (*      1 *) fun apply a b = [R a b]
-
-  (* must start with slot containing zero! *)
-  (* cost is number of bits in n, plus number of 1 bits in n, minus one*)
-  fun buildnum slot 0 = []
-    | buildnum slot n = if (n mod 2 = 1) then (buildnum slot (n - 1)) @ (succ slot)
-                                         else (buildnum slot (n div 2)) @ (dbl slot)
-
-  (* cost is buildnum slot n,  + 1 *)
-  fun fastnum slot n = (fastzero slot) @ (buildnum slot n)
 
   fun strat enemy mine1 mine2 = ref (
 
