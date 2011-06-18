@@ -50,6 +50,9 @@ fun run_and_return_self src =
 fun for g = fix (\ "f" ` \ "x" ` (Card Card.Put) 
                    -- (g -- $"x") -- (\ "q" ` $"f" -- (Card Card.Succ -- $"x")))
 
+(* s is a slot number; this will only work in slot s *)
+fun for_ref g s = \"X" ` (Card Card.Put) -- (g -- $"X") -- ((\"f" ` \"_" ` $"f" -- ((Card Card.Succ) -- $"X")) -- ((Card Card.Get) -- (Int s)))
+
 datatype kil = KApply of kil * kil
              | KCard of Card.card
              | KVar of string
@@ -271,6 +274,10 @@ fun compile s i =
 fun compile_no_clear s i =
     kil2turns [L(Card.K, i), L(Card.I, i), L(Card.S, i)]
               (optimize (src2kil s)) i
+
+(* This doesn't work and makes no sense and don't use it. --gwillen *)
+fun compile_no_clear_rev s i =
+    kil2turns [] (optimize (src2kil s)) i
 
 val print = EPrint.eprint
 

@@ -40,6 +40,9 @@ sig
     the first time is used as the counter for the first iteration; after that
     the counter is incremented by one. *)
   val for : src -> src
+  (* Version of for that uses an explicit get, on the named slot, instead of 
+     the fixed point combinator. Must be installed in slot s (the second arg). *)
+  val for_ref : src -> int -> src
 
   (* Compiles a source expression into a turn-list that will create
      that expression in the given slot. *)

@@ -13,12 +13,40 @@ struct
      game state. *)
   fun init _ = let
         val _ = print "HELLO WORLD\n"
-        val exp = Lambda("_", Apply(Apply(Apply(Card Card.Attack, Card Card.Zero), Apply(Card Card.Succ, Card Card.Zero)), Apply(Card Card.Copy, Card Card.Zero)))  
 (*
-        val exp = Lambda("X", Apply(Var("A"), Apply(Var "X", Var "B")))
+        val exp = Lambda("_", Apply(Apply(Apply(Card Card.Attack, Card Card.Zero), Apply(Card Card.Succ, Card Card.Zero)), Apply(Card Card.Copy, Card Card.Zero)))  
 *)
+(*
+        val exp = Lambda("X", Lambda("Y", Apply(Var("X"), Apply(Var "Y", Card Card.Zero))))
+*)
+
+(*
+fun fix s = let
+  val minifix = \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
+  val Z = \"f" ` minifix -- minifix (* " make fontify happy *)
+in
+  Apply (Z, s)
+end
+
+fun run_and_return_self src =
+  fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
+
+fun for g = fix (\ "f" ` \ "x" ` (Card Card.Put)
+                   -- (g -- $"x") -- (\ "q" ` $"f" -- (Card Card.Succ -- $"x")))
+*)
+        (*val exp = for (Card Card.I)*)
+
+infix 9 --
+val op -- = Apply
+val $ = Var
+fun \ x exp = Lambda (x, exp)
+infixr 1 `
+fun a ` b = a b
+
+        fun for g s = \"X" ` (Card Card.Put) -- (g -- $"X") -- ((\"f" ` \"_" ` $"f" -- ((Card Card.Succ) -- $"X")) -- ((Card Card.Get) -- s))
+        val exp = for (Card Card.I) (Int 0)
         val _ = print ((Kompiler.src2str exp) ^ "\n")
-        val x = Kompiler.compile exp 3
+        val x = Kompiler.compile_no_clear_rev exp 3
         val _ = print ((LTG.turns2str x) ^ "\n")
      in
         ()
