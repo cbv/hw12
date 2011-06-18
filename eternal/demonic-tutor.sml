@@ -69,11 +69,13 @@ fun setupPlayer player arg state =
          end
 
        | SOME pid => (* Return the pipes to children *)
-         {name = player,
-          pid = pid, 
-          instream = mkInstream inServer, 
-          outstream = mkOutstream outServer,
-          state = state}
+         (PIO.close outPlayer
+          ; PIO.close inPlayer
+          ; {name = player,
+             pid = pid, 
+             instream = mkInstream inServer, 
+             outstream = mkOutstream outServer,
+             state = state})
    end
 
 type process = {name: string,
@@ -193,6 +195,10 @@ fun match player0 player1 =
       (* Cleanup *)
       val () = PP.kill (PP.K_PROC (#pid process0), Posix.Signal.kill)
       val () = PP.kill (PP.K_PROC (#pid process1), Posix.Signal.kill)
+      val () = TextIO.closeIn (#instream process0)
+      val () = TextIO.closeOut (#outstream process0)
+      val () = TextIO.closeIn (#instream process1)
+      val () = TextIO.closeOut (#outstream process1)
 
       val tok = String.tokens (fn c => c = #":")
    in
