@@ -18,6 +18,8 @@ struct
   infixr 1 `
   fun a ` b = a b
 
+  (* We run a for loop over enemies *)
+
   val help1 = \"slota" ` Card LTG.Help -- $"slota" -- Int 7 -- (Card LTG.Get -- Int 1)
   val help2 = \"slotb" ` (Card LTG.Help -- (Card LTG.Succ -- $"slotb") -- Int 7-- (Card LTG.Get -- Int 1))
   val help = \"slotx" ` (Card LTG.S -- help1 -- help2) -- (Card LTG.Dbl -- $"slotx")
@@ -34,7 +36,6 @@ struct
   (\"q" ` $"m" -- (Card LTG.Succ -- $"x"))
   val fixbigm = K.fix bigm
 
-
   val p8 = (K.compile (Int 8192) 0)
   val p0 = (K.compile (Card LTG.Get -- Int 0) 8)
   val p1 = (K.compile (Card LTG.Get -- Int 8) 1)
@@ -44,7 +45,8 @@ struct
   val pattack = (K.compile attackzomb 5)
   val pmbig = (K.compile fixbigm 3)
   val pcompile = (K.compile (Card LTG.Get -- (Int 3)) 6) @ 
-  [LTG.RightApply (7,LTG.Attack)] @ (List.tabulate (128, fn x => LTG.RightApply (6,LTG.Zero))) val p = p8 @ p0 @ p1 @ p2 @ phelp @ pattack @ pmbig @ pcompile
+  [LTG.RightApply (7,LTG.Attack)] @ (List.tabulate (128, fn x => LTG.RightApply (6,LTG.Zero))) 
+  val p = p8 @ p0 @ p1 @ p2 @ phelp @ pattack @ pmbig @ pcompile
   val turn = ref p;
   val counter = ref 0;
   (*val _ = eprint (Int.toString (List.length p))*)
