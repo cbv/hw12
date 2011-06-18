@@ -63,8 +63,21 @@ fun src2kil s =
       and A (x, KVar y) = if x = y then KCard Card.I
                           else KApply (KCard Card.K, KVar y)
         | A (x, KCard c) = KApply (KCard Card.K, KCard c)
-        | A (x, KApply (s1, s2)) =
-          KApply (KApply (KCard Card.S, A (x, s1)), A (x, s2))
+        | A (x, s as KApply (s1, s2)) =
+          let
+            fun contains x (KVar y) = x = y
+              | contains x (KCard _) = false
+              | contains x (KApply (s1, s2)) =
+                  contains x s1 orelse contains x s2
+          in
+            (* William can vouch for these optimisations *)
+            if (not (contains x s)) then
+              (KApply (KCard Card.K, s))
+            else if (not (contains x s1)) andalso (s2 = KVar x) then
+              s1
+            else 
+               KApply (KApply (KCard Card.S, A (x, s1)), A (x, s2))
+          end
     in
       T s
     end
@@ -143,6 +156,10 @@ fun test () = (
     print (kil2str (src2kil (Lambda("x", Card Card.K))));
     print "\n";
     print (kil2str (src2kil (Lambda("x", Lambda ("y", Var "x")))));
+    print "\n";
+    print (kil2str (src2kil (Lambda("x", Lambda("y", Lambda("z",
+        Apply(Apply(Var "x", Var "z"), Apply(Var "y", Var "z"))
+    ))))));
     print "\n";
     print (LTG.turns2str (compile (Lambda("x", Lambda ("y", Var "x"))) 13));
     print "\n";
