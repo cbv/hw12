@@ -22,6 +22,9 @@ struct
   val help2 = \"slotb" ` (Card LTG.Help -- (Card LTG.Succ -- $"slotb") -- Int 7-- (Card LTG.Get -- Int 1))
   val help = \"slotx" ` (Card LTG.S -- help1 -- help2) -- (Card LTG.Dbl -- $"slotx")
   val attack = \"slotc" ` Card LTG.Attack -- Int 7 -- $"slotc" -- (Card LTG.Get -- Int 2)
+  val zombiefunc = \"unused" ` Card LTG.Attack -- $"slote" -- Int 249 -- Int 10000
+  val zombie = \"slote" ` Card LTG.Zombie -- $"slote" -- zombiefunc
+  val attackzomb = \"slotf" ` (Card LTG.S -- attack -- zombie) -- $"slotf"
   val f = (Card LTG.S -- (Card LTG.Get -- Int 4) -- (Card LTG.Get -- Int 5))
   val m = \"x" ` (Card LTG.Put) -- (f -- $"x") -- (\"q" ` (Card LTG.Get -- $"x") -- ((Card LTG.S --
   (Card LTG.K -- Card LTG.Succ) -- (Card LTG.K -- $"x")) -- $"y"))
@@ -32,19 +35,19 @@ struct
   val fixbigm = K.fix bigm
 
 
-  val p8 = (K.compile (Int 6000) 0)
+  val p8 = (K.compile (Int 8192) 0)
   val p0 = (K.compile (Card LTG.Get -- Int 0) 8)
   val p1 = (K.compile (Card LTG.Get -- Int 8) 1)
-  val p2 = (K.compile (Int 11200) 2)
+  val p7 = (K.compile (\"x" ` Card LTG.Get -- Int 6) 7)
+  val p2 = (K.compile (Int 12288) 2)
   val phelp = (K.compile help 4)
-  val pattack = (K.compile attack 5)
+  val pattack = (K.compile attackzomb 5)
   val pmbig = (K.compile fixbigm 3)
-  val pcompile = (K.compile (Card LTG.Get -- (Int 3)) 6) @ (List.tabulate (110,
-  fn x => LTG.RightApply (6,LTG.Zero)))
-  val p = p8 @ p0 @ p1 @ p2 @ phelp @ pattack @ pmbig @ pcompile
+  val pcompile = (K.compile (Card LTG.Get -- (Int 3)) 6) @ 
+  [LTG.RightApply (7,LTG.Attack)] @ (List.tabulate (128, fn x => LTG.RightApply (6,LTG.Zero))) val p = p8 @ p0 @ p1 @ p2 @ phelp @ pattack @ pmbig @ pcompile
   val turn = ref p;
   val counter = ref 0;
-  val _ = eprint (Int.toString (List.length p))
+  (*val _ = eprint (Int.toString (List.length p))*)
   fun taketurn gs = 
   let
     fun f (t::ts) = 
