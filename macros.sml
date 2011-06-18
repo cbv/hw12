@@ -32,7 +32,7 @@ struct
   (*      1 *) fun fastload n card = [R n card] (* n must hold ID! *)
   (*      2 *) fun slowload n card = (clear n) @ (fastload n card)
   (*      1 *) fun fastzero n = fastload n Z (* n must hold ID! *)
-  (*      2 *) fun slowzero n = load n Z
+  (*      2 *) fun slowzero n = slowload n Z
   (*      1 *) fun apply a b = [R a b]
 
   (* must start with slot containing zero! *)
