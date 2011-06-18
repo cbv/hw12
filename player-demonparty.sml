@@ -127,8 +127,12 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         help_me dmg endslot scratch_slot @
         zombie daemon_install daemon_code zombie_code @
         daemon zombie_install zombie_code daemon_code @
-        zombie_loader zombie_code loader zombie_install @
+        slownum loader daemon_code @
+        [L Get loader] @
         apply loader Z)
+
+      val _ = print ("Zombie: " ^ (is (length (zombie daemon_install daemon_code zombie_code))) ^
+                     "Daemon: " ^ (is (length (daemon zombie_install zombie_code daemon_code))) ^ "\n")
      
     in
       result
