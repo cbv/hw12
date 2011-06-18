@@ -38,6 +38,9 @@ group is
    dos.sml
    dominator-sig.sml
 
+   emit-program-sig.sml
+   emit-program.sml
+
    backup-sig.sml
    backup.sml
 

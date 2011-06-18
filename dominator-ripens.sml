@@ -2,6 +2,9 @@ structure Ripens :> DOMINATOR =
 struct
   structure GS = GameState
   datatype src = datatype Kompiler.src
+  datatype dosturn = datatype DOS.dosturn
+
+  structure EP = EmitProgram
 
   infix 9 --
   val op -- = Apply
@@ -12,12 +15,11 @@ struct
 
   datatype mode =
       FindTarget
-      (* Building the attack program for the given
-         cell. *)
-    | Emit of { myslot : int, target : int, turns : LTG.turn list }
-      (* Keep attacking this slot until it's dead,
+      (* Once the program is in place, keep attacking until it's dead,
          then find a new target. *)
-    | Attacking of { myslot : int, target : int }
+    | Attacking of { status : EP.status ref, 
+                     myslot : int, 
+                     target : int }
 
   val compare_scores = ListUtil.bysecond Real.compare
 
@@ -49,6 +51,8 @@ struct
               raise e
           end
 
+    fun preview dos = ()
+
     val mode = ref FindTarget
     fun taketurn dos =
         let val gs = DOS.gamestate dos
@@ -75,37 +79,18 @@ struct
 
                      val prog = attackprogram best prog_slot
 
-                     val (stat, dom) = EmitProgram prog
-
                     (* Ignore child pid since we never kill it. *)
-                     val child_pid = DOS.spawn (SOME (DOS.getpid dos))
-                         (DOS.getpriority dos, dom)
+                     val (stat, child_pid) = EP.emitspawn dos prog
                    in
                      eprint ("New target: " ^ Int.toString best ^ "\n");
 
-                     mode := Waiting { myslot = prog_slot,
-                                       target = best, 
-                                       status = stat };
+                     mode := Attacking { myslot = prog_slot,
+                                         target = best, 
+                                         status = stat };
                      Can'tRun
                    end)
-              | Waiting { status = ref (Progress _), ... } => Can'tRun
-              | Waiting { status = ref Done, ... } =>
-                 let in
-                     mode := Attacking { myslot = myslot, target = target };
-                     taketurn dos
-                 end
-              (* Optimistically hope that someone will heal it? *)
-              | Waiting { status = ref (Paused _), ... } => Can'tRun
-
-              | Emit { myslot, target, turns = t :: rest } =>
-                 let in
-                     mode := Emit { myslot = myslot,
-                                    target = target,
-                                    turns = rest }; 
-                     DOS.Turn t
-                 end
-
-              | Attacking { myslot, target } =>
+              | Attacking { status = ref (EP.Progress _), ... } => Can'tRun
+              | Attacking { status = ref EP.Done, myslot, target } =>
                  let val theirside = GS.theirside gs
                      val health = Array.sub (#2 theirside, target)
                  in
@@ -124,9 +109,13 @@ struct
                              DOS.Turn (LTG.RightApply (myslot, LTG.I))
                          end
                  end
+
+              (* Optimistically hope that someone will heal it? *)
+              | Attacking { status = ref (EP.Paused _), ... } => Can'tRun
         end
   in
-    { taketurn = taketurn }
+    { preview = preview,
+      taketurn = taketurn }
   end
 end
 

@@ -3,8 +3,7 @@
    Runs multiple different threads, called dominators,
    simultaneously. A dominator is like a player strategy
    and can do almost anything, but has to reserve the
-   slots it's using. It can also ask the OS for help
-   with various things, like ...?
+   slots it's using.
 *)
 
 signature DOS =
@@ -18,19 +17,31 @@ sig
   type dos
 
   datatype dosturn =
-(*
-     ReserveSlot of  { status: ??? }
-     EmitProgram of { turns : LTG.turn list, dst : int, status : ??? }
-*)
+    (* Make a single regular turn. Your dominator is charged. *)
       Turn of LTG.turn
     (* If you can't take a turn this round, just return Can'tRun.
        The operating system will take a turn for some other dominator,
        internal operation, or if none can run, idle. *)
     | Can'tRun
 
-  (* An individual thread that runs in DOS 3.1 *)
+  (* An individual thread that runs in DOS 3.1.
+
+     preview:
+     The preview function is run for every dominator at the beginning
+     of the round. It can do things like update internal state or
+     change the process's priority, if it really wants to run, or
+     wants to kill itself because it's hopeless.
+
+     taketurn:
+     Taketurn may run for a dominator if its priority allows it.
+     The function might make a regular move, or it might realize
+     that it can't progress (still waiting on some ref cell or
+     can't reserve a necessary slot, or just has nothing to do).
+     If it doesn't do anything, then it is not charged and another
+     dominator gets a chance to run. *)
   type dominator = 
-      { taketurn : dos -> dosturn }
+      { preview : dos -> unit,
+        taketurn : dos -> dosturn }
 
   (* Get my own pid. *)
   val getpid : dos -> pid
@@ -67,12 +78,8 @@ sig
   val spawn : pid option -> real * dominator -> pid
 
   (* TODO 
-      - add new dominator
       - change priority
      val change_priority : dos -> real -> unit
-      - give me a slot that contains a number N
-     val slot_with_number : dos -> int -> int opt
-      - enable backups
      *)
 
   (* Creates the two functions in the LAYER signature by

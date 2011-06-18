@@ -15,7 +15,8 @@ struct
        The operating system will take a turn for some other dominator,
        internal operation, or if none can run, idle. *)
     | Can'tRun
-  type dominator = { taketurn : dos -> dosturn }
+  type dominator = { preview : dos -> unit,
+                     taketurn : dos -> dosturn }
   datatype process = 
       P of { reserved_slots : int list ref,
              priority : real ref,
@@ -27,16 +28,6 @@ struct
              (* ... *)
              }
 
-  datatype emit_turns_status =
-      (* in [0, 1) *)
-      ET_Progress of real
-      (* Can't continue, because the next cell in the
-         program (given) is dead. *)
-    | ET_Paused of int
-      (* Finished emitting. *)
-    | ET_Done
-
-
   (* The argument that I give to dominators.
      Some internal state is just global. *)
   val reserved = Array.array (256, false)
@@ -44,7 +35,9 @@ struct
   fun gamestate (D { gs, ... }) = gs
   fun getpid (D { pid, ... }) = pid
 
-  (* PERF *)
+  (* PERF: Doesn't need to be linear time.
+     PERF: Should perhaps reserve larger slots if the
+     user hasn't asked for an addressable one. *)
   exception Return of int
   fun reserve_slot dos =
     let 
@@ -61,9 +54,8 @@ struct
         NONE
     end handle Return i => SOME i
 
+  (* TODO: This should be smarter. *)
   val reserve_addressable_slot = reserve_slot
-
-  fun emit_turns _ = raise DOS "unimplemented"
 
   fun release_slot _ i =
     let in
@@ -121,6 +113,13 @@ struct
        fun dos_init _ = ()
        fun dos_taketurn (gs : GS.gamestate) =
          let 
+             (* Every dominator gets a preview of its state, and
+                might adjust its priority. *)
+             val () = GA.appi (fn (pid, P { dominator, ... }) =>
+                               let val dos = D { gs = gs, pid = pid }
+                               in #preview dominator dos
+                               end) processes
+
              val l = ref nil
              val () = GA.appi (fn a => l := a :: !l) processes
              val l = ListUtil.sort (fn ((_, P { charge, ... }),
