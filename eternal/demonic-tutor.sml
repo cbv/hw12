@@ -185,14 +185,21 @@ fun go args =
             fun vit vit' live' = 
                if live' = 0 then "0"
                else IntInf.toString (vit' div IntInf.fromInt live')
-            val (vit0, live0, dead0, zombie0) = playerData final0
-            val (vit1, live1, dead1, zombie1) = playerData final1
+            val (vit0, live0, dead0, zomb0) = playerData final0
+            val (vit1, live1, dead1, zomb1) = playerData final1
             val f = print o RPC.rpc "http://R_E_D_A_C_T_E_D/arena/log.php"
          in
             f [ ("player0", name0),
                 ("player0rev", Int.toString rev0),
                 ("player1", name1),
-                ("player1rev", Int.toString rev1) ]
+                ("player1rev", Int.toString rev1),
+                ("rounds", Int.toString rounds),
+                ("dead0", Int.toString dead0),
+                ("dead1", Int.toString dead1),
+                ("zomb0", Int.toString zomb0),
+                ("zomb1", Int.toString zomb1),
+                ("vit0", vit vit0 live0),
+                ("vit1", vit vit1 live1) ]
             ; print "\nDone.\n"
          end  
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
