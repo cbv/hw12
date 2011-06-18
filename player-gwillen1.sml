@@ -55,7 +55,7 @@ struct
   (* cost is buildnum slot n,  + 1 *)
   fun fastnum slot n = (fastzero slot) @ (buildnum slot n)
 
-  fun strat enemy = ref (
+  fun strat enemy mine1 mine2 = ref (
 
                  (* build our zombie function in slot 3 *)
                  (* zombies are applied to ID! *)
@@ -67,21 +67,21 @@ struct
                  fastnum 0 8192 @ (* slot 0 holds 8192 (amt. of damage) *)
 
                  fastload 1 Attack @
-		 apply_slot_to_int 1 1 @
-		 apply_slot_to_slot 1 2 @ (* slot 1 holds (Attack 1 enemy ...) *)
-		 apply_slot_to_slot 1 0 @ (* executes Attack 1 enemy 8192 *)
+		 apply_slot_to_int 1 mine1 @
+		 apply_slot_to_slot 1 2 @
+		 apply_slot_to_slot 1 0 @ (* executes Attack mine1 enemy 8192 *)
 
 		 fastload 1 Attack @
-		 apply_slot_to_int 1 0 @
+		 apply_slot_to_int 1 mine2 @
 		 apply_slot_to_slot 1 2 @
-		 apply_slot_to_slot 1 0 @ (* executes Attack 0 enemy 8192 *)
+		 apply_slot_to_slot 1 0 @ (* executes Attack mine2 enemy 8192 *)
 
 		 fastload 1 Zombie @
 		 apply_slot_to_slot 1 2 @
-		 apply_slot_to_int 1 0 (* executes Zombie 255 0 *)
+		 apply_slot_to_int 1 0 (* executes Zombie enemy 0 *)
   )
 
-  val strategy = strat 255
+  val strategy = strat 255 1 0
 
   fun taketurn _ = case (!strategy) of nil => L Z 0
     | today::future => let 
