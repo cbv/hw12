@@ -1,4 +1,4 @@
-structure Kompiler : KOMPILER =
+structure Kompiler (* : KOMPILER *) =
 struct
 
 datatype src =
@@ -96,8 +96,7 @@ fun src2kil s =
                has side effects.
 
               all other terms are pure. *)
-            (* PERF: might instead make the translation return whether or not
-               the result is pure, to avoid exponential double traversal... *)
+            (* XXX OBSOLETE *)
             fun pure (KApply (KCard Card.Get, _)) = false
               | pure (KApply (KCard Card.Inc, _)) = false
               | pure (KApply (KCard Card.Dec, _)) = false
@@ -109,8 +108,12 @@ fun src2kil s =
               | pure (KApply (s1, s2)) = pure s1 andalso pure s2
               | pure _ = true
 
+            (* PERF: might instead make the translation return whether or not
+               the result is a value, to avoid exponential double traversal.. *)
             fun value (KCard _) = true
               | value (KVar _) = true
+              | value (KApply (KCard Card.Succ, v)) = value v
+              | value (KApply (KCard Card.Dbl, v)) = value v
               | value (KApply (KCard Card.S, v)) = value v
               | value (KApply (KApply (KCard Card.S, v1), v2)) = value v1
                                                          andalso value v2
@@ -148,6 +151,9 @@ fun kil2str (KCard c) = Card.card2str c
 val L = LTG.LeftApply
 val R = LTG.RightApply
 
+(*
+    (* newer, better version below -wjl *)
+fun kil2turns k i = let
 fun kil2turns init k i = let
   fun f (acc, KCard c) = R(i, c) :: acc
     | f (acc, KApply (KCard c, t))
@@ -164,6 +170,39 @@ fun kil2turns init k i = let
 in
   rev (f (init, k))
 end
+*)
+
+(* a twig is a tree where no branch leaves the main trunk for more than a
+   single step.  this is the kind of thing that can be easily put into a
+   slot by left and right applications. *)
+datatype twig =
+    TCard of Card.card
+  | TLApp of Card.card * twig
+  | TRApp of twig * Card.card
+
+infix <@ @>
+fun TC c = TCard c
+fun c <@ ts = TLApp (c, ts)
+fun ts @> c = TRApp (ts, c)
+
+fun twigapp (TCard c, ts) = c <@ ts
+  | twigapp (ts, TCard c) = ts @> c
+  | twigapp (ts, TLApp (c, us)) = twigapp (Card.S <@ (Card.K <@ ts) @> c, us)
+  | twigapp (ts, TRApp (us, c)) = twigapp (Card.S <@ (Card.K <@ ts), us) @> c
+
+fun kil2twig (KCard c) = TCard c
+  | kil2twig (KApply (t, u)) = twigapp (kil2twig t, kil2twig u)
+  | kil2twig (KVar x) = raise (Kompiler ("unbound variable: " ^ x))
+
+fun twig2turns twig i =
+    let fun t2t (TCard c) = [R (i, c)]
+          | t2t (TLApp (c, ts)) = L (c, i) :: t2t ts
+          | t2t (TRApp (ts, c)) = R (i, c) :: t2t ts
+    in
+        rev (t2t twig)
+    end
+
+fun kil2turns init k i = init @ twig2turns (kil2twig k) i
 
 (* Tom's peephole optimizer. 
    XXX This keeps going until no more optimizations can be applied,
@@ -176,6 +215,8 @@ in
     let
         (* True if evaluating the argument will have no effects.
            This can be massively expanded! *)
+        (* c.f. pure below -- but that turned out not to be useful for my
+           purposes -wjl *)
         fun effectless (KCard _) = true
           | effectless _ = false
 
@@ -227,6 +268,8 @@ fun test () = (
     print (LTG.turns2str (compile (Lambda("x", Lambda ("y", Var "x"))) 13));
     print "\n";
     print (LTG.turns2str (compile (Lambda("x", Int 4)) 1));
+    print "\n";
+    print (LTG.turns2str (compile (Int 4) 1));
     print "\n";
     ())
 
