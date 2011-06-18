@@ -70,6 +70,10 @@ struct
       let val P { priority, ... } = GA.sub processes pid
       in !priority
       end
+  fun setpriority pid new_priority =
+      let val P { priority, ... } = GA.sub processes pid
+      in priority := new_priority
+      end
 
   fun spawn parent (priority, f) =
       let 

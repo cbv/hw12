@@ -47,6 +47,8 @@ sig
   val getpid : dos -> pid
   val getpriority : dos -> real
 
+  val setpriority : pid -> real -> unit  
+
   val gamestate : dos -> GameState.gamestate
 
   (* Get a slot that's not currently being used, right now. Tends to be
@@ -76,11 +78,6 @@ sig
      parent dominator's pid is supplied, then if the parent is killed,
      so will this dominator be. *)
   val spawn : pid option -> real * dominator -> pid
-
-  (* TODO 
-      - change priority
-     val change_priority : dos -> real -> unit
-     *)
 
   (* Creates the two functions in the LAYER signature by
      scheduling the argument dominators according to its
