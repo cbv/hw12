@@ -107,6 +107,12 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
                     apply scratch Z @
                     apply_slot_to_slot scratch dmg
                          
+  fun shootem (dmg_cell : int) (enemy_cell : int (*reg containing target*)) (mine1 : int) (scratch2 : int) : LTG.turn list =
+      fastload scratch2 Attack @
+      apply_slot_to_int scratch2 mine1 @
+      apply_slot_to_slot scratch2 enemy_cell @
+      apply_slot_to_slot scratch2 dmg_cell (* executes Attack minescratch2 enemy 8292 *)
+
   val strategy = let
       val tgt = 0
       val endslot = 1 (* number of the end slot, i.e. 255 *)
@@ -115,24 +121,40 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val daemon_code = 4
       val loader = 5   
       val scratch_slot = 6
+      val scratch_slot_2 = 7
 
       val daemon_install = 0 (* our slot 255, in enemy's numbering system *)
       val zombie_install = 255 (* their slot zero, in our numbering system *)
 
+      val make_255 = fastnum endslot 255
+      val hitthem = doubleshot (REG endslot) 0 1 scratch_slot scratch_slot_2
+      val make_10000 = fastnum dmg 10000
+      val helpme = help_me dmg endslot scratch_slot
+      val zom = zombie daemon_install daemon_code zombie_code
+      val dam = daemon zombie_install zombie_code daemon_code
+      val copyloader = fastnum loader daemon_code @ [L Get loader]
+      val go = apply loader Z
+ 
       val result = ref (
-        doubleshot 255 0 1 @
-        clear 0 @
-        slownum dmg 10000 @
-        slownum endslot 255 @
+        fastnum endslot 255 @
+        fastnum dmg 10000 @
         help_me dmg endslot scratch_slot @
+        dbl dmg @
+        shootem dmg endslot 0 scratch_slot @
         zombie daemon_install daemon_code zombie_code @
         daemon zombie_install zombie_code daemon_code @
-        slownum loader daemon_code @
+        fastnum loader daemon_code @
         [L Get loader] @
         apply loader Z)
 
-      val _ = print ("Zombie: " ^ (is (length (zombie daemon_install daemon_code zombie_code))) ^
-                     "Daemon: " ^ (is (length (daemon zombie_install zombie_code daemon_code))) ^ "\n")
+      val _ = print ("255: " ^ (is (length make_255)) ^
+                     " hit: " ^ (is (length hitthem)) ^ 
+                     " 10k: " ^ (is (length make_10000)) ^ 
+                     " help: " ^ (is (length helpme)) ^ 
+                     " zom: " ^ (is (length zom)) ^ 
+                     " dam: " ^ (is (length dam)) ^ 
+                     " copyloader: " ^ (is (length copyloader)) ^ 
+                     " go: " ^ (is (length go)) ^ "\n")
      
     in
       result
