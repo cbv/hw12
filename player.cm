@@ -38,6 +38,9 @@ group is
    dos.sml
    dominator-sig.sml
 
+   backup-sig.sml
+   backup.sml
+
    (* All dominators should be here, since
       any DOS-based player may reference them. *)
    dominator-ripens.sml
