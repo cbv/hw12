@@ -1,7 +1,14 @@
+KERN=$(shell uname -s)
+ifeq ($(strip $(KERN)),Linux)
+	MLTONFLAGS += -cc-opt -static -link-opt -static
+else
+	MLTONFLAGS +=
+endif
+
 .PHONY: default
 default:
-	echo "make tutor to make the demonic tutor"
-	echo "make player-*.exe to make the player-*.sml"
+	@echo "make tutor to make the demonic tutor"
+	@echo "make player-*.exe to make the player-*.sml"
 
 .PHONY: tutor
 tutor:
@@ -34,7 +41,7 @@ player-%.exe: .DUMMY
 	@echo >> player.sml
 	@svn info | ./embedversion.pl > version.sml
 	@chmod a-w player.sml # try to prevent user from editing
-	mlton -cc-opt -static -link-opt -static -verbose 1 -const "Exn.keepHistory true" -output $@ player.cm
+	mlton $(MLTONFLAGS) -verbose 1 -const "Exn.keepHistory true" -output $@ player.cm
 	@chmod u+w player.sml
 	@rm -f player.sml
 	@rm version.sml
