@@ -42,6 +42,9 @@ group is
    emit-program-sig.sml
    emit-program.sml
 
+   unravel-program-sig.sml
+   unravel-program.sml
+
    backup-sig.sml
    backup.sml
 
@@ -49,6 +52,7 @@ group is
       any DOS-based player may reference them. *)
    dominator-ripens.sml
    dominator-medic.sml
+   dominator-gorillas.sml
 
  (* broken? *)
  (*   dominator-overripe.sml *)
