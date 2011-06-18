@@ -5,6 +5,25 @@ datatype src = datatype K.src
 
 type state = LTG.turn list
 
+(*
+  At the end both players should be in the state:
+
+    13={10000,7}
+    14={10000,help}
+    15={10000,help}
+    252={9991,I}
+    255={9999,I}
+
+  Where the 9991 might be smaller depending on how efficient the compiler is.
+  Both player should exhaust the stack while running the program in slot 16.
+  Look for this in the judges simulator:
+
+    player 0 applied slot 16 to card zero
+    Exception: Native.AppLimitExceeded
+    slot 16 reset to I
+    
+*)
+
 fun init _ = 
     let 
       val p =
