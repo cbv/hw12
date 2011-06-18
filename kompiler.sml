@@ -44,7 +44,7 @@ fun run_and_return_self src =
 datatype kil = KApply of kil * kil
              | KCard of Card.card
              | KVar of string
-                       
+
 (* first translate from lambda calculus to kombinators *)
 fun src2kil s =
     let
@@ -69,13 +69,16 @@ fun src2kil s =
               | contains x (KCard _) = false
               | contains x (KApply (s1, s2)) =
                   contains x s1 orelse contains x s2
+            fun pure (
           in
             (* William can vouch for these optimisations *)
+            (*
             if (not (contains x s)) then
               (KApply (KCard Card.K, s))
             else if (not (contains x s1)) andalso (s2 = KVar x) then
               s1
             else 
+            *)
                KApply (KApply (KCard Card.S, A (x, s1)), A (x, s2))
           end
     in
