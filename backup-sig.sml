@@ -16,16 +16,23 @@ sig
   (* given gamestate, a slot to take a backup of, and whether to optimise to
    * make restoration high-prio (i.e. easily addressable), returns a backup
    * state and the moves it will take to generate the backup *)
-  val create_backup : DOS.dos -> int -> bool
-                      -> (backup * (unit -> LTG.turn option)) option
+  val create_backup : DOS.dos -> int -> bool -> backup option
+
+  val build_backup : backup -> LTG.turn option
 
   (* returns the slot number the backup is in, IF the backup is valid *)
   val get_backup : backup -> int option
 
-  (* did the mans get killed (pass in the src slot number) *)
+  (* returns the slot number for the backup (useful to tell if the backup itself
+   * has died) *)
+  val get_backup_slot : backup -> int
+
+  (* did the mans get killed (pass in the slot number) *)
   val need_restore : DOS.dos -> int -> bool
 
-  (* need to release resources *)
+  (* need to release resources -- if you switch to using the backup slot as your
+   * new slot, do not call this, but if you're going away entirely or otherwise
+   * stop needing the backup, call this *)
   val release_backup : DOS.dos -> backup -> unit
 
 end

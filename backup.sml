@@ -15,21 +15,20 @@ struct
       (case slot of
             (* slot allocation succeeded *)
             SOME dest =>
-              let
-                (* the moves it will take to generate the backup *)
-                val moves = ref (moves_to_copy src dest)
-                fun getmove () =
-                  (case !moves of
-                        (m::rest) => (moves := rest; SOME m)
-                      | nil => NONE)
-              in
-                SOME ({ dest = dest, moves = moves }, getmove)
-              end
+              SOME ({ dest = dest, moves = ref (moves_to_copy src dest) })
+            (* or not *)
           | NONE => NONE)
     end
 
+  fun build_backup ({ dest, moves }) =
+    (case !moves of
+          m::rest => (moves := rest; SOME m)
+        | nil => NONE)
+
   fun get_backup ({ dest, moves }) =
     if List.null (!moves) then SOME dest else NONE
+
+  fun get_backup_slot ({ dest, moves }) = dest
 
   fun need_restore dos src =
     LTG.slotisdead (GameState.myside (DOS.gamestate dos)) src 
