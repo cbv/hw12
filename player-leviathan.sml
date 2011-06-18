@@ -16,11 +16,6 @@ struct
 
 
 
-  val myslot0 = 1
-  val myslot1 = 2
-  val helpamount = 2048
-  val hurtamount = 512
-  val targetpointer = 4
 
 
   (* Maybe should have a lower bound on what it will
@@ -92,30 +87,68 @@ struct
 
   val instructions = ref builddecker                   
                    
+
+(*  fun someliveslot myside = 
+        
+
+ *)
+      
                       
   val target = ref 0
 
   fun init gs = ()
 
-  fun taketurn gs =
+  val reviving = ref false
+
+  fun updateinstructions gs = 
       let
+          val myside = GS.myside gs
           val theirside = GS.theirside gs
           val stats = GS.theirstats gs
-(*          val health = Array.sub (#2 theirside, 255 - !target) *)
           val slots = List.tabulate (256, fn i =>
                                              (i, LTG.statfor stats i))
           val slots = map (scoreslot theirside) slots
-                      
+          val scratch = 69
           val (best, _) = ListUtil.max compare_scores slots
+      in
+          if slotisdead myside 0 andalso not (!reviving)
+          then ( reviving := true;
+              instructions := 
+               [LeftApply (Put, scratch),
+                RightApply (scratch, Zero),
+                LeftApply (Revive, scratch)])
+          else  ( if slotisdead myside 1 andalso not (!reviving)
+                  then ( reviving := true;
+                         instructions := 
+                         [LeftApply (Put, scratch),
+                          RightApply (scratch, Zero),
+                          LeftApply (Succ, scratch),
+                          LeftApply (Revive, scratch)] ) 
+                  else (
+                      if slotisdead myside 2 andalso not (!reviving)
+                      then ( reviving := true;
+                             instructions := 
+                             [LeftApply (Put, scratch),
+                              RightApply (scratch, Zero),
+                              LeftApply (Succ, scratch),
+                              LeftApply (Succ, scratch),
+                              LeftApply (Revive, scratch)] )
+                      else (
+                          if List.null (!instructions)    
+                          then instructions := 
+                               ((compile (Int (255 - best)) 0) @ (copyregs2 1) @ applyregs)
+                          else () ) ) )
+      end
 
-(*          val _ = if health <= 0 
-                  then target := (!target) + 1 
-                  else () *)
-          val () = if List.null (!instructions)    
-                   then instructions := ((compile (Int (255 - best)) 0) @ (copyregs2 1) @ applyregs)
-                   else ()
+
+  fun taketurn gs =
+      let
+          val () = updateinstructions gs
           val (ins,inses) = (List.hd (!instructions), List.tl (!instructions))
           val _ = instructions := inses
+          val _ = case ins 
+                   of LeftApply (Revive, n) => reviving := false
+                    | _ =>  ()
       in
           ins
       end
