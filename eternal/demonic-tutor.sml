@@ -181,7 +181,7 @@ fun usage stat =
 (* Runs a single match between two players *)
 fun match player0 player1 = 
    let 
-      val () = print ("Starting " ^ player0 ^ " vs " ^ player1)
+      val () = print ("Starting " ^ player0 ^ " vs " ^ player1 ^ "\n")
 
       (* Setup state *)
       val process0 = setupPlayer player0 "0" (LTG.initialside ())
@@ -189,8 +189,8 @@ fun match player0 player1 =
 
       (* Run *)
       val (rounds, final0, final1) = continue (0, process0, process1)
-      val () = printquiet ("Done.\n")
-
+      val () = print ("Done.\n\n")
+  
       val tok = String.tokens (fn c => c = #":")
    in
       (* Potentially record output *)
@@ -219,7 +219,6 @@ fun match player0 player1 =
                     ("zomb1", Int.toString zomb1),
                     ("vit0", vit vit0 live0),
                     ("vit1", vit vit1 live1) ]
-                ; print "\nDone.\n"
              end
            | _ => ())
        | _ => () 
