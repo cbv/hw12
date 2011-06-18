@@ -39,8 +39,10 @@ struct
   val counter = ref 0
   val debugs = ref 50
 
+
   val battery = 0
   val slosh = 1
+  val slosh2 = 2
 
   val small = 0
   val big = 1
@@ -60,7 +62,7 @@ struct
   end
   
 
-  fun dprint x = (if !debugs > 0 then (debugs := !debugs - 1; eprint x) else ())
+  fun dprint x = (if !debugs > 0 then (debugs := !debugs - 1; eprint (Int.toString (!counter) ^ " " ^ x ^ "\n")) else ())
  
 	  
   fun also [] x = x
@@ -76,32 +78,35 @@ struct
   val ass = install (attack ` Int battery ` (get (Int loc)) ` get (Int med))
 
 
- fun charge sweep gs = let
+  val script = ref Nil
+	       
+  fun charge sweep gs = let
       val (_, vits) = GS.myside gs
       val v = Array.sub (vits , battery)
       val attacker = ass (* if sweep then sweeper else ass *)
       val plan = if sweep 
-		    then attacker @@> [L(Succ, loc)] @@>> Fn (charge true)
-		    else attacker @@> (zero, loc) @@ Fn (charge true)
+		 then attacker @@> [L(Succ, loc)] @@>> Fn (charge true)
+		 else attacker @@> (zero, loc) @@ Fn (charge true)
   in
-      if (v <= cThresh) 
+      if v < 10000
+      then (dprint ("Rebooting!"); (revive ` Int 0, 1) 
+				       @@ (help ` Int slosh ` Int battery ` Int 5000, 1) 
+				       @@ (help ` Int slosh2 ` Int battery ` Int 5000, 1) @@ Fn main)
+      else if (v <= cThresh) 
       then helpSmall @@> Fn (charge sweep)
       else if (v < aThresh)
       then slosher @@> Fn (charge sweep)
-      else (dprint("Attacking " ^ Int.toString (!counter) ^ "\n"); plan)
+      else (dprint("Attacking"); plan)
   end
-
-
-  val moves =  (Int 255, loc) @@ (Int 11112, med) @@ (Int cThresh, big) @@ (Int 9999, small) @@ also (!codes) (Fn (charge false))
-  val script = ref moves
-
+ and main gs = (Int 255, loc) @@ (Int 11112, med) @@ (Int cThresh, big) @@ (Int 9999, small) @@ also (!codes) (Fn (charge false))
+  
 
   fun valtos (LTG.VInt i) = Int.toString i
     | valtos (LTG.VFn f) = let val s = LTG.ftos f in substring(s, 0, Int.min(size s - 1, 10)) end
 
-  fun taketurn gs = let
+  fun tt entry gs = let
 
-      fun f Nil = L (I, 0)
+      fun f Nil = go ` entry gs
 	| f (List(t::ts, next)) = (script := List (ts, next); t)
 	| f (List([], next)) = go next
 	| f (Move((p,n), next)) = go ` List (K.compile p n, next)
@@ -116,8 +121,8 @@ struct
 		  val vitsmap = List.tabulate (8, fn x => (Int.toString (Array.sub (vits,x))))
 		  val valsmap = List.tabulate (8, fn x => (valtos (Array.sub (vals,x))))
 		  in
-		  dprint (Int.toString(!counter)^"f=["^(String.concatWith "," valsmap)^"]\n");
-		  dprint (Int.toString(!counter)^"v=["^(String.concatWith "," vitsmap)^"]\n")
+		  dprint ("f=["^(String.concatWith "," valsmap)^"]\n");
+		  dprint ("v=["^(String.concatWith "," vitsmap)^"]\n")
 	      end
 	  else ()
       val _ = counter := (!counter) + 1
@@ -127,6 +132,8 @@ struct
 
   end
       
+  fun taketurn gs = tt main gs
+
 end
 
  
