@@ -1,4 +1,6 @@
 
+(* current story: broken; attacks opponent's slot 0 once and zombies it. Working on making the zombie do something. *)
+
 structure Gwillen1 :> LAYER =
 struct
   structure GS = GameState
