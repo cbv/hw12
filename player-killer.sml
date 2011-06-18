@@ -66,7 +66,6 @@ struct
           eprint ballsprint
         end
       else ()
-    val _ = showscores ()
     val _ = counter := (!counter) + 1
   in
     f (!turn)
