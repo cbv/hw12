@@ -151,10 +151,8 @@ fun kil2str (KCard c) = Card.card2str c
 val L = LTG.LeftApply
 val R = LTG.RightApply
 
-(*
-    (* newer, better version below -wjl *)
-fun kil2turns k i = let
-fun kil2turns init k i = let
+(* newer, different version below -wjl *)
+fun kil2turns_spoons init k i = let
   fun f (acc, KCard c) = R(i, c) :: acc
     | f (acc, KApply (KCard c, t))
       (* S(K acc) c t *)
@@ -170,7 +168,6 @@ fun kil2turns init k i = let
 in
   rev (f (init, k))
 end
-*)
 
 (* a twig is a tree where no branch leaves the main trunk for more than a
    single step.  this is the kind of thing that can be easily put into a
@@ -187,8 +184,21 @@ fun ts @> c = TRApp (ts, c)
 
 fun twigapp (TCard c, ts) = c <@ ts
   | twigapp (ts, TCard c) = ts @> c
+  (*
+  | twigapp (TLApp (c, us), ts) = twigapp (Card.S <@ c <@ Card.K <@ ts, us)
+        (c us) ts
+        (c us) (K ts us)
+        ===> S c (K ts) us
+  | twigapp (TRApp (us, c), ts) =
+  *)
   | twigapp (ts, TLApp (c, us)) = twigapp (Card.S <@ (Card.K <@ ts) @> c, us)
   | twigapp (ts, TRApp (us, c)) = twigapp (Card.S <@ (Card.K <@ ts), us) @> c
+
+    (*
+        ts @ (c us)
+        K ts us (c us)
+        S (K ts) c us
+    *)
 
 fun kil2twig (KCard c) = TCard c
   | kil2twig (KApply (t, u)) = twigapp (kil2twig t, kil2twig u)
@@ -202,7 +212,17 @@ fun twig2turns twig i =
         rev (t2t twig)
     end
 
-fun kil2turns init k i = init @ twig2turns (kil2twig k) i
+fun kil2turns_wjl init k i = init @ twig2turns (kil2twig k) i
+
+(* XXX experimental: try both, take the smaller.  performance problem? *)
+fun kil2turns init k i =
+    let val tspoons = kil2turns_spoons init k i
+        val twjl = kil2turns_wjl init k i
+    in
+        if length tspoons < length twjl
+        then tspoons
+        else twjl
+    end
 
 (* Tom's peephole optimizer. 
    XXX This keeps going until no more optimizations can be applied,
@@ -274,6 +294,9 @@ fun test () = (
     print (LTG.turns2str (compile (Card Card.Attack -- Card Card.Zero -- Card Card.Zero -- Card Card.Zero) 1));
     print "\n";
     ())
+
+(* a small test case that distinguishes kil2turns_spoons and kil2turns_wjl *)
+val e = Lambda ("x", Lambda ("y", Lambda ("z", $"x" -- (Card Card.Attack -- $"x" -- $"y" -- $"z"))));
 
 fun tomtest () =
     let in
