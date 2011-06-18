@@ -10,17 +10,20 @@ struct
     | makeN n = Apply (Card Card.Succ, makeN (n-1))
   *)
 
+  fun load_num n i = compile (Int n) i
+
   fun maketurnlist k =
     let
       fun apply instr arg = (compile instr 13) @ [LTG.RightApply (13, arg)]
-      val decpos = Int 0
+      val decpos = Int (if k < 30000 then 0 else 1)
       val incpos = Int 0
       val respos = Int 255
       val dec = Apply (Card Card.Dec, decpos)
       val inc = Apply (Card Card.Inc, incpos)
       val res = Apply (Card Card.Revive, respos)
+      (*val cond_res = (* check if dead *)*)
     in
-      (compile inc 0) @ (compile dec 1) @ (compile res 2)
+      (compile inc 0) @ (compile dec 1) @ (compile dec 1)
     end
 
   fun init _ = let val l = maketurnlist 0 in (hd l, (1, tl l)) end
