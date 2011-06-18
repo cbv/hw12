@@ -69,16 +69,62 @@ fun src2kil s =
               | contains x (KCard _) = false
               | contains x (KApply (s1, s2)) =
                   contains x s1 orelse contains x s2
-            fun pure (
+
+            (* purity of combinator terms.
+
+               these terms have side effects:
+
+                get i       (read effect only)
+                inc i
+                dec i
+                attack i j n
+                help i j n
+                copy i      (read effect only)
+                revive i
+                zombie i x
+
+               any term containing one of these terms as a subterm
+               has side effects.
+
+              all other terms are pure. *)
+            (* PERF: might instead make the translation return whether or not
+               the result is pure, to avoid exponential double traversal... *)
+            fun pure (KApply (KCard Card.Get, _)) = false
+              | pure (KApply (KCard Card.Inc, _)) = false
+              | pure (KApply (KCard Card.Dec, _)) = false
+              | pure (KApply (KApply (KApply (KCard Card.Attack, _), _), _)) = false
+              | pure (KApply (KApply (KApply (KCard Card.Help, _), _), _)) = false
+              | pure (KApply (KCard Card.Copy, _)) = false
+              | pure (KApply (KCard Card.Revive, _)) = false
+              | pure (KApply (KApply (KCard Card.Zombie, _), _)) = false
+              | pure (KApply (s1, s2)) = pure s1 andalso pure s2
+              | pure _ = true
+
+            fun value (KCard _) = true
+              | value (KVar _) = true
+              | value (KApply (KCard Card.S, v)) = value v
+              | value (KApply (KApply (KCard Card.S, v1), v2)) = value v1
+                                                         andalso value v2
+              | value (KApply (KCard Card.K, v)) = value v
+              | value (KApply (KCard Card.Attack, v)) = value v
+              | value (KApply (KApply (KCard Card.Attack, v1), v2)) = value v1
+                                                              andalso value v2
+              | value (KApply (KCard Card.Help, v)) = value v
+              | value (KApply (KApply (KCard Card.Help, v1), v2)) = value v1
+                                                            andalso value v2
+              | value (KApply (KCard Card.Zombie, v)) = value v
+              | value _ = false
           in
             (* William can vouch for these optimisations *)
-            (*
-            if (not (contains x s)) then
-              (KApply (KCard Card.K, s))
-            else if (not (contains x s1)) andalso (s2 = KVar x) then
-              s1
-            else 
-            *)
+            (* Note: to preserve CBV semantics, we must ensure that the result
+               is always a value. *)
+            if value s andalso not (contains x s) then
+                (KApply (KCard Card.K, s))
+            else if value s1 andalso not (contains x s1)
+                             andalso s2 = KVar x then
+                s1
+            else
+               (* naive translation: term is not safe for optimization *)
                KApply (KApply (KCard Card.S, A (x, s1)), A (x, s2))
           end
     in
