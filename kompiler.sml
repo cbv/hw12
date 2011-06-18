@@ -271,6 +271,8 @@ fun test () = (
     print "\n";
     print (LTG.turns2str (compile (Int 4) 1));
     print "\n";
+    print (LTG.turns2str (compile (Card Card.Attack -- Card Card.Zero -- Card Card.Zero -- Card Card.Zero) 1));
+    print "\n";
     ())
 
 fun tomtest () =
