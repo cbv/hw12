@@ -56,6 +56,7 @@ end
 fun run_and_return_self src =
   fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
 
+(* fun rrs_ref src s = fn unused => (fn self => Put src self) (Get s) *)
 fun rrs_ref src s =
   \"unused" ` ((\ "self" ` Card LTG.Put -- src -- $"self") -- ((Card Card.Get) -- (Int s)))
 

@@ -10,6 +10,15 @@ struct
   open Kompiler
   open Macros
 
+open LTG
+
+infix 9 --
+val op -- = Apply
+val $ = Var
+fun \ x exp = Lambda (x, exp)
+infixr 1 `
+fun a ` b = a b
+
   (* This one doesn't pay any attention to the
      game state. *)
   fun init _ = let
@@ -36,15 +45,6 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
 *)
         (*val exp = for (Card Card.I)*)
 
-open Macros
-open LTG
-
-infix 9 --
-val op -- = Apply
-val $ = Var
-fun \ x exp = Lambda (x, exp)
-infixr 1 `
-fun a ` b = a b
 
 (*
         fun for g s = \"X" ` (Card Card.Put) -- (g -- $"X") -- ((\"f" ` \"_" ` $"f" -- ((Card Card.Succ) -- $"X")) -- ((Card Card.Get) -- s))
@@ -64,16 +64,20 @@ fun a ` b = a b
 
   (* Zombie performs \_.Help (2*(Copy tgt)) (2(Copy tgt)+1) (Copy dmg) *)
   fun zombie tgt dmg slot = let
-      val exp = \"_" ( (Card LTG.Help) -- (Card Dbl -- (Card Copy -- Int tgt)) -- (Card Succ -- (Card Dbl -- (Card Copy -- Int tgt))) -- (Card Copy -- Int dmg) )
+      val exp = \"_" ` Card Help -- (Card Dbl -- (Card Copy -- Int tgt)) -- (Card Succ -- (Card Dbl -- (Card Copy -- Int tgt))) -- (Card Copy -- Int dmg) 
     in
       (* this should be named like, compile_assume_identity *)
       Kompiler.compile_no_clear_rev exp slot
     end
 
-  val zombie_loader zombie s = rrs_ref (
+  fun zombie_loader zombie s = Kompiler.compile_no_clear_rev (rrs_ref (
+    Card Zombie -- Card Z -- (Card Get -- Int zombie)
+(*
       fastload s Zombie @
       apply s Z @
       apply_slot_to_slot s zombie) s
+*)
+  ) s) s
 
   val strategy = let
       val dmg = 0
@@ -87,7 +91,7 @@ fun a ` b = a b
       fastnum tgt 0 @
       zombie tgt dmg zmb @
       zombie_loader zmb loader @
-      (rep 127 (apply loader Z @ succ tgt)))
+      (rep 128 (apply loader Z @ succ tgt)))
     end
 
   fun taketurn _ = case (!strategy) of nil => L Z 0
