@@ -189,7 +189,7 @@ fun match player0 player1 =
 
       (* Run *)
       val (rounds, final0, final1) = continue (0, process0, process1)
-      val () = print ("Done.\n\n")
+      val () = print ("\n")
   
       val tok = String.tokens (fn c => c = #":")
    in
@@ -224,15 +224,18 @@ fun match player0 player1 =
        | _ => () 
    end
       
+(* Main function*)
 (* args are the result of Params.docommandline *)
 fun go args = 
    let
+      (* Handle special command-line parameters and flags *)
       val () = 
          case Int.fromString (!flagPoll) of 
-            NONE => ()
+            NONE =>
+            (err ("Bad argument to --poll: " ^ !flagPoll ^ "!")
+             ; usage OS.Process.failure)
           | SOME 0 => flagFreq := max
           | SOME i => flagFreq := i * 2
-
       val () = if not (!flagHelp) then ()
                else usage OS.Process.success
    in
