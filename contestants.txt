@@ -3,7 +3,7 @@ inc0 106
 bograts 106
 sniper 106
 ripens 115
-leviathan 146
+leviathan 162
 killer 160
 gwillen1 154
 
