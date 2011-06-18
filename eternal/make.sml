@@ -19,9 +19,14 @@ fun parse_player_arg s =
     | _ => raise BadPlayer
 
 fun build_target (CUR name) = "player-" ^ name ^ ".exe"
-  | build_target (REV (name, num)) = "player-" ^ name ^ ".exe"
+  | build_target (REV (name, num)) = 
+    if num > 175 then "player-" ^ name ^ ".exe"
+    else  "player-" ^ name
 
-fun build_filename x = build_target x
+fun build_filename (x as (CUR name)) = build_target x
+  | build_filename (x as (REV (name, num))) = 
+    if num > 175 then build_target x
+    else "player-" ^ name ^ ".exe"
 
 fun save_filename (CUR name) = "player-" ^ name ^ ".exe"
   | save_filename (REV (name, num)) = 
