@@ -35,7 +35,7 @@ struct
     val attackzomb = \ "slotf" ` (Card S -- attack -- zombie) -- $"slotf"
     val f = (Card S -- (Card Get -- Int heal_slot) -- (Card Get -- Int attack_slot))
     (* We run a loop over enemies *)
-    val fixbigm = K.for f
+    val fixbigm = K.for_ref f prog_slot
 
     (* Do a little computation in tmps to confuse emenies. *)
     val p8 = (K.compile (Int 8192) tmp_slot1)

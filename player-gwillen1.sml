@@ -30,10 +30,8 @@ end
 
 fun run_and_return_self src =
   fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
-
-fun for g = fix (\ "f" ` \ "x" ` (Card Card.Put)
-                   -- (g -- $"x") -- (\ "q" ` $"f" -- (Card Card.Succ -- $"x")))
 *)
+fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card Card.Succ -- $"x")))
         (*val exp = for (Card Card.I)*)
 
 infix 9 --
@@ -44,7 +42,7 @@ infixr 1 `
 fun a ` b = a b
 
         fun for g s = \"X" ` (Card Card.Put) -- (g -- $"X") -- ((\"f" ` \"_" ` $"f" -- ((Card Card.Succ) -- $"X")) -- ((Card Card.Get) -- s))
-        val exp = for (Card Card.I) (Int 0)
+        val exp = for (Card Card.I) (Int 9)
         val _ = print ((Kompiler.src2str exp) ^ "\n")
         val x = Kompiler.compile_no_clear_rev exp 3
         val _ = print ((LTG.turns2str x) ^ "\n")
