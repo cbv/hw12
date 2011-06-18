@@ -4,5 +4,5 @@ bograts 106
 sniper 106
 ripens 115
 leviathan 146
-killer 149
+killer 160
 gwillen1 154
