@@ -1,7 +1,7 @@
 structure Backup :> BACKUP =
 struct
 
-  type backup = { src : int, dest : int, moves : LTG.turn list ref }
+  type backup = { dest : int, moves : LTG.turn list ref }
 
   fun moves_to_copy src dest =
     (LTG.LeftApply (Card.Get,dest))::(Kompiler.compile (Kompiler.Int src) dest)
@@ -23,15 +23,17 @@ struct
                         (m::rest) => (moves := rest; SOME m)
                       | nil => NONE)
               in
-                SOME ({ src = src, dest = dest, moves = moves }, getmove)
+                SOME ({ dest = dest, moves = moves }, getmove)
               end
           | NONE => NONE)
     end
 
-  fun get_backup ({ src, dest, moves }) =
+  fun get_backup ({ dest, moves }) =
     if List.null (!moves) then SOME dest else NONE
 
-  fun need_restore dos ({ src, dest, moves }) =
+  fun need_restore dos src =
     LTG.slotisdead (GameState.myside (DOS.gamestate dos)) src 
+
+  fun release_backup dos ({ dest, moves }) = DOS.release_slot dos dest
 
 end
