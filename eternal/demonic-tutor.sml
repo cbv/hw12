@@ -101,7 +101,10 @@ type process = {name: string,
                 outstream: TextIO.outstream,
                 state: LTG.side}
 
-fun winner (proponent, opponent) = false
+fun winner (proponent, opponent) = 
+    let fun lost player = 
+          not (Array.exists (fn x => x > 0) (#2 (#state player)))
+    in lost proponent orelse lost opponent end
 
 fun playerData player = 
     let 
@@ -134,7 +137,6 @@ fun export (n, proponent, opponent) =
        | NONE => ())
 
 fun report (n, proponent, opponent) =
-   if n mod 20000 <> 0 then () else
    let
        fun printPlayerData player =
 	   let val (vitality, live, dead, zombie) = playerData player
