@@ -98,6 +98,10 @@ fun src2kil s =
                any term containing one of these terms as a subterm
                has side effects.
 
+              (XXX What about the side effect of causing errors? 
+               maybe we want to just have the behavior that the
+               optimizer is allowed to optimize away errors. -tom7)
+
               all other terms are pure. *)
             (* XXX OBSOLETE *)
             fun pure (KApply (KCard Card.Get, _)) = false
