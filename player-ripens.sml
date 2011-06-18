@@ -89,6 +89,9 @@ struct
 
   val n = ref 0
   
+  (* emit : LTG.turn list -> (GS.gamestate * (LTG.turn -> return))
+  *                       -> (GS.gamestate * (LTG.turn -> return)) 
+  **)
   fun emit nil (gs, return) = (gs, return)
     | emit (m::ms) (gs, return) =
       let
