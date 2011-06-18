@@ -116,7 +116,10 @@ fun report (n, proponent, opponent) =
 
 fun continue (n, proponent: process, opponent: process) =
    if n = 200000 orelse winner (proponent, opponent)
-   then (report (n, proponent, opponent); (* export(n, proponent, opponent); *) print "Done.\n")
+   then (report (n, proponent, opponent); 
+         if n mod 2 = 0 
+         then (n, proponent, opponent)
+         else (n, opponent, proponent))
    else let
       val () = if n = 0 orelse n mod 20000 <> 0 then ()  
                else report (n, proponent, opponent) 
@@ -144,11 +147,22 @@ fun go args =
       val () = print "Starting...\n"
       val state0 = LTG.initialside ()
       val state1 = LTG.initialside ()
-      fun go' args = 
+      fun initialize args = 
          case args of 
 	        [ player0, player1 ] => 
-            (setupPlayer player0 "0" state0, 
-             setupPlayer player1 "1" state1)
+            let 
+               val t0 = String.tokens (fn c => c = #":") player0
+               val t1 = String.tokens (fn c => c = #":") player1
+               val report = 
+               case (t0, t1, map Int.fromString t0, map Int.fromString t1) of
+                 ([name0, _], [name1, _], [_, SOME rev0], [_, SOME rev1]) =>
+                 SOME (name0, rev0, name1, rev1)
+               | _ => NONE
+            in
+              (report, 
+               setupPlayer player0 "0" state0, 
+               setupPlayer player1 "1" state1)
+            end
           | [] => 
             (err ("No main argument given!")
              ; err ("Usage: " ^ CommandLine.name () ^ " player0 player1")
@@ -159,9 +173,27 @@ fun go args =
              ; err ("Usage: " ^ CommandLine.name () ^ " player0 player1")
              ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
              ; OS.Process.exit OS.Process.failure)
-      val (process0, process1) = go' args
+      val (report, process0, process1) = initialize args
+
+      val (rounds, final0, final1) = continue (0, process0, process1)
    in
-      continue (0, process0, process1)
+      case report of 
+         NONE => print "Done..."
+       | SOME (name0, rev0, name1, rev1) => 
+         let
+            val () = print "Reporting..."
+            fun vit vit' live' = 
+               if live' = 0 then "0"
+               else IntInf.toString (vit' div IntInf.fromInt live')
+            val (vit0, live0, dead0, zombie0) = playerData final0
+            val (vit1, live1, dead1, zombie1) = playerData final1
+            val f = print o RPC.rpc "http://R_E_D_A_C_T_E_D/arena/log.php"
+         in
+            f [ ("player0", name0),
+                ("player0rev", Int.toString rev0),
+                ("player1", name1),
+                ("player1rev", Int.toString rev1) ]
+         end
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
                                    ; OS.Process.exit OS.Process.failure)
 

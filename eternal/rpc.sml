@@ -1,5 +1,5 @@
 structure RPC = struct
-  fun rpc (url, args) = 
+  fun rpc url args = 
     let 
       val tempfile = FSUtil.tempfilename "/tmp/rpc"
       val argstr = 
