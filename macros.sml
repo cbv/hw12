@@ -1,10 +1,19 @@
 (* Here live small strategies that have been hand coded for efficiency. *)
 structure Macros =
 struct
+  open LTG
+  open Kompiler
+
+  infix 9 --
+  val op -- = Apply
+  val $ = Var
+  fun \ x exp = Lambda (x, exp)
+  infixr 1 `
+  fun a ` b = a b
+
   fun curry2 f x y = f(x, y)
   fun rep n x = List.concat (List.tabulate (n, fn _ => x))
 
-  open LTG
 
   val L = curry2 LTG.LeftApply
   val R = curry2 LTG.RightApply
@@ -66,4 +75,26 @@ struct
       apply_slot_to_slot 1 2 @
       apply_slot_to_int 1 0 (* executes Zombie enemy 0 *)
 
+  (* like the above, with enemy = 0 and mine = 0 and 1 *)
+  (* 35 cycles *)
+  fun fastest_doubleshot () : LTG.turn list =
+      fastnum 0 8192 @ (* slot 0 holds 8192 (amt. of damage) *)
+
+      fastload 1 Attack @
+      apply_slot_to_int 1 0 @
+      apply_slot_to_int 1 0 @
+      apply_slot_to_slot 1 0 @ (* executes Attack mine1 enemy 8192 *)
+
+      fastnum 1 1 @
+      [L Attack 1] @
+      apply 1 Z @
+      apply_slot_to_slot 1 0 
+
+(*
+      fastload 1 Zombie @
+      apply_slot_to_int 1 0 @
+      apply_slot_to_int 1 0 (* executes Zombie enemy 0 *)
+*)
+
+ 
 end

@@ -52,6 +52,7 @@ in
   Apply (Z, s)
 end
 
+(* fun rrs src = fn unused => Put src (rrs src) *)
 fun run_and_return_self src =
   fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
 
