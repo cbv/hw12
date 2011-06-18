@@ -1,3 +1,17 @@
+/*
+
+A little nodejs server that accepts http requests like
+
+http://localhost:1337/match?win=WinningAwsomeProgramName&lose=PitifulLoserProgram
+
+and you can go to
+
+http://localhost:1337/
+
+also to view the total scores (+1 per victory, -1 per loss)
+
+*/
+
 var fs = require('fs');
 var http = require('http');
 var url = require('url');
