@@ -57,8 +57,21 @@ sig
 
 end
 
+(* Argument to coro-layer functor. *)
+signature CORO_LAYER =
+sig
+  structure GS : GAMESTATE
+
+  datatype return = RETURN of (GS.gamestate * (LTG.turn -> return))
+  val algorithm : (GS.gamestate * (LTG.turn -> return)) -> 'a
+end
+
 (* In your player-strategy.sml file, do
    
    structure Player = LayerFn(Me)
 
-   after declaring Me :> LAYER. *)
+   after declaring Me :> LAYER, or
+   
+   structure Player = LayerFn(CoroLayerFn(Me))
+   
+   after declaring Me :> CORO_LAYER. *)

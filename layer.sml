@@ -96,3 +96,57 @@ struct
       end
 
 end
+
+functor CoroLayerFn(L : CORO_LAYER) :> LAYER =
+struct
+  structure GS = L.GS
+  type state = GS.gamestate
+  
+  type return = L.return
+  
+  type 'a cont = 'a SMLofNJ.Cont.cont
+  val callcc : ('a cont -> 'a) -> 'a = SMLofNJ.Cont.callcc
+  val throw : 'a cont -> 'a -> 'b = SMLofNJ.Cont.throw
+  
+  val nextcont : (state * (LTG.turn cont)) cont option ref = ref NONE
+  
+  val n = ref 0
+  
+  fun init _ = ()
+  fun taketurn gs =
+    let in
+      n := !n + 1;
+      if !n mod 1000 = 0
+      then (eprint ("Turn #" ^ Int.toString (!n) ^ ". Stats:\n");
+            GS.printstats (GS.mystats gs);
+            eprint "Theirs:\n";
+            GS.printstats (GS.theirstats gs))
+      else ();
+      
+      LTG.enable_trace false;
+      
+      callcc (fn (c : LTG.turn cont) =>
+        let
+          (* Recall that c is bound in the scope of the original callcc, so next
+           * time we step into 'return', we return to the original c.  This is
+           * why the outermost cont has to pass in the correct c.  *)
+          fun return' (c' : LTG.turn cont) (m : LTG.turn) : return =
+            let
+              val (gs, c'') =
+                callcc (fn (nc : (state * (LTG.turn cont)) cont) => (
+                  nextcont := (SOME nc) ;
+                  throw c' m
+                ))
+            in
+              L.RETURN (gs, return' c'')
+            end
+        in
+          (* Already running?  If so, pitch back; otherwise, kick off the
+           * algorithm coro.  *)
+          case !nextcont
+          of SOME nc => throw nc (gs, c)
+           | NONE => L.algorithm (gs, return' c)
+        end
+      )
+    end
+end
