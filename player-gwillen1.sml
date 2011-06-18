@@ -82,8 +82,8 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
   val is = Int.toString
 
   val strategy = let
-      val dmg = 0
-      val tgt = 1
+      val tgt = 0
+      val dmg = 1
       val zmb = 2
       val loader = 3   
       val result = ref (
