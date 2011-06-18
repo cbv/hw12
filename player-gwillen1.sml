@@ -26,25 +26,30 @@ struct
   fun fastload n card = [R n card] (* n must hold ID! *)
   fun fastzero n = fastload n Z (* n must hold ID! *)
   fun apply a b = [R a b]
+  fun twofivefive n = succ n @ (rep 7 ((dbl n) @ (succ n))) (* n must hold 0! *)
 
   val strategy = ref (
 
+                 fastzero 2 @
+	         twofivefive 2 @ (* slot 2 holds 255 *)
+
 		 fastzero 0 @
                  succ 0 @ (* slot 0 holds 1 *)
+
                  fastload 1 Attack @
 		 apply_slot_to_slot 1 0 @
-		 apply 1 Z @ (* slot 1 holds (Attack 1 0 ...) *)
+		 apply_slot_to_slot 1 2 @ (* slot 1 holds (Attack 1 255 ...) *)
 		 rep 13 (dbl 0) @ (* slot 0 holds 8192 *)
-		 apply_slot_to_slot 1 0 @ (* executes Attack 1 0 8192 *)
+		 apply_slot_to_slot 1 0 @ (* executes Attack 1 255 8192 *)
 
 		 fastload 1 Attack @
 		 apply 1 Z @
-		 apply 1 Z @ (* slot 1 holds (Attack 0 0 ...) *)
-		 apply_slot_to_slot 1 0 @ (* executes Attack 0 0 8192 *)
+		 apply_slot_to_slot 1 2 @
+		 apply_slot_to_slot 1 0 @ (* executes Attack 0 255 8192 *)
 
 		 fastload 1 Zombie @
-		 apply 1 Z @
-		 apply 1 Z
+		 apply_slot_to_slot 1 2 @
+		 apply 1 Z (* executes Zombie 255 0 *)
   )
 
   fun taketurn _ = case (!strategy) of nil => L Z 0
