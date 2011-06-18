@@ -10,6 +10,7 @@
 signature DOS =
 sig
 
+  type pid
   (* The operating system state, which dominators have
      access to. It may be customized to a particular dominator's
      context, so it may be appropriate to think of this as
@@ -17,10 +18,9 @@ sig
   type dos
 
   datatype dosturn =
-(*    
+(*
      ReserveSlot of  { status: ??? }
      EmitProgram of { turns : LTG.turn list, dst : int, status : ??? }
-     
 *)
       Turn of LTG.turn
     (* If you can't take a turn this round, just return Can'tRun.
@@ -31,6 +31,9 @@ sig
   (* An individual thread that runs in DOS 3.1 *)
   type dominator = 
       { taketurn : dos -> dosturn }
+
+  (* Get my own pid. *)
+  val getpid : dos -> pid
 
   val gamestate : dos -> GameState.gamestate
 
@@ -52,6 +55,28 @@ sig
      returned by reserve_*_slot. Doesn't change the contents
      or anything like that. *)
   val release_slot : dos -> int -> unit
+
+  (* Kill a running dominator. *)
+  (* XXX Doesn't free slots or kill children yet *)
+  val kill : pid -> unit
+
+  (* Create a new dominator with the given priority. If the optional
+     parent dominator's pid is supplied, then if the parent is killed,
+     so will this dominator be. *)
+  val spawn : pid option -> real * dominator -> pid
+
+  datatype emit_turns_status =
+      (* in [0, 1) *)
+      ET_Progress of real
+      (* Can't continue, because the next cell in the
+         program (given) is dead. *)
+    | ET_Paused of int
+      (* Finished emitting. *)
+    | ET_Done
+
+  (* Tell the operating system to start making these turns
+     for me. The status is updated while the emit takes place. *)
+  val emit_turns : dos -> LTG.turn list -> emit_turns_status ref * pid
 
   (* TODO 
       - add new dominator

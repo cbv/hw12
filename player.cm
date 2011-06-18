@@ -14,6 +14,9 @@ group is
    sml-lib/misc/params-sig.sml
    sml-lib/misc/params.sml
 
+   sml-lib/util/growarray-sig.sml
+   sml-lib/util/growarray.sml
+
    (* Shared datatypes. *)
    card.sml
 

@@ -172,4 +172,21 @@ struct
       in ref (Array.length a, a)
       end
 
+  (* XXX should probably (?) update n if we are
+     erasing the last one. *)
+  fun erase (ref (n, a)) i = Array.update(a, i, NONE)
+
+  (* PERF, could keep low water mark as well. *)      
+  fun update_next (ga as (ref (n, a))) x =
+      let
+          fun findy i =
+              if i = n
+              then (append ga x; i)
+              else
+                  (case Array.sub(a, i) of
+                       NONE => (Array.update (a, i, SOME x); i)
+                     | SOME _ => findy (i + 1))
+      in
+          findy 0
+      end
 end
