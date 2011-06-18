@@ -35,6 +35,9 @@ sig
   (* Takes an expression of type unit.  Wraps in a function that ignores its
      single argument, evaluates the expression, and then returns itself. *)
   val run_and_return_self : src -> src
+  (* Version of run_and_return_self that uses an explicit get, on the named slot, instead of 
+     the fixed point combinator. Must be installed in slot s (the second arg). *)
+  val rrs_ref : src -> int -> src
   (* Take a function that represents the body of a loop, and return a function
     that, when called, executes one iteration of the loop. The argument passed
     the first time is used as the counter for the first iteration; after that

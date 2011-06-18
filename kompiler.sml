@@ -47,11 +47,14 @@ end
 fun run_and_return_self src =
   fix (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self")
 
+fun rrs_ref src s =
+    (\"self" ` \"unused" ` Card LTG.Put -- src -- $"self") -- ((Card Card.Get) -- (Int s))
+
 fun for g = fix (\ "f" ` \ "x" ` (Card Card.Put) 
                    -- (g -- $"x") -- (\ "q" ` $"f" -- (Card Card.Succ -- $"x")))
 
 (* s is a slot number; this will only work in slot s *)
-fun for_ref g s = \"X" ` (Card Card.Put) -- (g -- $"X") -- ((\"f" ` \"q" ` $"f" -- ((Card Card.Succ) -- $"q")) -- ((Card Card.Get) -- (Int s)))
+fun for_ref g s = \ "X" ` (Card Card.Put) -- (g -- $"X") -- ((\ "f" ` \ "q" ` $"f" -- ((Card Card.Succ) -- $"q")) -- ((Card Card.Get) -- (Int s)))
 
 datatype kil = KApply of kil * kil
              | KCard of Card.card
