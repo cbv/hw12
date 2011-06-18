@@ -22,19 +22,23 @@ struct
   val hurtamount = 512
   val targetpointer = 4
 
-(*
-  val killer = 
-      fix (\ "f" 
-           (\ "_" ( ((Card Help) -- (Int myslot0) -- (Int myslot1) -- (Int helpamount)) 
-                   -- ((Card Help) -- (Int myslot1) -- (Int myslot0) -- (Int helpamount)) 
-                   -- ((Card Attack) -- (Int myslot1) 
-                                     -- (Int myslot1) (* ((Card (Get)) -- (Int(targetpointer ))) *)
-                                     -- (Int hurtamount))
-                   -- ($ "f" -- Int(0) ))))
 
-*)
+  (* Maybe should have a lower bound on what it will
+     consider valuable, and just heal/revive if there
+     are no current high-value targets. *)
+  fun scoreslot side (idx : int, s : LTG.stat) =
+      (idx,
+       (* XXX weighted! *)
+       if LTG.slotisdead side idx
+       then ~1000.0
+       else real (LTG.stat_left_applications s) +
+            real (LTG.stat_right_applications s) +
+            LTG.stat_damage_done s +
+            LTG.stat_healing_done s +
+            real (LTG.stat_iterations s) +
+            real (LTG.stat_gotten s))
 
- 
+  val compare_scores = ListUtil.bysecond Real.compare 
     
 
   val fnslot = 0
@@ -64,10 +68,13 @@ struct
                      LeftApply (Get, n)]
 
 
-  val instructions = ref `
-                     [RightApply (0, Dec),
+  val builddecker =  [RightApply (0, Dec),
                       RightApply (1, Dec)]
-                     @ sapplyregs
+                     @ sapplyregs (* 2 damage  *)
+                     @ ( copyregs1 0)
+                     @ sapplyregs (* 4 damage  *)
+                     @ ( copyregs1 0)
+                     @ sapplyregs (* 8 damage  *)
                      @ ( copyregs1 0)
                      @ sapplyregs
                      @ ( copyregs1 0)
@@ -77,28 +84,13 @@ struct
                      @ ( copyregs1 0)
                      @ sapplyregs
                      @ ( copyregs1 0)
-                     @ sapplyregs
+                     @ sapplyregs (*256 damage *)
                      @ ( copyregs1 0)
-                     @ sapplyregs
-                     @ ( copyregs1 0)
-                     @ sapplyregs 
-                     @ ( copyregs1 0)
-                     @ sapplyregs 
-                     @ ( copyregs1 0)
-                     @ sapplyregs 
-                     @ ( copyregs1 0)
-                     @ sapplyregs 
-                     @ ( copyregs1 0)
-                     @ sapplyregs 
-                     @ ( copyregs1 0)
-                     @ sapplyregs 
+                     @ sapplyregs (*512 damage *)
                     (* once it's constructed, move it to f[2] *)
                      @ ( copyregs1 2)
-                     
 
-                  
-                  
-                   
+  val instructions = ref builddecker                   
                    
                       
   val target = ref 0
@@ -108,10 +100,19 @@ struct
   fun taketurn gs =
       let
           val theirside = GS.theirside gs
-          val health = Array.sub (#2 theirside, 255 - !target)
-          val _ = if health <= 0 then target := (!target) + 1 else ()
+          val stats = GS.theirstats gs
+(*          val health = Array.sub (#2 theirside, 255 - !target) *)
+          val slots = List.tabulate (256, fn i =>
+                                             (i, LTG.statfor stats i))
+          val slots = map (scoreslot theirside) slots
+                      
+          val (best, _) = ListUtil.max compare_scores slots
+
+(*          val _ = if health <= 0 
+                  then target := (!target) + 1 
+                  else () *)
           val () = if List.null (!instructions)    
-                   then instructions := ((compile (Int (!target)) 0) @ (copyregs2 1) @ applyregs)
+                   then instructions := ((compile (Int (255 - best)) 0) @ (copyregs2 1) @ applyregs)
                    else ()
           val (ins,inses) = (List.hd (!instructions), List.tl (!instructions))
           val _ = instructions := inses
