@@ -20,6 +20,7 @@ sig
   val mystats : gamestate -> LTG.stats
   val theirstats : gamestate -> LTG.stats
 
+  (* WARNING: It is unsafe to modify the returned copies. *)
   val myside : gamestate -> LTG.side
   val theirside : gamestate -> LTG.side
   
