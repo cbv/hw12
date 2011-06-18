@@ -51,8 +51,11 @@ group is
    (* All dominators should be here, since
       any DOS-based player may reference them. *)
    dominator-ripens.sml
-   dominator-medic.sml
    dominator-gorillas.sml
+
+   (* Tom Fortress 2! Don't mess them up plz :) *)
+   dominator-medic.sml
+   dominator-sniper.sml
 
  (* broken? *)
  (*   dominator-overripe.sml *)

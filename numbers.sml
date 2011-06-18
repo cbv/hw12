@@ -6,7 +6,7 @@ struct
   fun next_lowest_power_of_two n =
       let
           fun find nlp =
-              if nlp * 2 > n
+              if nlp * 2 < n
               then find (nlp * 2)
               else nlp
       in

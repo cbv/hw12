@@ -16,6 +16,8 @@ struct
   infixr 1 `
   fun a ` b = a b
 
+  val eprint = fn s => eprint ("[MEDIC] " ^ s ^ "\n")
+
   datatype mode =
       FindTarget
       (* Once the program is in place, revive and heal until
@@ -49,6 +51,7 @@ struct
       in
           (LTG.slotisdead my_side idx,
            Array.sub(#2 my_side, idx),
+           idx,
            (real (LTG.stat_left_applications s) +
             real (LTG.stat_right_applications s) +
             LTG.stat_damage_done s +
@@ -57,19 +60,25 @@ struct
             real (LTG.stat_gotten s)))
       end
 
+  (* XXX: Should use number of bits, but this is close *)
+  fun compare_idx (i, ii) = Int.compare (ii, i)
+
   (* If one is dead, then it is lexicographically higher priority. *)
-  fun compare_scores ((true, _, _), (false, _, _)) = GREATER
-    | compare_scores ((false, _, _), (true, _, _)) = LESS
-    | compare_scores ((_, v, s), (_, vv, ss)) =
+  fun compare_scores ((true, _, _, _), (false, _, _, _)) = GREATER
+    | compare_scores ((false, _, _, _), (true, _, _, _)) = LESS
+    | compare_scores ((_, v, i, s), (_, vv, ii, ss)) =
       (case Int.compare (v, vv) of
-           EQUAL => Real.compare (ss, s)
+           EQUAL => 
+               (* This is really only for the case that the cards have
+                  been completely unused. Heal cheaper cards since
+                  they make good sources and are easier to heal. *)
+               (case Real.compare (ss, s) of
+                    EQUAL => compare_idx (i, ii)
+                  | neq => neq)
          | LESS => GREATER
          | GREATER => LESS)
 
   val HEALTH_GOAL = 20000
-
-  (* XXX: Should use number of bits, but this is close *)
-  fun compare_idx (i, ii) = Int.compare (ii, i)
 
   fun compare_sources (_, vitality) (i, ii) =
     let
@@ -95,19 +104,27 @@ struct
 
     (* Makes a program that revives, and heals the target from the
        source slot for the given health, then returns itself (so it sticks around). *)
-    fun healprogram { src, amount, target } prog_slot =
+    fun healprogram { src : int, amount : int, target : int } prog_slot =
       let
-          (* XXX actually this killz *)
-          val dec = 
-              (\"f" ` $"f" -- ($"f" -- ($"f" -- ($"f" -- $"f")))) --
-              (\"_" ` Card LTG.Dec -- Int target)
+          val helpy = 
+              (\"src" ` \"target" ` \"amount" `
+               (Card LTG.Revive -- $"target") --
+               (* First heal from source to target.
+                  This drains a lot of src's health, but gives even
+                  more to target. Doing this in reverse then restores
+                  even more health to src, but leaves target
+                  with any excess. *)
+               (* XXX Should try to do this more times? *)
+               (Card LTG.Help -- $"src" -- $"target" -- $"amount") --
+               (Card LTG.Help -- $"target" -- $"src" -- $"amount")) --
+              Int src -- Int target -- Int amount
 
-          val prog = Kompiler.run_and_return_self dec
+          val prog = Kompiler.run_and_return_self helpy
       in
           Kompiler.compile prog prog_slot
       end handle (e as Kompiler.Kompiler s) =>
           let in
-              eprint ("Kompilation failed: " ^ s ^ "\n");
+              eprint ("Kompilation failed: " ^ s);
               raise e
           end
 
@@ -143,7 +160,7 @@ struct
     fun findsource (myside as (_, vitality)) =
       let
           val slots = all256
-          val best = ListUtil.max (compare_sources myside) slots
+          val best : int = ListUtil.max (compare_sources myside) slots
           val actual_health = Array.sub (vitality, best)
           val discounted_health = Real.trunc (real actual_health * !discount_estimate)
           val heal_health = Numbers.next_lowest_power_of_two discounted_health
@@ -166,8 +183,6 @@ struct
                         the health amount we'll try to use. *)
                      val myside = GS.myside gs
                      val (src, heal, actual_src_health) = findsource myside
-                     val () = eprint ("Source will be " ^ Int.toString src ^
-                                      ", healing " ^ Int.toString heal ^ "\n")
 
                      (* Find a high value slot on my own side to heal. *)
                      val mystats = GS.mystats gs
@@ -186,7 +201,9 @@ struct
                         there are no other medics. *)
                      val (stat, child_pid) = EP.emitspawn dos prog
                    in
-                     eprint ("New target: " ^ Int.toString best ^ "\n");
+                     eprint ("New task: " ^ Int.toString src ^ " -> " ^ 
+                             Int.toString best ^ " @ " ^ Int.toString heal ^
+                             ". Program length: " ^ Int.toString (length prog));
 
                      mode := Healing { myslot = prog_slot,
                                        child = child_pid,
@@ -218,7 +235,7 @@ struct
                              (* XXX if the target is dead now, we should
                                 still run our program once, since it revives. *)
                              eprint ("Source doesn't have " ^ Int.toString heal ^
-                                     " health to heal with.\n");
+                                     " health to heal with.");
                              DOS.release_slot dos myslot;
                              mode := FindTarget;
                              taketurn dos
@@ -229,7 +246,9 @@ struct
                              let in
                                  eprint ("Success! Healed slot " ^
                                          Int.toString target ^ " " ^
-                                         Int.toString (!heals) ^ " times\n");
+                                         Int.toString (!heals) ^ 
+                                         " times to bring it to " ^
+                                         Int.toString health ^ ".");
                                  DOS.release_slot dos myslot;
                                  mode := FindTarget;
                                  taketurn dos
@@ -237,6 +256,7 @@ struct
                          else 
                              let in
                                  (* Otherwise keep healing. *)
+                                 heals := !heals + 1;
                                  DOS.Turn (LTG.RightApply (myslot, LTG.I))
                              end
                  end
@@ -244,7 +264,7 @@ struct
               (* Optimistically hope that someone will heal it? *)
               | Healing { status = ref (EP.Paused _), child, myslot, ... } =>
                  let in
-                     eprint ("Medic: My child EmitProgram was interrupted. Killing.\n");
+                     eprint ("Medic: My child EmitProgram was interrupted. Killing.");
                      DOS.kill child;
                      (* This slot is useless to me now, since it's dead. *)
                      DOS.release_slot dos myslot;

@@ -75,8 +75,11 @@ struct
       in priority := new_priority
       end
 
-  fun spawn parent (priority, f) =
-      let 
+  (* XXX This scheduler is pretty bad! A process can get arbitrarily far
+     behind (ahead) and then hog the CPU. Should recenter? *)
+  fun getstartcharge _ (* NONE *) priority =
+      let
+(*
           val min_charge = ref (NONE : real option)
           val () = GA.app (fn (P { charge, ... }) =>
                            case !min_charge of
@@ -87,9 +90,43 @@ struct
 
           (* The first process starts with no charge. *)
           val charge = case !min_charge of
-              NONE => ref 0.0
-            | SOME c => ref c
+              NONE => 0.0
+            | SOME c => c
+*)
+          val max_charge = ref (NONE : real option)
+          val () = GA.app (fn (P { charge, ... }) =>
+                           case !max_charge of
+                               NONE => max_charge := SOME (!charge)
+                             | SOME mc => if !charge > mc
+                                          then max_charge := SOME (!charge)
+                                          else ()) processes
 
+          (* The first process starts with no charge. *)
+          val charge = case !max_charge of
+              NONE => 0.0
+            | SOME c => c
+      in
+          charge
+      end
+(*
+    | getstartcharge (SOME parent) priority =
+      (* Just inherit parent's charge, if it's not a totally new process. *)
+      let
+          val P { charge, ... } = GA.sub processes parent
+      in
+          !charge 
+      end
+*)
+
+  val rtos = Real.fmt (StringCvt.FIX (SOME 2))
+
+  fun spawn parent (priority, f) =
+      let 
+          val charge = ref (getstartcharge parent priority)
+(*
+          val () = eprint ("[DOS] new process started with charge " ^
+                           rtos (!charge) ^ "\n")
+*)
           val pid = GA.update_next processes (P { reserved_slots = ref nil,
                                                   priority = ref priority,
                                                   parent = parent,
@@ -102,7 +139,7 @@ struct
   fun kill pid =
       let
       in
-          eprint "XXX NOTE: Kill does not free slots nor kill children, yet!!\n";
+          (* eprint "XXX NOTE: Kill does not free slots nor kill children, yet!!\n"; *)
           GA.erase processes pid
       end
 
@@ -129,6 +166,13 @@ struct
              val l = ListUtil.sort (fn ((_, P { charge, ... }),
                                         (_, P { charge = charge', ... })) =>
                                     Real.compare (!charge, !charge')) (!l)
+
+                 (*
+             val () =
+                 eprint ("[DOS]: Schedulable: " ^ StringUtil.delimit " "
+                         (map (fn (pid, P { charge, ... }) =>
+                               Int.toString pid ^ "@" ^ rtos (!charge)) l) ^ "\n")
+                 *)
 
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
                | dosomething (((pid, P { dominator, charge, 

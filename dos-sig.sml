@@ -76,7 +76,11 @@ sig
 
   (* Create a new dominator with the given priority. If the optional
      parent dominator's pid is supplied, then if the parent is killed,
-     so will this dominator be. *)
+     so will this dominator be. 
+
+     You should generally use a parent process. The scheduler is not
+     good about accounting for unparented processes that start after
+     the first round (they can starve other processes). *)
   val spawn : pid option -> real * dominator -> pid
 
   (* Creates the two functions in the LAYER signature by

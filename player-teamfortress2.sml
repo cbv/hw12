@@ -1,25 +1,24 @@
-(* Example player that uses DOS 3.1. 
-   Threads can be composed at any ratio and priority;
-   you should make your own player file instead of
-   modifying this one in place.
-*)
-structure PlayerDOS31Demo :> LAYER =
+(* This strategy uses the tried and true Team Fortress 2
+   class composition, which is known to maximize teamwork.
+   Not all classes are implemented. :) *)
+structure PlayerTF2 :> LAYER =
 struct
   structure GS = GameState
 
-  (* [ ] Scout
-     [ ] Soldier
+  (* [ ] Scout         - (blitzkrieg)
+     [ ] Soldier       - (suicide-bombs enemy?)
      [ ] Flametrooper
-     [ ] Demoman
-     [ ] Heavy
-     [ ] Engineer
-     [ ] Medic
-     [ ] Sniper
-     [ ] Spy *)
+     [ ] Demoman       - (creates demons)
+     [ ] Heavy         - (defends blitzes?)
+     [ ] Engineer      - (builds useful numbers?)
+     [x] Medic         - Selects targets and heals them
+     [x] Sniper        - Selects high-value enemies and kills them
+     [ ] Spy           - (copies useful programs? make zombies?)
+     *)
   val (init, taketurn) =
-      DOS.makelayer [(1.0, Ripens.create ()),
+      DOS.makelayer [(1.0, Sniper.create ()),
                      (1.0, Medic.create ())]
 end
 
-structure Player = LayerFn(PlayerDOS31Demo)
+structure Player = LayerFn(PlayerTF2)
 
