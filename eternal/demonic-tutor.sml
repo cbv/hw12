@@ -70,7 +70,7 @@ fun setupPlayer player arg state =
 
        | SOME pid => (* Return the pipes to children *)
          {name = player,
-	  pid = pid, 
+          pid = pid, 
           instream = mkInstream inServer, 
           outstream = mkOutstream outServer,
           state = state}
@@ -190,6 +190,10 @@ fun match player0 player1 =
       (* Run *)
       val (rounds, final0, final1) = continue (0, process0, process1)
   
+      (* Cleanup *)
+      val () = PP.kill (PP.K_PROC (#pid process0), Posix.Signal.kill)
+      val () = PP.kill (PP.K_PROC (#pid process1), Posix.Signal.kill)
+
       val tok = String.tokens (fn c => c = #":")
    in
       (* Potentially record output *)
@@ -205,7 +209,9 @@ fun match player0 player1 =
                    else IntInf.toString (vit' div IntInf.fromInt live')
                 val (vit0, live0, dead0, zomb0) = playerData final0
                 val (vit1, live1, dead1, zomb1) = playerData final1
-                val f = print o RPC.rpc"http://R_E_D_A_C_T_E_D/arena/log.php"
+                fun f x = 
+                   print (RPC.rpc"http://R_E_D_A_C_T_E_D/arena/log.php" x
+                          ^ "\n")
              in
                 f [ ("player0", name0),
                     ("player0rev", Int.toString rev0),
@@ -221,7 +227,7 @@ fun match player0 player1 =
              end
            | _ => ())
        | _ => () 
-      ; print "\nDone.\n\n"
+      ; printquiet "Done.\n\n"
    end
       
 (* uses time as a substitute for randomness *)
