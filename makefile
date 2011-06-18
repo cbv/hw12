@@ -1,3 +1,6 @@
+# -verbose 1
+MLTONFLAGS =
+
 KERN=$(shell uname -s)
 ifeq ($(strip $(KERN)),Linux)
 	MLTONFLAGS += -cc-opt -static -link-opt -static
@@ -43,7 +46,7 @@ player-%.exe: .DUMMY
 	@echo >> player.sml
 	@svn info | ./embedversion.pl > version.sml
 	@chmod a-w player.sml # try to prevent user from editing
-	mlton $(MLTONFLAGS) -verbose 1 -const "Exn.keepHistory true" -output $@ player.cm
+	mlton $(MLTONFLAGS) -const "Exn.keepHistory true" -output $@ player.cm
 	@chmod u+w player.sml
 	@rm -f player.sml
 	@rm version.sml

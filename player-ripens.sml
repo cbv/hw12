@@ -20,21 +20,6 @@ struct
          then find a new target. *)
     | Attacking of int
 
-  (* Maybe should have a lower bound on what it will
-     consider valuable, and just heal/revive if there
-     are no current high-value targets. *)
-  fun scoreslot side (idx : int, s : LTG.stat) =
-      (idx,
-       (* XXX weighted! *)
-       if LTG.slotisdead side idx
-       then ~1000.0
-       else real (LTG.stat_left_applications s) +
-            real (LTG.stat_right_applications s) +
-            LTG.stat_damage_done s +
-            LTG.stat_healing_done s +
-            real (LTG.stat_iterations s) +
-            real (LTG.stat_gotten s))
-
   val compare_scores = ListUtil.bysecond Real.compare
 
 
@@ -108,9 +93,11 @@ struct
          stats *)
       val stats = GS.theirstats gs
       val slots = List.tabulate (256, fn i =>
-                                 (i, LTG.statfor stats i))
-      val slots = map (scoreslot theirside) slots
-      
+                                 (i, GS.scoreopponentslot gs i))
+
+      (* Maybe should have a lower bound on what it will
+         consider valuable, and just heal/revive if there
+         are no current high-value targets. *)
       val (best, _) = ListUtil.max compare_scores slots
       
       val prog = attackprogram best

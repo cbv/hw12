@@ -35,6 +35,22 @@ struct
   fun printstats stats =
       TextIO.output (TextIO.stdErr, LTG.statstostring stats ^ "\n")
 
+  fun scoreopponentslot_sniper (G { their_side, their_stats, ... }) idx =
+      let val s = LTG.statfor their_stats idx
+      in
+       (* XXX weighted! *)
+       if LTG.slotisdead their_side idx
+       then ~1000.0
+       else real (LTG.stat_left_applications s) +
+            real (LTG.stat_right_applications s) +
+            LTG.stat_damage_done s +
+            LTG.stat_healing_done s +
+            real (LTG.stat_iterations s) +
+            real (LTG.stat_gotten s)
+      end
+
+  val scoreopponentslot = scoreopponentslot_sniper
+
   (* XXX These need to take care of the number of
      turns, ending conditions (?), etc. *)
   fun my_turn (G { is_my_turn = myturn as ref true,

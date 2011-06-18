@@ -22,6 +22,17 @@ sig
 
   val myside : gamestate -> LTG.side
   val theirside : gamestate -> LTG.side
+  
+  (* Best current practices scoring function. Gives the value of the
+     opponent's slot by index as a real number (larger is better)
+     based on cards played, damage done, etc. If the slot is dead,
+     then the result will always be negative.
+     
+     Might change at any point to reflect new heuristics. *)
+  val scoreopponentslot : gamestate -> int -> real
+
+  (* Old versions of scoring function. *)
+  val scoreopponentslot_sniper : gamestate -> int -> real
 
   (* Prints out all stats, for debugging. 
      This should not be called in submissions, just for debugging! *)
