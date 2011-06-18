@@ -35,6 +35,8 @@ struct
   val compare_healths = ListUtil.bysecond Int.compare 
     
 
+  val n = ref 0;
+
   (* We're going to want to transfer life from the slot with the most
      life to the slot with the least.
      XXX? In case of tie, favor the lower numbers.
@@ -44,6 +46,14 @@ struct
           val vlist = List.tabulate (256, fn i => (i,Array.sub (vitalities,i)))
           val (low, lowval) = ListUtil.min compare_healths vlist
           val (high, highval) = ListUtil.max compare_healths vlist
+(* only slosh back and forth between two slots. *)
+(*
+          val (high,low) = if !n mod 2 = 0 
+                           then (0,1)
+                           else (1,0)
+          val highval = Array.sub (vitalities, high)
+          val lowval = Array.sub (vitalities, low)
+*)
       in
           ((high,highval), (low,lowval))
       end
@@ -177,8 +187,11 @@ struct
                    then (builtnum := Int.div(highval, 2) ;
                          instructions := ( compile (Int (! builtnum)) 2 )
                        )
-                   else 
-                     instructions := help high low 
+                   else (if highval > 4 * (!builtnum) 
+                         then ( builtnum := (!builtnum) * 2; 
+                             instructions := [LeftApply (Dbl, 2)])
+                         else 
+                             instructions := help high low )
                    )
                else ()
       end
