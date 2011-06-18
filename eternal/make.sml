@@ -18,10 +18,10 @@ fun parse_player_arg s =
                                                | SOME n => REV (name, n))
     | _ => raise BadPlayer
 
-fun build_target (CUR name) = "player-" ^ name
-  | build_target (REV (name, num)) = "player-" ^ name
+fun build_target (CUR name) = "player-" ^ name ^ ".exe"
+  | build_target (REV (name, num)) = "player-" ^ name ^ ".exe"
 
-fun build_filename x = (build_target x) ^ ".exe"
+fun build_filename x = build_target x
 
 fun save_filename (CUR name) = "player-" ^ name ^ ".exe"
   | save_filename (REV (name, num)) = 
