@@ -6,6 +6,9 @@ structure Make:> sig
    val getExe: string -> string
 end = struct
 
+val flagSubmit = Params.flag false 
+   (SOME ("--submit", "ONLY USE IF YOU'VE TALKED TO ROB")) "submit"
+
 datatype player_file = CUR of string | REV of string * int
 
 exception BadPlayer
@@ -34,6 +37,11 @@ fun save_filename (CUR name) = "player-" ^ name ^ ".exe"
   | save_filename (REV (name, num)) = 
     "player-" ^ name ^ "-" ^ (Int.toString num) ^ ".exe"
 
+exception Archive
+fun archive_filename (CUR name) = raise Archive
+  | archive_filename (REV (name, num)) = 
+    "player-" ^ name ^ "-" ^ Int.toString num ^ ".tgz"
+
 fun file_exists file = 
    case (SOME (OS.FileSys.fullPath file) handle SysErr => NONE) of
       SOME _ => true
@@ -52,6 +60,15 @@ fun getExe base =
                            ())
           | CUR _ => (OS.Process.system("make " ^ (build_target player));
                       ())
+
+      val _ = 
+         if !flagSubmit andalso not(file_exists (archive_filename player))
+         then case player of 
+            CUR _ => raise Archive
+          | REV (name, n) => 
+            OS.Process.system("./submission " ^ name ^ " " ^ Int.toString n)
+         else OS.Process.success
+
       val filename = OS.Path.joinDirFile {dir = OS.FileSys.getDir (),
                                           file = save_filename player}
    in
