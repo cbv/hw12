@@ -123,12 +123,12 @@ in
                 then il
                 else
                     let in
-                        eprint ("Optimized to\n" ^ kil2str il' ^ "\n");
+                        (* eprint ("Optimized to\n" ^ kil2str il' ^ "\n"); *)
                         loop il'
                     end
             end
     in
-        eprint ("OPTIMIZE:\n" ^ kil2str il ^ "\n");
+        (* eprint ("OPTIMIZE:\n" ^ kil2str il ^ "\n"); *)
         loop il
     end
 end
