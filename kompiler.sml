@@ -142,10 +142,10 @@ fun kil2str (KCard c) = Card.card2str c
     = "(" ^ kil2str k1 ^ " " ^ kil2str k2 ^ ")"
   | kil2str (KVar x) = x
 
-fun kil2turns k i = let
-  val L = LTG.LeftApply
-  val R = LTG.RightApply
+val L = LTG.LeftApply
+val R = LTG.RightApply
 
+fun kil2turns init k i = let
   fun f (acc, KCard c) = R(i, c) :: acc
     | f (acc, KApply (KCard c, t))
       (* S(K acc) c t *)
@@ -159,7 +159,7 @@ fun kil2turns k i = let
     | f (acc, KVar x)
       = raise (Kompiler ("unbound variable: " ^ x))
 in
-  rev (f ([L(Card.Put, i)], k))
+  rev (f (init, k))
 end
 
 (* Tom's peephole optimizer. 
@@ -201,7 +201,12 @@ in
     end
 end
 
-fun compile s i = kil2turns (optimize (src2kil s)) i
+fun compile s i =
+    kil2turns [L(Card.Put, i)]
+              (optimize (src2kil s)) i
+fun compile_no_clear s i =
+    kil2turns [L(Card.K, i), L(Card.I, i), L(Card.S, i)]
+              (optimize (src2kil s)) i
 
 val print = EPrint.eprint
 

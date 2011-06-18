@@ -37,8 +37,12 @@ sig
   val run_and_return_self : src -> src
 
   (* Compiles a source expression into a turn-list that will create
-     that expression in the given slot *)
+     that expression in the given slot. *)
   val compile : src -> int -> LTG.turn list
+  (* As above, but doesn't clear the content of the slot first.  If the given
+    turns are played, src will be left-applied to the current content of the
+    slot. *)
+  val compile_no_clear : src -> int -> LTG.turn list
 
 
   (* Internal utilities *)
