@@ -37,6 +37,8 @@ fun \ x exp = Lambda (x, exp)
 infixr 1 `
 fun a ` b = a b
 
+fun seq a b = (\"x" ` b) -- a
+
 fun fix s = let
   val minifix = \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
   val Z = \"f" ` minifix -- minifix (* " make fontify happy *)
