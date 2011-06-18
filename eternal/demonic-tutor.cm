@@ -26,4 +26,5 @@ group is
    ../ltg-parse.sml
 
    rpc.sml
+   make.sml
    demonic-tutor.sml

@@ -1,7 +1,5 @@
 structure DemonicTutor = struct
 
-val cardfax : string option ref = ref NONE
-
 structure PFS = Posix.FileSys
 structure PP = Posix.Process
 structure PIO = Posix.IO
@@ -9,6 +7,7 @@ structure PIO = Posix.IO
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
 fun debug x = () (* TextIO.output (TextIO.stdErr, x ^ "\n") *)
 
+(* SETTING UP PIPES *)
 fun mkInstream in_file_desc = 
    TextIO.mkInstream
     (TextIO.StreamIO.mkInstream 
@@ -25,54 +24,9 @@ fun mkOutstream out_file_desc =
                         chunkSize = 1024,
                         appendMode = true}, IO.NO_BUF))
 
-datatype player_file = CUR of string | REV of string * int
-
-exception BadPlayer
-
-fun parse_player_arg s =
-   case String.tokens (fn x => x = #":") s of
-      [] => raise BadPlayer
-    | [name] => CUR name
-    | [name, num] => (case Int.fromString num of NONE => raise BadPlayer
-                                               | SOME n => REV (name, n))
-    | _ => raise BadPlayer
-
-fun build_target (CUR name) = "player-" ^ name
-  | build_target (REV (name, num)) = "player-" ^ name
-
-fun build_filename x = (build_target x) ^ ".exe"
-
-fun save_filename (CUR name) = "player-" ^ name ^ ".exe"
-  | save_filename (REV (name, num)) = 
-    "player-" ^ name ^ "-" ^ (Int.toString num) ^ ".exe"
-
-fun file_exists file = 
-   case (SOME (OS.FileSys.fullPath file) handle SysErr => NONE) of
-      SOME _ => true
-    | NONE => false
-
-fun getExe base = 
-   let 
-      val player = parse_player_arg(base) 
-      val _ = if (file_exists (save_filename player)) then () else
-         case player of
-            REV (_, n) => (OS.Process.system("svn up -r " ^ (Int.toString n));
-                           OS.Process.system("make " ^ (build_target player));
-                           OS.Process.system("mv " ^ (build_filename player)
-                                             ^ " " ^ (save_filename player));
-                           OS.Process.system("svn up");
-                           ())
-          | CUR _ => (OS.Process.system("make " ^ (build_target player));
-                      ())
-      val filename = OS.Path.joinDirFile {dir = OS.FileSys.getDir (),
-                                          file = save_filename player}
-   in
-      filename
-   end
-
 fun setupPlayer player arg state = 
    let 
-      val exe = getExe player
+      val exe = Make.getExe player
 
       (* Set up two pipes *)
       val {infd = inServer, outfd = outPlayer} = PIO.pipe ()
@@ -119,6 +73,7 @@ fun playerData player =
 		else (vitality, live, dead, zombie + 1)) (0, 0, 0, 0) vita
     end
 
+(*
 fun export (n, proponent, opponent) =
     (case !cardfax of 
 	 SOME server =>
@@ -134,14 +89,14 @@ fun export (n, proponent, opponent) =
 	       | LESS => defeat (#name opponent, #name proponent)
 	       | EQUAL => ()
 	 end
-       | NONE => ())
+       | NONE => ()) *)
 
 fun report (n, proponent, opponent) =
    let
        fun printPlayerData player =
 	   let val (vitality, live, dead, zombie) = playerData player
 	   in
-               print ("DEAD: " ^ Int.toString dead)
+         print ("DEAD: " ^ Int.toString dead)
 	     ; print (" / ZOMB: " ^ Int.toString zombie)
 	     ; if live = 0 then print " / LIVE: 0\n"
            else print (" / LIVE: " ^ Int.toString live 
@@ -161,7 +116,7 @@ fun report (n, proponent, opponent) =
 
 fun continue (n, proponent: process, opponent: process) =
    if n = 200000 orelse winner (proponent, opponent)
-   then (report (n, proponent, opponent); export(n, proponent, opponent); print "Done.\n")
+   then (report (n, proponent, opponent); (* export(n, proponent, opponent); *) print "Done.\n")
    else let
       val () = if n = 0 orelse n mod 20000 <> 0 then ()  
                else report (n, proponent, opponent) 
@@ -191,8 +146,7 @@ fun go args =
       val state1 = LTG.initialside ()
       fun go' args = 
          case args of 
-	    ("--server" :: s :: args) => (cardfax := SOME s; go' args) (* TODO: use standard flag library *)
-          | [ player0, player1 ] => 
+	        [ player0, player1 ] => 
             (setupPlayer player0 "0" state0, 
              setupPlayer player1 "1" state1)
           | [] => 
