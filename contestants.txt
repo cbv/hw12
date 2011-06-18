@@ -1,5 +1,3 @@
-hopeless 106
-inc0 106
 bograts 106
 sniper 106
 ripens 115
