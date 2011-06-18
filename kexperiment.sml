@@ -12,12 +12,22 @@ fun rapp (ts, KCard c) = TRApp (ts, c)
   | rapp (ts, KApply (KVar x, _)) = raise (Kompiler ("unbound variable: " ^ x))
   | rapp (ts, KVar x) = raise (Kompiler ("unbound variable: " ^ x))
 
-(* rappho : (twig -> twig) * kil -> twig *)
-fun rappho (r, KCard c) = r (TCard c)
-  | rappho (r, KApply (KCard c, t)) =
-        rappho (fn ts =>  , t)
+(* rappho : kil -> (twig -> twig) -> twig *)
+fun rappho (KCard c) r = r (TCard c)
+  | rappho (KApply (KCard c, t)) r = rappho (fn tt => r (c <@ tt), t)
+  | rappho (KApply (KApply (t, u), v)) r =
+        rappho t (fn tt =>
+        rappho u (fn uu =>
+        rappho v (fn vv =>
+            (* build (tt uu) vv, and feed it to r *)
+        )))
+
+  | rapp (KApply (KVar x, _)) _ = raise (Kompiler ("unbound variable: " ^ x))
+  | rapp (KVar x) _ = raise (Kompiler ("unbound variable: " ^ x))
 
 fun kil2twig k = rapp (TCard Card.I) k
+
+fun kil2twigho k = rapp (fn tt => tt) k
 
 (* lapp : kil * twig -> twig *)
 (*
