@@ -9,6 +9,9 @@ group is
    ../sml-lib/util/stringutil-sig.sml
    ../sml-lib/util/stringutil.sml
 
+   ../sml-lib/util/fsutil-sig.sml
+   ../sml-lib/util/fsutil.sml
+
    ../sml-lib/misc/params-sig.sml
    ../sml-lib/misc/params.sml
 
@@ -22,4 +25,5 @@ group is
    ../ltg.sml
    ../ltg-parse.sml
 
+   rpc.sml
    demonic-tutor.sml
