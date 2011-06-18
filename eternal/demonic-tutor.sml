@@ -17,6 +17,11 @@ val flagHelp = Params.flag false
 val flagMode = Params.param "duel"
    (SOME ("--mode", "Tutor mode (duel, stress, auto)")) "mode"
 
+val flagPoll = Params.param "10000"
+   (SOME ("--poll", "How often the state is reported (0=never)")) "poll"
+val max = 200000
+val flagFreq = ref 20000
+
 (*
 val flagPoll   = Params.param "poll" "How often outputs are reported" "20000"
 val flagMode   = Params.param "mode" "Run mode (duel, stress, auto)" "duel"
@@ -137,13 +142,13 @@ fun report (n, proponent, opponent) =
    end
 
 fun continue (n, proponent: process, opponent: process) =
-   if n = 200000 orelse winner (proponent, opponent)
+   if n = max orelse winner (proponent, opponent)
    then (report (n, proponent, opponent); 
          if n mod 2 = 0 
          then (n, proponent, opponent)
          else (n, opponent, proponent))
    else let
-      val () = if n = 0 orelse n mod 20000 <> 0 then ()  
+      val () = if n = 0 orelse n mod !flagFreq <> 0 then ()  
                else report (n, proponent, opponent) 
       (* val _ = TextIO.inputLine TextIO.stdIn *)
 
@@ -176,7 +181,7 @@ fun usage stat =
 (* Runs a single match between two players *)
 fun match player0 player1 = 
    let 
-      val () = printquiet ("Starting " ^ player0 ^ " vs " ^ player1)
+      val () = print ("Starting " ^ player0 ^ " vs " ^ player1)
 
       (* Setup state *)
       val process0 = setupPlayer player0 "0" (LTG.initialside ())
@@ -222,7 +227,13 @@ fun match player0 player1 =
       
 (* args are the result of Params.docommandline *)
 fun go args = 
-   let 
+   let
+      val () = 
+         case Int.fromString (!flagPoll) of 
+            NONE => ()
+          | SOME 0 => flagFreq := max
+          | SOME i => flagFreq := i * 2
+
       val () = if not (!flagHelp) then ()
                else usage OS.Process.success
    in
