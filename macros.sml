@@ -43,23 +43,22 @@ struct
 
   (* Shoots the slot 'enemy' twice, using the slots 'mine1' and 'mine2'. Note that this uses the backwards numbering for 'enemy' that the attack card uses; i.e. pass enemy=255 to shoot what the enemy calls slot 0. Sorry. *)
   (* This was initially hand-coded with mine1 and mine2 being 0 and 1. The numbers you pick will get inlined expensively, so low numbers are better. *)
-  fun doubleshot enemy mine1 mine2 = (
-                 fastnum 2 enemy @ (* load enemy slot number into our slot 2 *)
-                 fastnum 0 8192 @ (* slot 0 holds 8192 (amt. of damage) *)
+  fun doubleshot (enemy : int) (mine1 : int) (mine2 : int) : LTG.turn list =
+      fastnum 2 enemy @ (* load enemy slot number into our slot 2 *)
+      fastnum 0 8192 @ (* slot 0 holds 8192 (amt. of damage) *)
 
-                 fastload 1 Attack @
-		 apply_slot_to_int 1 mine1 @
-		 apply_slot_to_slot 1 2 @
-		 apply_slot_to_slot 1 0 @ (* executes Attack mine1 enemy 8192 *)
+      fastload 1 Attack @
+      apply_slot_to_int 1 mine1 @
+      apply_slot_to_slot 1 2 @
+      apply_slot_to_slot 1 0 @ (* executes Attack mine1 enemy 8192 *)
 
-		 fastload 1 Attack @
-		 apply_slot_to_int 1 mine2 @
-		 apply_slot_to_slot 1 2 @
-		 apply_slot_to_slot 1 0 @ (* executes Attack mine2 enemy 8192 *)
+      fastload 1 Attack @
+      apply_slot_to_int 1 mine2 @
+      apply_slot_to_slot 1 2 @
+      apply_slot_to_slot 1 0 @ (* executes Attack mine2 enemy 8192 *)
 
-		 fastload 1 Zombie @
-		 apply_slot_to_slot 1 2 @
-		 apply_slot_to_int 1 0 (* executes Zombie enemy 0 *)
-  )
+      fastload 1 Zombie @
+      apply_slot_to_slot 1 2 @
+      apply_slot_to_int 1 0 (* executes Zombie enemy 0 *)
 
 end
