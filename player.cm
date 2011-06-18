@@ -27,6 +27,7 @@ group is
    kompiler-sig.sml
    kompiler.sml
 
+   card-help.sml
    macros.sml
 
    player-sig.sml
