@@ -24,10 +24,12 @@ tutor:
 player-%.tar.gz: player-%.exe
 	@mkdir -p $<-build
 	@cp $< $<-build/run
-	@touch $<-build/install
+	@echo '#!/bin/sh' > $<-build/install
+	@echo 'exit 0' > $<-build/install
 	@chmod +x $<-build/install
+	@mkdir $<-build/src
 	@echo '*** THIS IS OKAY FOR THE ARENA, BUT WE MUST COPY SOURCE IN FOR THE FINAL SUBMISSION! ***'
-	tar czvf $@ -C $<-build run install
+	tar czvf $@ -C $<-build run install src
 	@echo '*** THIS IS OKAY FOR THE ARENA, BUT WE MUST COPY SOURCE IN FOR THE FINAL SUBMISSION! ***'
 	@rm -rf $<-build
 
