@@ -43,11 +43,13 @@ fun build_target (CUR name) = "player-" ^ name
 fun build_filename x = (build_target x) ^ ".exe"
 
 fun save_filename (CUR name) = "player-" ^ name ^ ".exe"
-  | save_filename (REV (name, num)) = "player-" ^ name ^ "-" ^ (Int.toString num) ^ ".exe"
+  | save_filename (REV (name, num)) = 
+    "player-" ^ name ^ "-" ^ (Int.toString num) ^ ".exe"
 
-fun file_exists file = case (SOME (OS.FileSys.fullPath file) handle SysErr => NONE) of
-    SOME _ => true
-  | NONE => false
+fun file_exists file = 
+   case (SOME (OS.FileSys.fullPath file) handle SysErr => NONE) of
+      SOME _ => true
+    | NONE => false
 
 fun getExe base = 
    let 
@@ -56,7 +58,9 @@ fun getExe base =
          case player of
             REV (_, n) => (OS.Process.system("svn up -r " ^ (Int.toString n));
                            OS.Process.system("make " ^ (build_target player));
-                           OS.Process.system("mv " ^ (build_filename player) ^ " " ^ (save_filename player));
+                           OS.Process.system("mv " ^ (build_filename player)
+                                             ^ " " ^ (save_filename player));
+                           OS.Process.system("svn up");
                            ())
           | CUR _ => (OS.Process.system("make " ^ (build_target player));
                       ())
@@ -137,10 +141,11 @@ fun report (n, proponent, opponent) =
 	   in
                print ("DEAD: " ^ Int.toString dead)
 	     ; print (" / ZOMB: " ^ Int.toString zombie)
-	     ; print (" / LIVE: " ^ Int.toString live 
-		      ^ " (average vitality of living: " 
-		      ^ IntInf.toString (vitality div IntInf.fromInt live) 
-		      ^ ")\n")
+	     ; if live = 0 then print " / LIVE: 0\n"
+           else print (" / LIVE: " ^ Int.toString live 
+		               ^ " (average vitality of living: " 
+		               ^ IntInf.toString (vitality div IntInf.fromInt live) 
+		               ^ ")\n")
 	   end
       val (player0, player1) = 
          if n mod 2 = 0 then (proponent, opponent) else (opponent, proponent)
