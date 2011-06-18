@@ -79,20 +79,29 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
 *)
   ) s) s
 
+  val is = Int.toString
+
   val strategy = let
       val dmg = 0
       val tgt = 1
       val zmb = 2
       val loader = 3   
-    in ref (
-      (fastest_doubleshot()) @
-      clear 0 @
-      fastnum dmg 10000 @
-      fastnum tgt 0 @
-      zombie tgt dmg zmb @
-      zombie_loader zmb loader @
-      (rep 128 (apply loader Z @ succ tgt)))
+      val result = ref (
+        (fastest_doubleshot()) @
+        clear 0 @
+        fastnum dmg 10000 @
+        fastnum tgt 0 @
+        zombie tgt dmg zmb @
+        zombie_loader zmb loader @
+        (rep 128 (apply loader Z @ succ tgt)))
+     
+      val _ = print ("10k: " ^ (is (length (fastnum dmg 10000))) ^
+                     "zombie: " ^ (is (length (zombie tgt dmg zmb))) ^
+                     "loader: " ^ (is (length (zombie_loader zmb loader))) ^ "\n")
+    in
+      result
     end
+
 
   fun taketurn _ = case (!strategy) of nil => L Z 0
     | today::future => let 
