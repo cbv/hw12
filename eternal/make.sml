@@ -18,6 +18,8 @@ fun parse_player_arg s =
                                                | SOME n => REV (name, n))
     | _ => raise BadPlayer
 
+(* build_target and build_filename include messy hack to get around 
+ * joshua_'s change to the build process on Friday night *)
 fun build_target (CUR name) = "player-" ^ name ^ ".exe"
   | build_target (REV (name, num)) = 
     if num > 175 then "player-" ^ name ^ ".exe"

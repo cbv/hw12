@@ -224,6 +224,12 @@ fun match player0 player1 =
        | _ => () 
    end
       
+(* uses time as a substitute for randomness *)
+fun pick n =
+   IntInf.toInt (Time.toNanoseconds (Time.now ()) 
+                 mod IntInf.fromInt (valOf Int.maxInt))
+   mod n
+
 (* Main function*)
 (* args are the result of Params.docommandline *)
 fun go args = 
@@ -249,6 +255,34 @@ fun go args =
                   (RPC.rpc "http://R_E_D_A_C_T_E_D/arena/contestants.php" [])
          in 
             List.app (match player0) contestants
+         end
+
+       | ("auto", []) =>
+         let
+            fun tupleify str = 
+               case String.tokens (fn x => x = #":") str of
+                  [ a, b, c, d, e ] => (a, b, c, d, e)
+                | _ => (err "match.php!"; OS.Process.exit OS.Process.failure)
+
+            fun loop () = 
+              let 
+                (* Get candidates from RPC, filter for all the total noobs *)
+                val candidates =   
+                  map tupleify 
+                    (String.tokens Char.isSpace
+                      (RPC.rpc "http://R_E_D_A_C_T_E_D/arena/match.php" []))
+                val zeroes = List.filter (fn x => "0" = #5 x) candidates
+
+                (* Pick a random zero, or else a random low number *)           
+                val (p0, r0, p1, r1, _) = 
+                   if null zeroes 
+                   then List.nth (candidates, pick (length candidates))
+                   else List.nth (zeroes, pick (length zeroes))
+              in
+                match (p0 ^ ":" ^ r0) (p1 ^ ":" ^ r1); loop ()
+              end
+         in
+            loop ()
          end
 
        | ("duel", _) => 
