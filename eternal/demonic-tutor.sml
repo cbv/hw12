@@ -4,6 +4,24 @@ structure PFS = Posix.FileSys
 structure PP = Posix.Process
 structure PIO = Posix.IO
 
+val flagQuiet  = Params.flag false
+   (SOME ("--quiet", "Suppress most output")) "quiet"
+fun printquiet s = if !flagQuiet then () else print (s ^ "\n")
+
+val flagReport = Params.flag true
+   (SOME ("--noreport", "Do not report to server")) "report"
+
+val flagHelp = Params.flag false
+   (SOME ("--help", "Print an informative help message")) "help"
+
+val flagMode = Params.param "duel"
+   (SOME ("--mode", "Tutor mode (duel, stress, auto)")) "mode"
+
+(*
+val flagPoll   = Params.param "poll" "How often outputs are reported" "20000"
+val flagMode   = Params.param "mode" "Run mode (duel, stress, auto)" "duel"
+*)
+
 fun err x = TextIO.output (TextIO.stdErr, x ^ "\n")
 fun debug x = () (* TextIO.output (TextIO.stdErr, x ^ "\n") *)
 
@@ -34,9 +52,13 @@ fun setupPlayer player arg state =
    in
       case PP.fork () of 
          NONE => (* Set up the player's pipes, exec away *)
-         let in
+         let 
+            val devnull = PFS.openf ("/dev/null", PFS.O_WRONLY, PFS.O.append) 
+         in
             PIO.dup2 {old = inPlayer, new = PFS.stdin }
           ; PIO.dup2 {old = outPlayer, new = PFS.stdout }
+          ; if not (!flagQuiet) then ()
+            else PIO.dup2 {old = devnull, new = PFS.stderr }
           ; debug "Forking child..."
           ; PP.execp (exe, [ exe, arg ]) 
          end
@@ -141,67 +163,78 @@ fun continue (n, proponent: process, opponent: process) =
       continue (n+1, opponent, proponent)
    end
 
+fun usage stat = 
+  (err ("Usage: "^CommandLine.name()^" [options] [--mode duel] arg arg")
+   ; err ("       "^CommandLine.name()^" [options] --mode stress arg")   
+   ; err ("       "^CommandLine.name()^" [options] --mode auto")
+   ; err ("The argument 'foo' runs (building if needed) player-foo.exe")
+   ; err ("The argument 'foo:12' runs (building if needed) player-foo-12.exe")
+   ; err (Params.usage ())
+   ; OS.Process.exit stat)
+
+(* Runs a single match between two players *)
+fun match (player0, player1) = 
+   let 
+      val () = printquiet ("Starting " ^ player0 ^ " vs " ^ player1)
+
+      (* Setup state *)
+      val process0 = setupPlayer player0 "0" (LTG.initialside ())
+      val process1 = setupPlayer player1 "1" (LTG.initialside ())
+
+      (* Run *)
+      val (rounds, final0, final1) = continue (0, process0, process1)
+      val () = printquiet ("Done.\n")
+
+      val tok = String.tokens (fn c => c = #":")
+   in
+      (* Potentially record output *)
+      if not (!flagReport) then ()
+      else case (tok player0, tok player1) of
+         ([ name0, rev0 ], [ name1, rev1 ]) =>
+         (case (Int.fromString rev0, Int.fromString rev1) of 
+             (SOME rev0, SOME rev1) => 
+             let
+                val () = print "Reporting versioned match to server...\n"
+                fun vit vit' live' = 
+                   if live' = 0 then "0"
+                   else IntInf.toString (vit' div IntInf.fromInt live')
+                val (vit0, live0, dead0, zomb0) = playerData final0
+                val (vit1, live1, dead1, zomb1) = playerData final1
+                val f = print o RPC.rpc"http://R_E_D_A_C_T_E_D/arena/log.php"
+             in
+                f [ ("player0", name0),
+                    ("player0rev", Int.toString rev0),
+                    ("player1", name1),
+                    ("player1rev", Int.toString rev1),
+                    ("rounds", Int.toString rounds),
+                    ("dead0", Int.toString dead0),
+                    ("dead1", Int.toString dead1),
+                    ("zomb0", Int.toString zomb0),
+                    ("zomb1", Int.toString zomb1),
+                    ("vit0", vit vit0 live0),
+                    ("vit1", vit vit1 live1) ]
+                ; print "\nDone.\n"
+             end
+           | _ => ())
+       | _ => () 
+   end
+      
 (* args are the result of Params.docommandline *)
 fun go args = 
    let 
-      val () = print "Starting...\n"
-      val state0 = LTG.initialside ()
-      val state1 = LTG.initialside ()
-      fun initialize args = 
-         case args of 
-	        [ player0, player1 ] => 
-            let 
-               val t0 = String.tokens (fn c => c = #":") player0
-               val t1 = String.tokens (fn c => c = #":") player1
-               val report = 
-               case (t0, t1, map Int.fromString t0, map Int.fromString t1) of
-                 ([name0, _], [name1, _], [_, SOME rev0], [_, SOME rev1]) =>
-                 SOME (name0, rev0, name1, rev1)
-               | _ => NONE
-            in
-              (report, 
-               setupPlayer player0 "0" state0, 
-               setupPlayer player1 "1" state1)
-            end
-          | [] => 
-            (err ("No main argument given!")
-             ; err ("Usage: " ^ CommandLine.name () ^ " player0 player1")
-             ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
-             ; OS.Process.exit OS.Process.failure) 
-          | _ =>
-            (err ("Wrong number of arguments given!")
-             ; err ("Usage: " ^ CommandLine.name () ^ " player0 player1")
-             ; err ("playerN should be \"foo\" for \"player-foo.exe\"")
-             ; OS.Process.exit OS.Process.failure)
-      val (report, process0, process1) = initialize args
-
-      val (rounds, final0, final1) = continue (0, process0, process1)
+      val () = if not (!flagHelp) then ()
+               else usage OS.Process.success
    in
-      case report of 
-         NONE => print "Done."
-       | SOME (name0, rev0, name1, rev1) => 
-         let
-            val () = print "Reporting versioned match to server...\n"
-            fun vit vit' live' = 
-               if live' = 0 then "0"
-               else IntInf.toString (vit' div IntInf.fromInt live')
-            val (vit0, live0, dead0, zomb0) = playerData final0
-            val (vit1, live1, dead1, zomb1) = playerData final1
-            val f = print o RPC.rpc "http://R_E_D_A_C_T_E_D/arena/log.php"
-         in
-            f [ ("player0", name0),
-                ("player0rev", Int.toString rev0),
-                ("player1", name1),
-                ("player1rev", Int.toString rev1),
-                ("rounds", Int.toString rounds),
-                ("dead0", Int.toString dead0),
-                ("dead1", Int.toString dead1),
-                ("zomb0", Int.toString zomb0),
-                ("zomb1", Int.toString zomb1),
-                ("vit0", vit vit0 live0),
-                ("vit1", vit vit1 live1) ]
-            ; print "\nDone.\n"
-         end  
+      case (!flagMode, args) of
+         ("duel", [ player0, player1 ]) => match (player0, player1)
+       | ("duel", _) => 
+         (err "Wrong number of arguments (duel)"; usage OS.Process.failure)
+       | ("stress", _) => 
+         (err "Not ready yet"; usage OS.Process.success)
+       | ("auto", _) => 
+         (err "Not ready yet"; usage OS.Process.success)
+       | (mode, _) => 
+         (err ("Invalid mode '" ^ mode ^ "'"); usage OS.Process.success)
    end handle LTGParse.LTGIO s => (err ("Error: " ^ s)
                                    ; OS.Process.exit OS.Process.failure)
 
