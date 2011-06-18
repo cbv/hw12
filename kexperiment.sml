@@ -5,10 +5,7 @@
 fun rapp (ts, KCard c) = TRApp (ts, c)
   | rapp (ts, KApply (KCard c, t)) = rapp (Card.S <@ (Card.K <@ ts) @> c, t)
   | rapp (ts, KApply (KApply (t, u), v)) =
-        rapp (rapp (rapp (TLApp (Card.S,
-                                 TLApp (Card.K,
-                                        TLApp (Card.S,
-                                               TLApp (Card.K, ts)))),
+        rapp (rapp (rapp ((Card.S <@ (Card.K <@ (Card.S <@ (Card.K <@ ts)))),
                           t),
                     u),
               v)
