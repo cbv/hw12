@@ -10,6 +10,7 @@ struct
 
   structure EP = EmitProgram
   structure RE = RobustEmit
+  structure B = Backup
 
   infix 9 --
   val op -- = Apply
@@ -31,7 +32,7 @@ struct
          Targeting after choosing a source allows us to have lower latency on assassinating
          small programs that get hot. Setting source afte choosing a target reduces the
          risk that the opponent harms our source. *)
-    | ReTarget of { gun_slot : int, target_slot : int, src_slot : int }
+    | ReTarget of { gun_slot : int, target_slot : int, src_slot : int, backup : unit B.status ref }
       (* Now keep attacking until it's dead, or something happens to our
          equipment. *)
     | Attacking of { status : EP.status ref,
@@ -44,7 +45,8 @@ struct
                      (* Slot containing the index of
                         the target, which is referred
                         to by the gun. *)
-                     target_slot : int }
+                     target_slot : int,
+                     backup : unit B.status ref }
 
   val compare_scores = ListUtil.bysecond Real.compare
 
@@ -223,26 +225,57 @@ struct
               (* Hope that medic helps us. *)
               | BuildingGun { status = ref (RE.Paused _), ... } => DOS.Can'tRun
               | BuildingGun { status = ref (RE.Done gun_slot), target_slot, src_slot } =>
-                   let in
+                   let
+                       val (bstat, backup_pid) = B.backupspawn dos
+                                                               { src = gun_slot,
+                                                                 use_addressable = false,
+                                                                 done_callback = fn () => ()
+                                                               }
+                   in
                        eprint ("Gun is assembled :D");
                        mode := ReTarget { gun_slot = gun_slot, 
                                           target_slot = target_slot,
-                                          src_slot = src_slot };
+                                          src_slot = src_slot,
+                                          backup = bstat };
                        was_stuck := false;
                        taketurn dos
                    end
 
-              | ReTarget { gun_slot, target_slot, src_slot } =>
+              | ReTarget { gun_slot, target_slot, src_slot, backup } =>
                    (* Check if any of our slots are dead. If so,
                       yield to medic. This would be a good place to
                       give hints to the medic! *)
-                   if LTG.slotisdead (GS.myside gs) gun_slot orelse
-                      LTG.slotisdead (GS.myside gs) target_slot orelse
+                   if LTG.slotisdead (GS.myside gs) gun_slot
+                   then
+                       case !backup
+                       of B.Done (cb, ()) =>
+                           let
+                               val newgun = cb ()
+                               val (newbackup, backup_pid) = B.backupspawn dos { src = newgun, use_addressable = false, done_callback = fn () => () }
+                           in
+                               eprint ("Gun was dead, but restoring from backup.");
+                               was_stuck := false;
+                               mode := ReTarget { gun_slot = gun_slot,
+                                                  target_slot = target_slot,
+                                                  src_slot = src_slot,
+                                                  backup = newbackup } ;
+                               taketurn dos
+                           end
+                        | _ =>
+                           let in
+                               if !was_stuck
+                               then eprint ("Gun slot are dead!")
+                               else ();
+                               was_stuck := true;
+                               Can'tRun
+                           end
+                   else
+                   if LTG.slotisdead (GS.myside gs) target_slot orelse
                       LTG.slotisdead (GS.myside gs) src_slot
                    then
                        let in
                            if !was_stuck
-                           then eprint ("Gun/target/src slots are dead!")
+                           then eprint ("Target/src slots are dead!")
                            else ();
                            was_stuck := true;
                            Can'tRun
@@ -291,7 +324,8 @@ struct
                                          gun_slot = gun_slot,
                                          target_slot = target_slot,
                                          src_slot = src_slot,
-                                         status = stat };
+                                         status = stat,
+                                         backup = backup };
                      was_stuck := false;
                      Can'tRun
                    end)
@@ -305,16 +339,41 @@ struct
                           Can'tRun
                       end
 
-              | Attacking { status = ref EP.Done, shots, gun_slot, target_slot,
-                            src_slot, ... } =>
-                 if LTG.slotisdead (GS.myside gs) gun_slot orelse
-                    LTG.slotisdead (GS.myside gs) target_slot orelse
+              | Attacking { status = status as ref EP.Done, shots, gun_slot, target_slot,
+                            src_slot, backup, ... } =>
+                 if LTG.slotisdead (GS.myside gs) gun_slot
+                 then
+                     case !backup
+                     of B.Done (cb, ()) =>
+                         let
+                             val newgun = cb ()
+                             val (newbackup, backup_pid) = B.backupspawn dos { src = newgun, use_addressable = false, done_callback = fn () => () }
+                         in
+                             eprint ("Gun was dead, but restoring from backup.");
+                             was_stuck := false;
+                             mode := Attacking { status = status,
+                                                 shots = shots,
+                                                 gun_slot = gun_slot,
+                                                 target_slot = target_slot,
+                                                 src_slot = src_slot,
+                                                 backup = newbackup } ;
+                             taketurn dos
+                         end
+                      | _ =>
+                         let in
+                             if !was_stuck
+                             then eprint ("Gun slot are dead!")
+                             else ();
+                             was_stuck := true;
+                             Can'tRun
+                         end
+                 else
+                 if LTG.slotisdead (GS.myside gs) target_slot orelse
                     LTG.slotisdead (GS.myside gs) src_slot
                  then
                      let in
                           if !was_stuck
-                          then eprint ("Sniper's gun/target/src slot " ^
-                                       Int.toString gun_slot ^ "/" ^
+                          then eprint ("Sniper's target/src slot " ^
                                        Int.toString target_slot ^ "/" ^
                                        Int.toString src_slot ^
                                        " was killed! Hoping for medic.\n")
@@ -346,7 +405,8 @@ struct
                                          " in " ^ Int.toString (!shots) ^ " shot(s).");
                                  mode := ReTarget { gun_slot = gun_slot,
                                                     src_slot = src_slot,
-                                                    target_slot = target_slot };
+                                                    target_slot = target_slot,
+                                                    backup = backup };
                                  taketurn dos
                              end
                          else
@@ -358,7 +418,8 @@ struct
                                            ". Retargeting.");
                                    mode := ReTarget { gun_slot = gun_slot,
                                                       src_slot = src_slot,
-                                                      target_slot = target_slot };
+                                                      target_slot = target_slot,
+                                                      backup = backup };
                                    taketurn dos
                                end
                              else
@@ -373,7 +434,7 @@ struct
                      let in
                          eprint ("src/target cells don't even contain ints. retargeting.");
                          mode := ReTarget { gun_slot = gun_slot, target_slot = target_slot,
-                                            src_slot = src_slot };
+                                            src_slot = src_slot, backup = backup };
                          taketurn dos
                      end)
 
