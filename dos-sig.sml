@@ -45,7 +45,10 @@ sig
       { preview : dos -> unit,
         taketurn : dos -> dosturn }
 
-  (* Get my own pid. *)
+  (* The current turn number. *)
+  val getturnnumber : unit -> int
+
+  (* Get pid/name/priority of the given context. *)
   val getpid : dos -> pid
   val getname : dos -> string
   val getpriority : dos -> real
@@ -90,7 +93,7 @@ sig
   val transfer_slot : dos -> {dst : dos, slot : int} -> unit
 
   (* Indicates whether or not a slot is reserved. *)
-  val is_researved : int -> bool
+  val is_reserved : int -> bool
 
   (* Kill a running dominator. *)
   (* XXX Doesn't free slots or kill children yet *)

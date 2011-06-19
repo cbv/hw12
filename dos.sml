@@ -152,10 +152,11 @@ struct
       ignore (reserve_fixed_slot dst slot orelse raise DOS ("Failed transfer"))
     end
 
-  fun is_researved i = Array.sub (reserved, i)
+  fun is_reserved i = Array.sub (reserved, i)
 
   (* How many game turns have passed. *)
   val turnnum = ref 0
+  fun getturnnumber () = !turnnum
 
   val rtos = Real.fmt (StringCvt.FIX (SOME 2))
 
