@@ -40,7 +40,7 @@ struct
      as high-scoring, since we often want to revive them.
 
      TODO: Allow programs to actually advise on the importance
-     of slots, which should override use-based heuristics. 
+     of slots, which should override use-based heuristics.
 
      TODO: If a slot is freed, might want to clear its score.
 
@@ -68,7 +68,7 @@ struct
     | compare_scores ((false, _, _, _), (true, _, _, _)) = LESS
     | compare_scores ((_, v, i, s), (_, vv, ii, ss)) =
       (case Int.compare (v, vv) of
-           EQUAL => 
+           EQUAL =>
                (* This is really only for the case that the cards have
                   been completely unused. Heal cheaper cards since
                   they make good sources and are easier to heal. *)
@@ -106,7 +106,7 @@ struct
        source slot for the given health, then returns itself (so it sticks around). *)
     fun healprogram { src : int, amount : int, target : int } prog_slot =
       let
-          val helpy = 
+          val helpy =
               (\"src" ` \"target" ` \"amount" `
                (Card LTG.Revive -- $"target") --
                (* First heal from source to target.
@@ -138,11 +138,11 @@ struct
        more than 1.0, never less than 0.25 *)
     val discount_estimate = ref 1.0
     fun update_discount_estimate (actual, expected) =
-        let 
+        let
             (* XXX: time weighted average? *)
             val de = real actual / real expected
-            val newde = 
-                if !discount_estimate < de 
+            val newde =
+                if !discount_estimate < de
                 then (!discount_estimate + de) * 0.5
                 else de
 
@@ -174,7 +174,7 @@ struct
         in
             case !mode of
                 FindTarget =>
-                 (case DOS.reserve_addressable_slot dos of 
+                 (case DOS.reserve_addressable_slot dos of
                       NONE => DOS.Can'tRun
                     | SOME prog_slot =>
                    let
@@ -201,7 +201,7 @@ struct
                         there are no other medics. *)
                      val (stat, child_pid) = EP.emitspawn dos prog
                    in
-                     eprint ("New task: " ^ Int.toString src ^ " -> " ^ 
+                     eprint ("New task: " ^ Int.toString src ^ " -> " ^
                              Int.toString best ^ " @ " ^ Int.toString heal ^
                              ". Program length: " ^ Int.toString (length prog));
 
@@ -216,9 +216,9 @@ struct
                      Can'tRun
                    end)
               | Healing { status = ref (EP.Progress _), ... } => Can'tRun
-              | Healing { status = ref EP.Done, myslot, target, src, heals, 
+              | Healing { status = ref EP.Done, myslot, target, src, heals,
                           heal, old_health, child = _ } =>
-                 let 
+                 let
                      val myside = GS.myside gs
                      val health = Array.sub (#2 myside, target)
                      val src_health = Array.sub (#2 myside, src)
@@ -241,19 +241,19 @@ struct
                              taketurn dos
                          end
                      else
-                         if health >= HEALTH_GOAL 
-                         then 
+                         if health >= HEALTH_GOAL
+                         then
                              let in
                                  eprint ("Success! Healed slot " ^
                                          Int.toString target ^ " " ^
-                                         Int.toString (!heals) ^ 
+                                         Int.toString (!heals) ^
                                          " times to bring it to " ^
                                          Int.toString health ^ ".");
                                  DOS.release_slot dos myslot;
                                  mode := FindTarget;
                                  taketurn dos
                              end
-                         else 
+                         else
                              let in
                                  (* Otherwise keep healing. *)
                                  heals := !heals + 1;

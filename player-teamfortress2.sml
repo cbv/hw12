@@ -7,13 +7,13 @@ struct
 
   (* [ ] Scout         - (blitzkrieg)
      [ ] Soldier       - (suicide-bombs enemy?)
-     [ ] Flametrooper
+     [ ] Flametrooper  = (top secret)
      [ ] Demoman       - (creates demons)
      [ ] Heavy         - (defends blitzes?)
      [ ] Engineer      - (builds useful numbers?)
      [x] Medic         - Selects targets and heals them
      [x] Sniper        - Selects high-value enemies and kills them
-     [ ] Spy           - (copies useful programs? make zombies?)
+     [ ] Spy           - (make zombies?)
      *)
   val (init, taketurn) =
       DOS.makelayer [(1.0, Sniper.create ()),

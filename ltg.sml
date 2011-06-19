@@ -455,13 +455,19 @@ struct
                                              (opp, oppstats)) i init
                        handle EvalError s => 
                            let in
-                               if !tracing
+                               if (* true orelse *) !tracing
                                then eprint ("Evaluation ended with error: " ^
                                             s ^ "\n")
                                else ();
                                VFn VI
                            end
-                            | EvalLimit => VFn VI
+                            | EvalLimit => 
+                           let in
+                               if (* true orelse *) !tracing
+                               then eprint ("Evaluation exceeded limits\n")
+                               else();
+                               VFn VI
+                           end
                in
                    if !tracing
                    then eprint ("Result of eval:\n" ^

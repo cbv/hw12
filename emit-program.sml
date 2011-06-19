@@ -18,6 +18,7 @@ struct
           val turnsleft = ref turns
           fun taketurn dos =
             (case !turnsleft of
+                 (* Weird; should only happen for the empty program. *)
                  nil => (status := Done;
                          DOS.kill (DOS.getpid dos);
                          DOS.Can'tRun)
@@ -33,7 +34,11 @@ struct
                                but we'll be blocked until then. *)
                             DOS.Can'tRun)
                       else (progress := !progress + icr;
-                            status := Progress (!progress);
+                            (* Immediately be finished if that was the
+                               last instruction. *)
+                            if List.null turns
+                            then status := Done
+                            else status := Progress (!progress);
                             turnsleft := turns;
                             DOS.Turn t)
                   end)

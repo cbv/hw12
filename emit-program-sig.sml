@@ -13,6 +13,8 @@ sig
       Progress of real
       (* Can't continue, because the next cell in the
          program (given) is dead. *)
+      (* TODO: If the cell is killed and zombied, then we probably
+         want to indicate that we're just toast. *)
     | Paused of int
       (* Finished emitting. *)
     | Done
