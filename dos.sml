@@ -80,6 +80,12 @@ struct
       else (Array.update (reserved, i, true);
             true)
 
+  fun reserve_fixed_slots dos l =
+      if List.exists (fn i => Array.sub (reserved, i)) l
+      then false
+      else (app (fn i => Array.update (reserved, i, true)) l;
+            true)
+
   fun release_slot _ i =
     let in
         if Array.sub (reserved, i)

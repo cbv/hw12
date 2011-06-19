@@ -58,6 +58,7 @@ group is
    dominator-gorillas.sml
 
    (* Tom Fortress 2! Don't mess them up plz :) *)
+   dominator-scout.sml
    dominator-medic.sml
    dominator-sniper.sml
 

@@ -5,7 +5,7 @@ structure PlayerTF2 :> LAYER =
 struct
   structure GS = GameState
 
-  (* [ ] Scout         - (blitzkrieg)
+  (* [x] Scout         - (blitzkrieg offense / defense)
      [ ] Soldier       - (suicide-bombs enemy?)
      [ ] Flametrooper  = (top secret)
      [ ] Demoman       - (creates demons)
@@ -16,7 +16,8 @@ struct
      [ ] Spy           - (make zombies?)
      *)
   val (init, taketurn) =
-      DOS.makelayer [("Sniper", 1.0, Sniper.create ()),
+      DOS.makelayer [("Scout", 1000.0, Scout.create ()),
+                     ("Sniper", 1.0, Sniper.create ()),
                      ("Medic", 1.0, Medic.create ())]
 end
 

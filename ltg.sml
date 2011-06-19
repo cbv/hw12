@@ -13,7 +13,14 @@ struct
   (* Using vector since every field of stat is mutable. *)
   type stats = stat Vector.vector
 
-  fun eprint s = TextIO.output (TextIO.stdErr, s)
+  val DEBUG = false
+
+  val lastmsg = ref ""
+  val eprint =
+      fn s => if s = !lastmsg
+              then ()
+              else (TextIO.output (TextIO.stdErr, "[LTG] " ^ s ^ "\n"); lastmsg := s)
+
 
   fun initialstat () = { left_applications = ref 0,
                          right_applications = ref 0,
@@ -280,8 +287,13 @@ struct
                                          (* XXX, this assumes we are not
                                             in zombie semantics. *)
                                          if semantics = NORMAL
-                                         then incbyr propstats curslot 
-                                                 #damage_done (real (vito - newvito))
+                                         then 
+                                             let in
+                                                 eprint ("Did " ^ Int.toString (vito - newvito) ^
+                                                         " damage!");
+                                                 incbyr propstats curslot 
+                                                   #damage_done (real (vito - newvito))
+                                             end
                                          else ();
                                          Array.update (oppv, oppj, newvito)
                                      end);
@@ -316,9 +328,14 @@ struct
                                      then ()
                                      else let in
                                             if semantics = NORMAL
-                                            then incbyr propstats curslot 
-                                                   #healing_done 
-                                                   (real (newwitp - witp))
+                                            then 
+                                                let in
+                                                    eprint ("Did " ^ Int.toString (newwitp - witp) ^
+                                                            " healing!");
+                                                    incbyr propstats curslot 
+                                                      #healing_done 
+                                                      (real (newwitp - witp))
+                                                end
                                             else ();
                                             Array.update (propv, j, newwitp)
                                           end);
@@ -455,16 +472,15 @@ struct
                                              (opp, oppstats)) i init
                        handle EvalError s => 
                            let in
-                               if (* true orelse *) !tracing
-                               then eprint ("Evaluation ended with error: " ^
-                                            s ^ "\n")
+                               if DEBUG orelse !tracing
+                               then eprint ("Evaluation ended with error: " ^ s)
                                else ();
                                VFn VI
                            end
                             | EvalLimit => 
                            let in
-                               if (* true orelse *) !tracing
-                               then eprint ("Evaluation exceeded limits\n")
+                               if DEBUG orelse !tracing
+                               then eprint ("Evaluation exceeded limits")
                                else();
                                VFn VI
                            end

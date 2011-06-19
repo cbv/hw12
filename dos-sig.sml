@@ -72,6 +72,9 @@ sig
      allow a slot to be reserved whether or not it is alive. *)
   val reserve_fixed_slot : dos -> int -> bool
 
+  (* Same, but takes all or none. *)
+  val reserve_fixed_slots : dos -> int list -> bool
+
   (* Indicate that we no longer need the slot, so it can be
      returned by reserve_*_slot. Doesn't change the contents
      or anything like that. *)
