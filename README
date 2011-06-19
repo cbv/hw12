@@ -73,24 +73,33 @@ named thread abstraction in DOS. The main role of DOS is to handle memory
 partitioning and scheduling for the scarce resource of plays.
 
 Individual dominators can use the operating system to reserve slots for their
-processes, fork, block for certain events, and manipulate their running 
-priority. There is no memory protection, so dominators have to be careful not 
-to execute functions that write into the slots of other dominators. At every
-turn, DOS runs the "preview" function of every dominator so that the dominators
-can look at the state (possibly changing its priority in response) and update
-their internal memory. Then, DOS selects a single process and runs a "taketurn"
-function that allows a single dominator, as determined by the scheduler, to
-either run or declare that it is blocked and has nothing to do.
+processes, fork, block for certain events, and manipulate their running
+priority. There is no memory protection, so dominators have to be careful not
+to execute functions that write into the slots of other dominators. Slot are
+divided into those that are easily addressable and those that are not.
+Addressable slots are those whose number can be quickly computed in the
+combinators language. Allocated slots are automatically cleaned up on process
+exit, and if a process was created with a parent process, it will also be
+killed with the parent exits.
+
+At every turn, DOS runs the "preview" function of every dominator so that the
+dominators can look at the state (possibly changing its priority in response)
+and update their internal memory. Then, DOS selects a single process and runs a
+"taketurn" function that allows a single dominator, as determined by the
+scheduler, to either run or yield its slot to another process.  Each process is
+created with a priority that controls how often it runs relative to other
+processes.  This priority may be changed dynamically.
 
 In addition to dominators, the "userland" of DOS also provides several other
 services which dominators may use. Backup allows a dominator to maintain a
 copy of an important program in another slot, to reduce the risk of having to
 build something from scratch if a slot gets killed. EmitProgram allows a
-dominator to spawn and block on a child thread which, given a program, will
-make the program appear in a specified slot. RobustEmit is a version of
-EmitProgram which maintains incremental backups and automatically restores
-from them when under attack. NumberGenerator provides numbers in slots,
-sometimes more cheaply than building the number from scratch.
+dominator to spawn (and optionally block on) a child thread which, given a
+program, will make the program appear in a specified slot. RobustEmit is a
+version of EmitProgram which maintains incremental backups and automatically
+restores from them when under attack. NumberGenerator provides numbers in
+slots, sometimes more cheaply than building the number from scratch. It looks
+for a slot that already have the desired number or something close to it.
 
 Underlying DOS are two abstraction levels that we created as we understood 
 the problem better. At various points, we wrote contestants against each of
