@@ -37,7 +37,7 @@ struct
                             (* Immediately be finished if that was the
                                last instruction. *)
                             if List.null turns
-                            then status := Done
+                            then (status := Done; DOS.kill (DOS.getpid dos))
                             else status := Progress (!progress);
                             turnsleft := turns;
                             DOS.Turn t)

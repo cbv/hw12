@@ -23,8 +23,11 @@ struct
              priority : real ref,
              parent : pid option,
              dominator : dominator,
-             (* How many virtual cycles has this process consumed,
-                which is real turns / priority. *)
+             (* How many virtual cycles has this process has "run", which is
+                real turns / priority.  It includes every turn that the
+                process was given an opportunity to run, whether or not it
+                took that opportunity.  We try to keep the charges of all
+                processes about the same. *) 
              charge : real ref
              (* ... *)
              }
@@ -121,91 +124,47 @@ struct
          | SOME pid => longname pid ^ "." ^ name
       end
 
+  (* How many game turns have passed. *)
   val turnnum = ref 0
-
-  (* XXX This scheduler is pretty bad! A process can get arbitrarily far
-     behind (ahead) and then hog the CPU. Should recenter? *)
-  fun getstartcharge _ (* NONE *) priority =
-      let
-(*
-          val min_charge = ref (NONE : real option)
-          val () = GA.app (fn (P { charge, ... }) =>
-                           case !min_charge of
-                               NONE => min_charge := SOME (!charge)
-                             | SOME mc => if !charge < mc
-                                          then min_charge := SOME (!charge)
-                                          else ()) processes
-
-          (* The first process starts with no charge. *)
-          val charge = case !min_charge of
-              NONE => 0.0
-            | SOME c => c
-*)
-          val max_charge = ref (NONE : real option)
-          val () = GA.app (fn (P { charge, ... }) =>
-                           case !max_charge of
-                               NONE => max_charge := SOME (!charge)
-                             | SOME mc => if !charge > mc
-                                          then max_charge := SOME (!charge)
-                                          else ()) processes
-
-          (* The first process starts with no charge. *)
-          val charge = case !max_charge of
-              NONE => 0.0
-            | SOME c => c
-      in
-          charge
-      end
-(*
-    | getstartcharge (SOME parent) priority =
-      (* Just inherit parent's charge, if it's not a totally new process. *)
-      let
-          val P { charge, ... } = GA.sub processes parent
-      in
-          !charge 
-      end
-*)
 
   val rtos = Real.fmt (StringCvt.FIX (SOME 2))
 
   fun spawn parent (name, priority, f) =
       let 
-          val charge = ref (getstartcharge parent priority)
-(*
-          val () = eprint ("[DOS] new process started with charge " ^
-                           rtos (!charge) ^ "\n")
-*)
-          val pid = GA.update_next processes (P { reserved_slots = ref nil,
-                                                  name = name,
-                                                  priority = ref priority,
-                                                  parent = parent,
-                                                  dominator = f,
-                                                  charge = charge })
+        val total_charge = ref 0.0
+        val length = ref 0
+        val () = GA.app (fn (P { charge, ... }) => 
+                            (total_charge := !total_charge + !charge;
+                             length := !length + 1)) 
+                        processes
+        val charge = if !length = 0 then 0.0 
+                     else !total_charge / (Real.fromInt (!length))
+        (*
+        val () = eprint ("[DOS] new process started with charge " ^
+                         rtos (!charge) ^ "\n")
+         *)
+        val pid = GA.update_next processes (P { reserved_slots = ref nil,
+                                                name = name,
+                                                priority = ref priority,
+                                                parent = parent,
+                                                dominator = f,
+                                                charge = ref charge})
       in
-          pid
+        pid
       end
 
+  (* A list of processes that have been killed this turn.  They should not
+     have another chance to run. *)
   val killed_this_turn = ref []
 
   fun kill pid =
       let        
-        val P { charge, parent, ... } = GA.sub processes pid
+        val P { parent, ... } = GA.sub processes pid
       in
         killed_this_turn := pid :: !killed_this_turn;
-(*
-        (* Kill off any children first. Note that killing each of these
-          children will pass any charges to us. *)
         GA.appi (fn (child_pid, P { parent = SOME parent_pid, ... }) => 
                     if parent_pid = pid then kill child_pid else ()
                   | _ => ()) processes;
-        (* Pass on any of our charges to our parent. *)
-        case parent of
-          SOME parent_pid =>
-          let val P { charge = parent_charge, ... } = GA.sub processes pid 
-          in parent_charge := !parent_charge + !charge
-          end
-        | NONE => ();
-*)
         (* eprint "XXX NOTE: Kill does not free slots, yet!!\n"; *)
         GA.erase processes pid
       end
@@ -241,31 +200,37 @@ struct
              val () =
                  eprint ("[DOS]: Schedulable: " ^ StringUtil.delimit " "
                          (map (fn (pid, charge) =>
-                               longname pid ^ "@" ^ rtos charge) l) ^ "\n")
+                                  (if List.exists (fn p => p = pid) (!killed_this_turn)
+                                   then "<killed>" else longname pid)
+                                  ^ "@" ^ rtos charge) l) ^ "\n")
                   *)
-
+                 
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
                | dosomething ((pid, new_charge) :: t) = 
                  if List.exists (fn p => p = pid) (!killed_this_turn) then dosomething t else
                  let
-                   val P { priority, dominator, charge, ... } = GA.sub processes pid
+                   val P { dominator, charge, ... } = GA.sub processes pid
                    val dos = D { gs = gs, pid = pid }
                  in
+                   (* Charge it whether it runs or not. *)
+                   charge := new_charge; 
                    case #taketurn dominator dos of
                        Can'tRun => dosomething t
                      | Turn turn =>
-                       (* Only charge the one that took the move. *)
                        let in
                          (*
                          eprint ("[DOS] sched: " ^ Int.toString (!turnnum) 
-                                 ^ " " ^ longname pid ^ "\n");
+                                 ^ " " ^ (if List.exists (fn p => p = pid) (!killed_this_turn)
+                                          then "<killed>" else longname pid) ^ "\n");
                          *)
-                         charge := new_charge;
                          turn
                        end
                  end
          in
-             dosomething l before (turnnum := !turnnum + 1; killed_this_turn := [])
+             dosomething l 
+             before
+             (turnnum := !turnnum + 1; 
+              killed_this_turn := [])
          end
     in
        (dos_init, dos_taketurn)
