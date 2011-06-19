@@ -57,7 +57,7 @@ struct
 
       val codes = ref []
 		      
-      fun dprint x = (if !debugs > 0 then (debugs := !debugs - 1; eprint (Int.toString (!counter) ^ " " ^ x ^ "\n")) else ())
+      fun dprint gs x = (if !debugs > 0 then (debugs := !debugs - 1; eprint (Int.toString (GS.time gs div 2) ^ " " ^ x ^ "\n")) else ())
  		     
       fun also [] x = x
 	| also (h::tl) x = h @@ also tl x
@@ -84,13 +84,14 @@ struct
 	  med := slot();
 	  loc := slot();
 	  helpSmall := install (help ` Int battery ` Int battery ` getr small);
-	  ass := install (attack ` Int battery ` getr loc ` getr med andthen help ` Int battery ` Int battery ` getr small );
+	  ass := install (attack ` Int battery ` getr loc ` getr med);
 	  slosher := install (put (help ` Int battery ` Int battery ` getr big) (help ` Int battery ` Int battery ` getr big));
 	  warm := true;
 	  ()
       end
 
       fun charge gs = let
+	  val _ = dprint gs ("Charging")
 	  val (vals, vits) = GS.myside gs
 	  val (_, ovits) = GS.theirside gs
 	  val v = Array.sub (vits , battery)
@@ -105,9 +106,8 @@ struct
 	  end
 	  val plan = attacker @@> Fn decide
       in
-	  if Array.sub (vits, !med) <= 0 then (eprint "recovering\n"; (revive ` Int (!med), 10) @@ Fn charge )
-	  else if v < 10000
-	  then (dprint ("Rebooting!"); (revive ` Int 0, 1) 
+	  if v < 10000
+	  then (dprint gs ("Rebooting!"); (revive ` Int 0, 1) 
 			            @@ (help ` Int slosh ` Int battery ` Int 5000, 1) 
 				    @@ (help ` Int slosh2 ` Int battery ` Int 5000, 1)
 				    @@ Fn main)
@@ -115,7 +115,7 @@ struct
 	  then helpSmall @@> Fn charge
 	  else if (v < aThresh)
 	  then slosher @@> Fn charge
-	  else (dprint("Attacking"); plan)
+	  else (dprint gs ("Attacking"); plan)
       end
       and main gs = setr loc 0
 		 @@ setr med 11112 
