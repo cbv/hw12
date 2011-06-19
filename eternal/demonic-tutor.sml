@@ -248,6 +248,8 @@ fun match player0 player1 =
       val () = TextIO.closeOut (#outstream process0)
       val () = TextIO.closeIn (#instream process1)
       val () = TextIO.closeOut (#outstream process1)
+      val () = Option.app TextIO.closeOut (#statstream process0)
+      val () = Option.app TextIO.closeOut (#statstream process1)
 
       val tok = String.tokens (fn c => c = #":")
    in
