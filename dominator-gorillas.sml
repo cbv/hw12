@@ -87,12 +87,22 @@ struct
       end
 
       fun charge gs = let
-	  val (_, vits) = GS.myside gs
+	  val (vals, vits) = GS.myside gs
+	  val (_, ovits) = GS.theirside gs
 	  val v = Array.sub (vits , battery)
-	  val attacker = ass (* if sweep then sweeper else ass *)
-	  val plan = attacker @@> [L(Succ, !loc)] @@>> Fn charge
+	  val attacker = ass 
+	  fun decide gs = let
+
+	      val moveOn = (case Array.sub (vals , !loc) of
+				LTG.VInt n => Array.sub (ovits, 255 - n) <= 0
+			      | _ => true) handle Subscript => true
+	  in
+	      if moveOn then [L(Succ, !loc)] @@>> Fn charge else Fn charge
+	  end
+	  val plan = attacker @@> Fn decide
       in
-	  if v < 10000
+	  if Array.sub (vits, !med) <= 0 then (eprint "recovering\n"; (revive ` Int (!med), 10) @@ Fn charge )
+	  else if v < 10000
 	  then (dprint ("Rebooting!"); (revive ` Int 0, 1) 
 			            @@ (help ` Int slosh ` Int battery ` Int 5000, 1) 
 				    @@ (help ` Int slosh2 ` Int battery ` Int 5000, 1)
