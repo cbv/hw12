@@ -376,6 +376,14 @@ in
               KApply (opt e, KApply (opt t, opt u))
             end
           *)
+          (*
+          (* never happens due to our optimizations in bracket abstraction *)
+          | opt (KApply (KApply (KCard S, (KApply (KCard K, a))), KCard I)) =
+            let in
+                eprint "[Kom] Got magic optimization 2!";
+                opt a
+            end
+          *)
 
           | opt (KApply (KApply (KCard K, t), u)) =
                 if pure u
