@@ -23,8 +23,8 @@ struct
                   )
             )
 
-  (* fun four v = Apply(basefour,Var v) *)
-  fun four v = Apply(Apply(Card Card.Get, Card Card.Zero), Var v)
+  fun four v = Apply(basefour,Var v)
+  (* fun four v = Apply(Apply(Card Card.Get, Card Card.Zero), Var v) *)
   fun quad x = Apply(Card Card.Dbl,(Apply(Card Card.Dbl,x)))
 
   val timecube =

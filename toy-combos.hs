@@ -81,10 +81,12 @@ f = Lam "x" $ Lam "y" $ Var "y"
 
 -- maps [T, I, F, S] to lambdas: \x -> x + [0, 1, 2, 3]
 basefour =
-    let -- \fx -> succ(fx)
-        a = Lam "f" $ Lam "x" $ Succ $ Var "f" $$ Var "x"
-        -- \fx -> succ(succ(fx))
-        b = Lam "f" $ Lam "x" $ Succ $ Succ $ Var "f" $$ Var "x"
+    let ---- \fx -> succ(fx) // "plus one"
+        -- a = Lam "f" $ Lam "x" $ Succ $ Var "f" $$ Var "x"
+        a = s $$ (t $$ (Lam "x" $ Succ $ Var "x")) -- jcreed's version, card-friendly
+        ---- \fx -> succ(succ(fx)) // "plus two"
+        -- b = Lam "f" $ Lam "x" $ Succ $ Succ $ Var "f" $$ Var "x"
+        b = s $$ (t $$ (Lam "x" $ Succ $ Succ $ Var "x")) -- .. card-friendly
     in Lam "x" $ Var "x" $$ f $$ i $$ (Var "x" $$ (t $$ a) $$ b $$ i)
 
 -- \x y z w -> get 0 w $ quad $ get 0 z $ quad $ get 0 y $ quad $ get 0 x
