@@ -120,6 +120,17 @@ struct
       apply 1 Z @
       apply_slot_to_slot 1 0 
 
+  (* best used with 0 0 1 0 *)
+  fun fast_doubleshot (scratch : int) (dmg_slot : int) (source1 : int) (source2 : int) (target : int) : LTG.turn list =
+      fastload scratch Attack @
+      apply_slot_to_int scratch source1 @
+      apply_slot_to_int scratch target @
+      apply_slot_to_slot scratch dmg_slot @ (* executes Attack mine1 enemy 8192 *)
+
+      fastnum scratch source2 @
+      [L Attack scratch] @
+      apply_slot_to_int scratch target  @
+      apply_slot_to_slot scratch dmg_slot
 (*
       fastload 1 Zombie @
       apply_slot_to_int 1 0 @
