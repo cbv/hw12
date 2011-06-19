@@ -213,8 +213,10 @@ fun TC c = TCard c
 fun c <@ ts = TLApp (c, ts)
 fun ts @> c = TRApp (ts, c)
 
-fun twigapp (TCard c, ts) = c <@ ts
-  | twigapp (ts, TCard c) = ts @> c
+exception Kil2TwigTimeout
+
+fun twigapp' r (TCard c, ts) = c <@ ts
+  | twigapp' r (ts, TCard c) = ts @> c
   (*
   | twigapp (TLApp (c, us), ts) = ???
         (c us) ts
@@ -222,17 +224,44 @@ fun twigapp (TCard c, ts) = c <@ ts
      == S c (K ts) us   // XXX not in twig form yet :(
   | twigapp (TRApp (us, c), ts) =
   *)
-  | twigapp (ts, TLApp (c, us)) = twigapp (Card.S <@ (Card.K <@ ts) @> c, us)
-  | twigapp (ts, TRApp (us, c)) = twigapp (Card.S <@ (Card.K <@ ts), us) @> c
+  | twigapp' r (ts, TLApp(c,us)) = twigapp r (Card.S <@ (Card.K <@ ts) @> c, us)
+  | twigapp' r (ts, TRApp(us,c)) = twigapp r (Card.S <@ (Card.K <@ ts), us) @> c
     (*
         ts @ (c us)
         K ts us (c us)
         S (K ts) c us
     *)
 
-fun kil2twig (KCard c) = TCard c
-  | kil2twig (KApply (t, u)) = twigapp (kil2twig t, kil2twig u)
-  | kil2twig (KVar x) = raise (Kompiler ("unbound variable: " ^ x))
+and twigapp r ts =
+    let in
+        r := !r - 1;
+        if !r < 0
+        then raise Kil2TwigTimeout
+        else twigapp' r ts
+    end
+
+fun kil2twig' r (KCard c) = TCard c
+  | kil2twig' r (KApply (t, u)) = twigapp r (kil2twig r t, kil2twig r u)
+  | kil2twig' r (KVar x) = raise (Kompiler ("unbound variable: " ^ x))
+
+and kil2twig r k =
+    let in
+        r := !r - 1;
+        if !r < 0
+        then raise Kil2TwigTimeout
+        else kil2twig' r k
+    end
+
+fun kil2twig_limited k =
+    let fun kilsize (KCard _) = 1
+          | kilsize (KApply (t, u)) = kilsize t + kilsize u + 1
+          | kilsize (KVar x) = 1
+        val size = kilsize k
+        val r = ref (100 * size)    (* overflow? *)
+    in
+        kil2twig r k
+    end
+    handle Overflow => raise Kil2TwigTimeout
 
 fun twig2turns twig i =
     let fun t2t (TCard c) = [R (i, c)]
@@ -242,18 +271,24 @@ fun twig2turns twig i =
         rev (t2t twig)
     end
 
-fun kil2turns_wjl init k i = init @ twig2turns (kil2twig k) i
+fun kil2turns_wjl init k i = SOME (init @ twig2turns (kil2twig_limited k) i)
+                             handle Kil2TwigTimeout => NONE
 
 (**** end wjl version of kil2turns ****)
 
 (* XXX experimental: try both, take the smaller.  performance problem? *)
+(* NB: kil2turns_wjl will return NONE if it takes more than 100*n steps
+   to convert a kil of size n *)
 fun kil2turns init k i =
     let val tspoons = kil2turns_spoons init k i
-        val twjl = kil2turns_wjl init k i
+        val twjl_o = kil2turns_wjl init k i
     in
-        if length tspoons < length twjl
-        then tspoons
-        else twjl
+        case twjl_o of
+            NONE => tspoons
+          | SOME twjl =>
+                if length tspoons < length twjl
+                then tspoons
+                else twjl
     end
 
 (* Tom's peephole optimizer. 
@@ -300,9 +335,13 @@ end
 fun compile s i =
     kil2turns [L(Card.Put, i)]
               (optimize (src2kil s)) i
-fun compile_never_exponential s i =
+
+fun compile_never_exponential s i = compile s i
+    (*
+    (* compile is now never exponential, by fiat *)
     kil2turns_spoons [L(Card.Put, i)]
                      (optimize (src2kil s)) i
+    *)
 
 fun compile_no_clear s i =
     kil2turns [L(Card.K, i), L(Card.I, i), L(Card.S, i)]
