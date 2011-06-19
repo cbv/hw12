@@ -57,6 +57,11 @@ struct
   (* TODO: This should be smarter. *)
   val reserve_addressable_slot = reserve_slot
 
+  fun reserve_fixed_slot dos i =
+      if Array.sub (reserved, i) then false
+      else (Array.update (reserved, i, true);
+            true)
+
   fun release_slot _ i =
     let in
         if Array.sub (reserved, i)

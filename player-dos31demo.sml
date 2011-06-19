@@ -10,7 +10,8 @@ struct
   (* Just creates two copies of the Ripens dominator. *)
   val (init, taketurn) = 
       DOS.makelayer [(1.0, Ripens.create ()),
-                     (1.0, Ripens.create ())]    
+                     (1.0, Ripens.create ()),
+                     (1.0, NumberGenerator.create ())]
 end
 
 structure Player = LayerFn(PlayerDOS31Demo)

@@ -65,6 +65,10 @@ sig
      may have arbitrary content in it, but won't be dead. *)
   val reserve_addressable_slot : dos -> int option
 
+  (* Reserve the given slot, if available. Returns true if successful. Will
+     allow a slot to be reserved whether or not it is alive. *)
+  val reserve_fixed_slot : dos -> int -> bool
+
   (* Indicate that we no longer need the slot, so it can be
      returned by reserve_*_slot. Doesn't change the contents
      or anything like that. *)

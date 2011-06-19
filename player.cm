@@ -42,6 +42,9 @@ group is
    emit-program-sig.sml
    emit-program.sml
 
+   number-generator-sig.sml
+   number-generator.sml
+
    unravel-program-sig.sml
    unravel-program.sml
 
