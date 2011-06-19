@@ -17,6 +17,7 @@ Signed,
  x David Renshaw, Carnegie Mellon University, New York, NY, USA
  y Ben Blum, Carnegie Mellon University, Pittsburgh, PA, USA
  o William Lovas (Dr. Barspoon), Carnegie Mellon University, Pittsburgh, PA, USA
+ / Joshua Wise, Emarhavil Heavy Industries, Wayland, MA, USA
 
 Please sign with real name, affiliation, and location - this is requested
 in the final submission.
