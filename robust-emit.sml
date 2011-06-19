@@ -3,6 +3,8 @@ struct
   exception Fuck of string
 
   structure GS = GameState
+  
+  structure B = Backup
 
   datatype status =
       Progress of real
@@ -16,7 +18,7 @@ struct
    * backup on hand even while refreshing to a latest backup. (Note: Killing
    * the backups can still foil us, but we won't get foiled if they only
    * target the main slot.) *)
-  type backup_status = ((LTG.turn list * int) Backup.status ref * DOS.pid)
+  type backup_status = ((LTG.turn list * int) B.status ref * DOS.pid)
 
   (* Trigger indicates the next time a backup should be kicked. *)
   type backups = { b0 : backup_status, b1 : backup_status, b_trigger : int }
@@ -48,7 +50,7 @@ struct
             let
               (* To spawn a new backup thread for the given slot *)
               fun spawn_new_backup slot =
-                Backup.backupspawn dos
+                B.backupspawn dos
                   { src = slot, use_addressable = use_addressable,
                     done_callback = get_turnsleft }
               fun two_new_backups ticks slot =
@@ -58,7 +60,7 @@ struct
                 in
                   (* b0 should always be the "more recent" backup. Right now,
                    * that means "farther in the future than b1". *)
-                  b0p := Backup.Waiting; b1p := Backup.Waiting;
+                  b0p := B.Waiting; b1p := B.Waiting;
                   { b0 = b0, b1 = b1, b_trigger = ticks + backup_stride }
                 end
             in
@@ -115,10 +117,10 @@ struct
                         in
                           (* b0 is "more recent", so check it first *)
                           case !(#1 b0) of
-                               Backup.Done done_info => use_backup done_info b1
+                               B.Done done_info => use_backup done_info b1
                              | _ =>
                                  (case !(#1 b1) of
-                                       Backup.Done done_info => (* use older *)
+                                       B.Done done_info => (* use older *)
                                          use_backup done_info b0
                                      | _ => (* fucked *)
                                        (status := Paused slot; DOS.Can'tRun))
