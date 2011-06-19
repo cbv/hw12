@@ -1,0 +1,29 @@
+this is a list of things that are on bblum's mind at 0500 EDT. feel free to add
+your own improvements, rebuttals, or whatever.
+
+backup is great. it seems like it works with sniper-with-backup as produced by
+joshua, to great effect.
+
+robust-emit is a version of emit-program that
+ 0 - uses Backup to avoid losing from having its guy get killed
+ 1 - instead of being told a slot to generate in, picks a slot and "returns" it
+ 2 - currently only takes one backup, but needs to take incremental ones
+ 3 - Is not tested but will probably work very well on sniper et al.
+
+the number generator wants:
+ 1 - support for building a timecube when we get "safely late" into the game
+ 2 - an interface to build a number in a user-specified slot (useful for sniper)
+     - this would fit best with using the timecube; otherwise it would probably
+       just be cheapest to compile the number from scratch into the slot
+
+backup, on the other hand, can be enhanced to use the current number generation
+scheme, instead of allocating the slot on its own. it would just ask for the
+number generator to produce the "src" number in any slot, then apply "Get", and
+the backup would be completed. (there is a TODO comment in backup to this
+effect, but it would need more than just a few lines to restructure.)
+
+perhaps the sniper should heuristically select its next target not just based on
+evaluation of a slot's value but also on how easy a slot number is to calculate
+starting from the number that you were previously attacking?
+
+
