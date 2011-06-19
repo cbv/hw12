@@ -237,11 +237,11 @@ open LTG;
                         | AVAttack [j, i] => ( addeffect(EAttack [v2,j,i]);
                                                AVFn AVI 
                                              )
-                        | AVAttack l => (addeffect( EAttack (v2::l));
+                        | AVAttack l => ( (* addeffect( EAttack (v2::l)); *)
                                          AVFn (AVAttack (v2 :: l)))
                         | AVHelp [j, i] => (addeffect  (EHelp [v2,j,i]);
                                             AVFn AVI )
-                        | AVHelp l => ( addeffect(EHelp (v2::l)) ;
+                        | AVHelp l => ( (* addeffect(EHelp (v2::l)) ; *)
                                         AVFn (AVHelp (v2 :: l)))
                         | AVCopy =>
                           let val i = expectslotnumber v2
@@ -273,7 +273,7 @@ open LTG;
                               AVFn AVI
                           end
                         | AVZombie l => AVFn (AVZombie (v2 :: l)))
-                   | _ => raise AbsEvalError "unimplemented"
+                   | _ => AVUnknown Unknown
                end
       val retexp = SOME(eval exp )   handle AbsEvalError s => NONE
                                           | AbsEvalLimit => NONE;
@@ -281,10 +281,26 @@ open LTG;
         (retexp, !effects)
     end
 
-(*
-  fun abseval (((propf, propv) : side), 
-               ((oppf,  oppv) : side))
-              (exp : abstractexp) : (abstractvalue * effect list) =
-*)
+
+  fun evalwithstate1 semantics (prop : side, 
+                                (opp : side))
+                      (exp : abstractexp) : (effect list) =
+      let  fun aux exp1 depth acc = 
+              if depth = 0 then acc else
+               case exp1 of
+                   AV (AVFn AVI) => acc
+                 | AV (AVInt i) => acc
+                 | AV (AVUnknown u) => acc
+                 | _ =>  ( let val newexp = AApp (exp1, AV (AVUnknown Unknown))
+                           in
+                               case evalwithstate semantics (prop,opp) newexp of
+                                   (NONE, es) => es @ acc
+                                 | (SOME(av), es) => aux (AV av) (depth - 1) (es @ acc )
+                           end
+                         )
+      in
+          aux exp 20 nil
+      end
+
 
 end

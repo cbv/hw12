@@ -40,10 +40,10 @@ struct
               let val _ = eprint ` Int.toString (!n) ^ ": "
                   val _ = eprint "found some code\n"
                   val _ = eprint ` valtos code ^ "\n"
-                  val abscode = abstractify code
-                  val newcode = AApp (AV abscode, AV ` AVUnknown Unknown )
-                  val (resval, reseffects) =
-                      evalwithstate NORMAL (theirside, myside) newcode
+                  val _ = eprint "it has the following effects\n"
+                  val abscode = AV ` abstractify code
+                  val reseffects =
+                      evalwithstate1 NORMAL (theirside, myside) abscode
                   val _ = eprint `
                            StringUtil.delimit ", " (map effect2str reseffects)
                   val _ = eprint "\n"
