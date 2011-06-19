@@ -46,15 +46,23 @@ struct
 
   (* must start with slot containing zero! *)
   (* cost is number of bits in n, plus number of 1 bits in n, minus one*)
+  (* Call this "blog n" or {n}*)
   fun buildnum slot 0 = []
     | buildnum slot n = if (n mod 2 = 1) then (buildnum slot (n - 1)) @ (succ slot)
                                          else (buildnum slot (n div 2)) @ (dbl slot)
 
-  (* cost is buildnum slot n,  + 1 *)
+  (* cost is {n} + 1 *)
   fun fastnum slot n = (fastzero slot) @ (buildnum slot n)
-
+  (* cost is {n} + 2 *)
   fun slownum slot n = (slowzero slot) @ (buildnum slot n)
  
+
+  (* 3 *) fun rcomp n card = rap n @ [R n card]
+
+  (* f[n] = rrs_ref(f[m]), expects slot n to be Id *)
+  (* cost is 13 + 3m + 3n *)
+  fun fast_rr n m = fastload n Get @ [ L K n, L S n] @ rcomp n K @ apply_slot_to_int n n @ [L K n, L S n] @ apply_slot_to_slot n m
+
   datatype num = IMM of int | REG of int
 
   (* Shoots the slot 'enemy' twice, using the slots 'mine1' and 'mine2'. Note that this uses the backwards numbering for 'enemy' that the attack card uses; i.e. pass enemy=255 to shoot what the enemy calls slot 0. Sorry. *)
