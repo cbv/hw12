@@ -19,7 +19,7 @@ struct
              Apply((* x f i *)
                    Apply(Apply(Var "x",f),i),
                    (* x (t a) b i *)
-                   Apply(Apply(Var "x",Apply(t,b)),i)
+                   Apply(Apply(Apply(Var "x",Apply(t,a)),b),i)
                   )
             )
 
