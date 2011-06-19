@@ -123,6 +123,17 @@ struct
       clear 0
     end
 
+  fun doubleshot_gwillen (dmg : int (*slot*)) (enemy_cell : int (*slot*)) (mine1 : int) (mine2 : int) (scratch2 : int) : LTG.turn list =
+      fastload scratch2 Attack @
+      apply_slot_to_int scratch2 mine1 @
+      apply_slot_to_slot scratch2 enemy_cell @
+      apply_slot_to_slot scratch2 dmg @ (* executes Attack minescratch2 enemy 8292 *)
+
+      fastload scratch2 Attack @
+      apply_slot_to_int scratch2 mine2 @
+      apply_slot_to_slot scratch2 enemy_cell @
+      apply_slot_to_slot scratch2 dmg (* executes Attack mine2 enemy 8292 *)
+
   (* like the above, with enemy = 0 and mine = 0 and 1 *)
   (* 35 cycles *)
   fun fastest_doubleshot () : LTG.turn list =

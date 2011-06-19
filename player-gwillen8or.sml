@@ -52,12 +52,12 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         val x = Kompiler.compile_no_clear_rev exp 3
 *)
   fun zombie tgt_slot dmg_slot dem_slot daemon_code zombie_code = let val exp =
-      \"_" ` \"_" ` (seq
+      \"_" ` (seq
           (Card Zombie -- Int dem_slot
-                       -- ((Card Copy -- Int daemon_code) -- (Card Succ -- (Card Get -- Int tgt_slot))))
-          (Card Help -- (Card Dbl -- (Card Get -- Int tgt_slot))
-                     -- (Card Succ -- (Card Dbl -- (Card Get -- Int tgt_slot)))
-                     -- (Card Copy -- Int dmg_slot))) 
+                       -- (Card Copy -- Int daemon_code))
+          (Card Help -- (Card Succ -- (Card Dbl -- (Card Copy -- Int tgt_slot)))
+                     -- (Card Dbl -- (Card Copy -- Int tgt_slot))
+                     -- (Card Copy -- Int dmg_slot)))
     in
       Kompiler.compile exp zombie_code
     end
@@ -93,8 +93,8 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
   (* Daemon performs \_ . Zombie zombie_install (Get zombie_code) *)
   (* zombie_install is the number, in _our_ numbering system, of the slot on _their_ side where the zombie will be installed. zombie_code is the number, in _our_ numbering system, of the slot on _our_ side where the zombie program is kept. *)
   fun daemon zombie_install zombie_code daemon_code = let
-      val exp = \"slot" ` \"_" ` Card Zombie -- Int zombie_install 
-                                             -- ((Card Get -- Int zombie_code) -- $"slot")
+      val exp = \"_" ` Card Zombie -- Int zombie_install 
+                                   -- (Card Get -- Int zombie_code)
     in
       Kompiler.compile exp daemon_code
     end
@@ -107,12 +107,12 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
                     apply scratch Z @
                     apply_slot_to_slot scratch dmg
                          
-  fun shootem (dmg_cell : int) (tgt : int)
+  fun shootem (dmg_cell : int) (tgt_cell : int)
     (mine1 : int) (scratch2 : int) : LTG.turn list =
       clear scratch2 @
       fastload scratch2 Attack @
       apply_slot_to_int scratch2 mine1 @
-      apply_slot_to_int scratch2 tgt @
+      apply_slot_to_slot scratch2 tgt_cell @
       apply_slot_to_slot scratch2 dmg_cell (* executes Attack minescratch2 enemy
       8292 *)
 
@@ -121,10 +121,10 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val endslot = 3 (* number of the end slot, i.e. 255 *)
       val dmg = 1
       val zombie_code = 2
-      val dmg_back = 4
+      val dmg_2x = 4
       val loader = 5   
       val scratch_slot = 6
-      val tgt = 0
+      val tgt = 7
 
       val daemon_install = 0 (* our slot 255, in enemy's numbering system *)
       val zombie_install = 255 (* their slot zero, in our numbering system *)
@@ -146,15 +146,21 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val result = ref (
         print_and_cat [
         ("255", fastnum endslot 255),
+(*
+        ("9996", fastnum dmg 9996),
+*)
         ("10k", fastnum dmg 10000),
         ("helpme", help_me dmg endslot scratch_slot),
-        ("dmg_back", slownum dmg_back dmg @ [L Get dmg_back]),
-        ("dbl dmg", dbl dmg_back),
-        ("shootem", shootem dmg_back 0 0 scratch_slot),
-        ("zombie", zombie tgt dmg 0 daemon_code zombie_code),
-        ("daemon", daemon 0 zombie_code daemon_code),
+(*
+        ("startup", doubleshot_gwillen dmg endslot 0 1 2),
+        ("10k", rep 4 (succ dmg)),
+*)
+        ("dmg_2x", fastnum dmg_2x dmg @ [L Get dmg_2x] @ dbl dmg_2x),
+        ("shootem", shootem dmg_2x endslot 0 scratch_slot),
+        ("zombie", zombie tgt dmg daemon_install daemon_code zombie_code),
+        ("daemon", daemon zombie_install zombie_code daemon_code),
         ("loadctr", fastnum tgt 0),
-        ("launch", slownum scratch_slot daemon_code @ [L Get scratch_slot] @ [R scratch_slot Z] @ [R scratch_slot I]),
+        ("launch", fastnum scratch_slot daemon_code @ [L Get scratch_slot] @ [R scratch_slot Z] @ [R scratch_slot I]),
         ("c&c", rep 128 (succ tgt))
       ])
 
