@@ -1,4 +1,115 @@
 Cult of the Bound Variable
 ICFP 2011 Programming Contest
 
-<snip>
+
+Cult of the Bound Variable, the descendends of the CMU-affiliated team that ran
+the 2006 ICFP Programming Contest, is usually a rather large team. This year,
+we were not only large but had active participants in four different cities on 
+three separate continents (Pittsburgh, New York City, Paris, and Bangalore). 
+
+In order to allow many people to participate together and have fun, in many
+recent years our overall design has been "arena" based - we allow different
+subgroups to explore many different solutions during the contest, but all the
+code is pulled into a shared sources.cm file. This greatly facilitates sharing
+and means that people can either work on finished submissions or shared 
+libraries throughout the contest. We tag everything with revision numbers
+with the knowledge that sometimes progress goes backwards, and the code
+at the end of the contest is not always the code we want to use to build our
+final submission.
+
+We describe several aspects of our submission, from roughly the highest to the
+lowest levels: the Kompiler (a compiler), DOS (a scheduler), the individual
+candidate players, the Demonic Tutor (a match server), and CARDFAX (a web 
+tracking system).
+
+
+== The Kompiler == 
+
+Because we like writing functional programs, not SKI combinator terms, we wrote
+a compiler to cards, the Kompiler, which allowed LTG programs to be written
+using a lambda-like combinator library. <don't know what else to say here>
+
+
+== Dominators and the Dominator Operating System ==
+
+The Dominator Operating System is a response to the competing demands of 
+needing to do several things (defense, short-term offense, long-term offense)
+well. It allows a contestant to be made of several Dominators, the aggressively
+named thread abstraction in DOS. The main role of DOS is to handle memory
+partitioning and 
+
+Individual dominators can use the operating system to reserve slots for their
+processes, fork, block, for certain events and manipulate their running 
+priority. There is no memory protection, so dominators have to be careful not 
+to execute functions that write into the slots of other dominators. At every
+turn, DOS runs the "preview" function of every dominator so that the dominators
+can look at the state (possibly changing its priority in response) and update
+their internal memory. Then, DOS selects a single process and runs a "taketurn"
+function that allows a single dominator, as determined by the scheduler, to
+either run or declare that it is blocked and has nothing to do.
+
+Underlying DOS are two abstraction levels that we created as we understood 
+the problem better. At various points, we wrote contestents against each of
+these interfaces. At the bottom is the PLAYER abstraction, which is used by the
+code that talks to and from standard output, and knows nothing else. Next is 
+the LAYER abstraction, which abstracts away maintnence of the game state. 
+(There is an alternate CORO_LAYER on top of PLAYER that allows contestents to 
+be coded as coroutines.) 
+
+
+== Individual Players == 
+
+A player differentiated itself from the global infrastructure based on the
+content of a file player-*.sml in the root of the repository. Some of these
+were very simple, and relied entirely on capabilities built into the shared
+infrastructure.
+
+<Anybody want to write about their players?>
+
+As of 10 hours before the end of the contest, dozens and dozens of players
+had been created, 39 had been registered with the CARDFAX arena (see below),
+and 22 were currently being tracked in the arena as potential candidates for
+submission.
+
+
+== The Demonic Tutor ==
+
+The Demonic Tutor (named after a Magic: The Gathering card --
+http://sales.starcitygames.com/cardsearch.php?singlesearch=Demonic%20Tutor)
+was our clone of the judges' interactive LTG clients. It allowed players
+to be run against each other at the head of the repository. Based on our 
+reading of the rules, it differed from the judges' version in allowing
+each player 100000 turns.
+
+./tutor leviathan killer
+
+And it allowed matches to be played relative to particular revisions of the
+repository. Below, we would make player-leviathan.sml in version 162 of the
+repository, player-killer.sml in version 193 of the repository, and allow
+them to complete.
+
+./tutor leviathan:162 killer:193
+
+If these two name:revision combinations are registered with CARDFAX (see
+below), then the results of the match will be recorded by a simple RPC
+interface (the ML code would 1) invoke wget to 2) visit a webpage that 3) was
+a php file that stored things in CARDFAX's database.) In order to facilitate
+this kind of play, the tutor essentially had Makefile-like capabaility: it
+checked for the existance of player-leviathan-162.exe, and then built it
+if it did not exist.
+
+The demonic tutor also had a mode where it would query the database for some 
+under-tested pair of players and automatically run a test ("autotutor").
+
+
+== CARDFAX ==
+
+CARDFAX is the 2011 arena; it mimics the unofficial duel server provided by
+the organizers (though it uses the official 6/2/1/0 contest scoring and keeps
+the scores of everyone against everyone else). It is the descendent of the
+2010 CARFAX, the 2009 Orbiting Arena, and the 2004 Arena Eternal. CARDFAX
+stored and reported the results of all matches, and had a view of all the 
+matchups for each player.
+
+CARDFAX can be seen for a limited time (probably until the end of July) at 
+http://R_E_D_A_C_T_E_D/arena.
