@@ -192,6 +192,25 @@ in
   rev (f (init, k))
 end
 
+(*
+alternative version -- totally broken!
+fun kil2turns_spoons init k i = let
+  fun f (r, KCard c) = r ([R(i, c)])
+    | f (r, KApply (KCard c, t)) = 
+      f (fn ts_t => r (L(c, i) :: ts_t), t)
+    | f (r, KApply (KApply (t, u), v)) = 
+      f (fn ts_t => f (fn ts_u => f (fn ts_v =>
+         r (L(Card.S, i) :: ts_t @ [L(Card.K, i)] @ ts_v @ ts_u),
+         v), u), t)
+    | f (r, KApply (KVar x, _))
+      = raise (Kompiler ("unbound variable: " ^ x))
+    | f (r, KVar x)
+      = raise (Kompiler ("unbound variable: " ^ x))
+  in
+    rev (f (fn ts => ts @ init, k))
+  end
+*)
+
 (**** wjl version of kil2turns -- differently biased than spoons version ****)
 
 (* in particular, it seems really good for right-nested things like numbers,
