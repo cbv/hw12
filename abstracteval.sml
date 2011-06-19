@@ -172,10 +172,14 @@ open LTG;
                         | AVSucc =>
                           (case v2 of
                                AVInt n => AVInt (clamp (n + 1))
+                             | AVUnknown (UnknownInt n) => AVUnknown (UnknownInt(clamp (n + 1)))
+                             | AVUnknown u => AVUnknown (UnknownInt 1)
                              | _ => raise AbsEvalError "argument to succ not int")
                         | AVDbl =>
                           (case v2 of
                                (AVInt n) => (AVInt (clamp (n * 2)))
+                             | AVUnknown (UnknownInt n) => AVUnknown (UnknownInt(clamp (n * 2)))
+                             | AVUnknown u => AVUnknown (UnknownInt 0)
                              | _ => raise AbsEvalError "argument to dbl not int")
                         | AVGet => (
                           case v2
