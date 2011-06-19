@@ -104,13 +104,9 @@ struct
                (Card LTG.Attack -- $"src" -- gettarg -- $"i8192")) --
               getsrc -- Int 8192
 
-          val _ = eprint "GWILLEN"
-          val prog' = Kompiler.run_and_return_self chargedattack
-          val prog = Kompiler.rrs_ref chargedattack 0
+          val prog = Kompiler.run_and_return_self chargedattack
           val () = eprint (Kompiler.src2str prog)
-          val () = eprint (Kompiler.src2str prog') (* 767 *)
           val insns = Kompiler.compile_never_exponential prog prog_slot
-          val _ = eprint "DONE COMPILING"
       in
           eprint ("Compiled to : " ^ Int.toString (length insns));
           insns
