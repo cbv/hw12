@@ -16,6 +16,8 @@ sig
      a process id. *)
   type dos
 
+  exception DOS of string
+
   datatype dosturn =
     (* Make a single regular turn. Your dominator is charged. *)
       Turn of LTG.turn

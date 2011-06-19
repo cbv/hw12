@@ -7,7 +7,7 @@ struct
 
   fun preview _ = ()
 
-  val queue = ref [4, 5, 10, 12, 20]
+  val queue = ref [4, 4, 5, 10, 12, 20]
   val status = ref (ref (Done ~1)) (* ~1 means we haven't asked for anything yet. *)
 
   fun taketurn dos = 
@@ -17,6 +17,7 @@ struct
 
       | (i :: rest, Done ~1) => (* Ask for a new one. *)
         (status := NumberGenerator.generate dos i;
+         queue := rest;
          DOS.Can'tRun)
 
       | (_, NotDone) => (* Waiting... *)
