@@ -86,19 +86,19 @@ struct
      | VGet => "Get"
      | VPut => "Put"
      | VS nil => "S"
-     | VS l => "(S " ^ StringUtil.delimit " " (map valtos  l) ^ ")"
+     | VS l => "(S " ^ StringUtil.delimit " " (rev (map valtos  l)) ^ ")"
      | VK nil => "K"
-     | VK l => "(K " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VK l => "(K " ^ StringUtil.delimit " " (rev (map valtos l)) ^ ")"
      | VInc => "Inc"
      | VDec => "Dec"
      | VAttack nil => "Attack"
-     | VAttack l => "(Attack " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VAttack l => "(Attack " ^ StringUtil.delimit " " (rev (map valtos l)) ^ ")"
      | VHelp nil => "Help"
-     | VHelp l => "(Help " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VHelp l => "(Help " ^ StringUtil.delimit " " (rev (map valtos l)) ^ ")"
      | VCopy => "Copy"
      | VRevive => "Revive"
      | VZombie nil => "Zombie"
-     | VZombie l => "(Zombie " ^ StringUtil.delimit " " (map valtos l) ^ ")")
+     | VZombie l => "(Zombie " ^ StringUtil.delimit " " (rev (map valtos l)) ^ ")")
 
   (* Parallel arrays (always size 256) for field and vitality.
      Vitality is always in [-1, 65535]. *)
