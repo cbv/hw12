@@ -125,7 +125,11 @@ formed our submission:
   this option is ready, we decide to take the disruptive aggressive
   strategy or the disruptive conservative strategy.
 
-  Sniper. 
+  Sniper. The sniper builds a big "gun," a value that can be applied
+  again and again to attack an arbitrary slot of the opponent.  It
+  uses many interations of "help" to boost the life of a proponent
+  slot followed by two "attack" cards.  It does not deal with recovery
+  of its own slots directly, but leaves these tasks to the Medic.
 
   Medic.
 
