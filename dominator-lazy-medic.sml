@@ -130,6 +130,8 @@ struct
 
     val mode = ref FindTarget
 
+    val LOW_MULTIPLIER = 0.5
+
     fun preview dos =
         if !initial_priority < 0.0 then initial_priority := DOS.getpriority dos
         else 
@@ -137,12 +139,12 @@ struct
             FindTarget => ()
           | Healing { target, child, ... } =>
                (* If the target is allocated then run with our usual priority. *)
-            if DOS.is_reserved target then
+            if DOS.is_reserved target orelse LTG.slotisdead (GS.myside (DOS.gamestate dos)) target then
               (eprint ("Switching to HIGH prio for slot " ^ Int.toString target);
                DOS.setpriority (DOS.getpid dos) (!initial_priority))
             else (* Otherwise run at low priority. *)
               (eprint ("Switching to LOW prio for slot " ^ Int.toString target);
-               DOS.setpriority (DOS.getpid dos) (!initial_priority / 2.0))
+               DOS.setpriority (DOS.getpid dos) (!initial_priority * LOW_MULTIPLIER))
 
     (* How much health do we expect to have in the source slot
        by the time we actually do the healing? Set dynamically
@@ -214,6 +216,7 @@ struct
                    in
                      eprint ("New task: " ^ Int.toString src ^ " -> " ^
                              Int.toString best ^ " @ " ^ Int.toString heal ^
+                             " in slot " ^ Int.toString prog_slot ^
                              ". Program length: " ^ Int.toString (length prog));
 
                      mode := Healing { myslot = prog_slot,
