@@ -15,7 +15,7 @@ val flagHelp = Params.flag false
    (SOME ("--help", "Print an informative help message")) "help"
 
 val flagMode = Params.param "duel"
-   (SOME ("--mode", "Tutor mode (duel, stress, auto)")) "mode"
+   (SOME ("--mode", "Tutor mode (duel, stress, costress, auto)")) "mode"
 
 val flagPoll = Params.param "10000"
    (SOME ("--poll", "How often the state is reported (0=never)")) "poll"
