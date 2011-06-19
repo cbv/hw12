@@ -13,12 +13,13 @@ struct
           find 1
       end
 
+  fun unslotify hts = 
+          map (fn LTG.LeftApply (c, _) => LTG.HLeftApply c
+                | LTG.RightApply (_, c) => LTG.HRightApply c) hts
+
   (* Precompute how to build numbers naively. *)
   val compiled_number_table = 
-      Array.tabulate (256, fn n =>
-          map (fn LTG.LeftApply (c, _) => LTG.HLeftApply c
-                | LTG.RightApply (_, c) => LTG.HRightApply c)
-          (Kompiler.compile (Kompiler.Int n) 0))
+      Array.tabulate (256, fn n => unslotify (Kompiler.compile (Kompiler.Int n) 0))
 
   (* Naive cost is the cost of of building a number from scratch.  Corresponds
      to the length of (compile VInt n _). *)
@@ -51,7 +52,9 @@ struct
       in
         case from 0 given desired of
           SOME hts => rev hts
-        | NONE => Array.sub (compiled_number_table, desired)
+        | NONE => if desired < 256 
+                  then Array.sub (compiled_number_table, desired)
+                  else unslotify (Kompiler.compile (Kompiler.Int desired) 0)
       end
 
   fun test () = 
@@ -59,6 +62,7 @@ struct
         convert_from {given = 10, desired = 10},
         convert_from {given = 10, desired = 20},
         convert_from {given = 10, desired = 21},
-        convert_from {given = 10, desired = 32}]
+        convert_from {given = 10, desired = 32},
+        convert_from {given = 9999, desired = 8191}]
 
 end
