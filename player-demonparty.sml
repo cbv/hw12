@@ -127,7 +127,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val zombie_install = 255 (* their slot zero, in our numbering system *)
 
       val make_255 = fastnum endslot 255
-      val hitthem = doubleshot (REG endslot) 0 1 scratch_slot scratch_slot_2
+      val hitthem = doubleshot_gwillen_don't_break_other_people's_code (REG endslot) 0 1 scratch_slot scratch_slot_2
       val make_10000 = fastnum dmg 10000
       val helpme = help_me dmg endslot scratch_slot
       val zom = zombie daemon_install daemon_code zombie_code
