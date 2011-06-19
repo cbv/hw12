@@ -34,11 +34,9 @@ struct
           val theirside = GS.theirside gs
           val (values, vitalities) = theirside
           val vlist = array2list(values)
-      in
-          case List.find iscode vlist of
-              SOME(code) => (
+          val _ = eprint ` Int.toString (!n) ^ ": "
+          fun aux code = (
               let 
-                  val _ = eprint ` Int.toString (!n) ^ ": "
                   val _ = eprint "found some code\n"
                   val _ = eprint ` valtos code ^ "\n"
                   val _ = eprint "it has the following effects\n" 
@@ -46,11 +44,15 @@ struct
                   val reseffects =
                       evalwithstate1 30 NORMAL (theirside, myside) abscode
                   val _ = eprint `
-                           StringUtil.delimit ", " (map effect2str reseffects)
-                  val _ = eprint "\n\n" 
+                                 StringUtil.delimit ", " (map effect2str reseffects)
+                  val _ = eprint "\n"
               in () end
-              )         
-            | NONE => ()          
+              )
+          val codes = List.filter iscode vlist
+          val _ = map aux codes
+          val _ = eprint "\n"
+      in
+          ()
       end
 
 

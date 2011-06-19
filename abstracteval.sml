@@ -75,7 +75,7 @@ open LTG;
   | EInc of abstractvalue
   | EDec of abstractvalue
   | ERevive of abstractvalue
-  | EZombie of abstractvalue
+  | EZombie of abstractvalue list
 
 
   fun effect2str e = 
@@ -85,7 +85,7 @@ open LTG;
         | EInc(v) => "(Inc " ^ abstractvalue2str v ^ ")"
         | EDec(v) => "(Dec " ^ abstractvalue2str v ^ ")"
         | ERevive(v) => "(Revive " ^ abstractvalue2str v ^ ")"
-        | EZombie(v) => "(Zombie " ^ abstractvalue2str v ^ ")"
+        | EZombie(l) => "(Zombie " ^ StringUtil.delimit " " (map abstractvalue2str l) ^")"
 
 
 
@@ -219,12 +219,21 @@ open LTG;
                                             AVFn AVI )
                         | AVHelp l => ( (* addeffect(EHelp (v2::l)) ; *)
                                         AVFn (AVHelp (v2 :: l)))
-                        | AVCopy =>
-                          let val i = expectslotnumber v2
-                          in AVUnknown Unknown   (* Array.sub (oppf, i) *)
-                          end
+                        | AVCopy => (
+                          case v2 of
+                              (AVInt _) => 
+                              let val i = expectslotnumber v2
+                                  val vit = Array.sub(oppv, i)
+                              in if isdead vit
+                                 then raise AbsEvalError "get on dead slot"
+                                 else concrete2abstractvalue (Array.sub(oppf, i)) 
+                              end
+                            | (AVUnknown u) => 
+                                 AVUnknown (UnknownSlotValue 0)
+                            | _ => raise AbsEvalError "bad get"
+                          )
                         | AVRevive => (addeffect(ERevive v2); AVFn AVI)
-                        | AVZombie [i] => (addeffect(EZombie v2); AVFn AVI)
+                        | AVZombie [i] => (addeffect(EZombie [v2, i] ); AVFn AVI)
                         | AVZombie l => AVFn (AVZombie (v2 :: l)))
                    | _ => AVUnknown Unknown
                end

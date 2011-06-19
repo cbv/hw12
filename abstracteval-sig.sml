@@ -46,7 +46,7 @@ sig
   | EInc of abstractvalue
   | EDec of abstractvalue
   | ERevive of abstractvalue
-  | EZombie of abstractvalue
+  | EZombie of abstractvalue list
 
 
   val abstractvalue2str : abstractvalue -> string
