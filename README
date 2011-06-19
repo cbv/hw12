@@ -173,7 +173,8 @@ possible effects of our opponent's code. For example, given a game
 state in which the opponent has value 12288 in slot 2 and this piece
 of code in another slot:
 
-(S (K (S (K (S (K (S (K (S (K (S (K (S (K I) (S (S (Attack 7) (S (K Get) (K 2)))))) 
+(S (K (S (K (S (K (S (K (S (K (S (K (S 
+   (K I) (S (S (Attack 7) (S (K Get) (K 2)))))) 
    (S Zombie))))) S)))) S)) K),
 
 the abstract evaluator can determine that two possible effects which
