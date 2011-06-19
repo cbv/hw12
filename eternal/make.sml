@@ -5,6 +5,10 @@ structure Make:> sig
     * a path to player-hopeless.exe or player-hopeless-102.exe *)
    val getExe: string -> string
    exception MakeFailed
+ 
+   (* breaking interfaces *)
+   val flagSubmit: bool ref
+   val file_exists: string -> bool
 end = struct
 
 val flagSubmit = Params.flag false 

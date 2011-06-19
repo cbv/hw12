@@ -51,16 +51,27 @@ fun mkOutstream out_file_desc =
                         chunkSize = 1024,
                         appendMode = true}, IO.NO_BUF))
 
+val isColon = fn x => x = #":"
+val enhypenate = fn x => String.concatWith "-" (String.tokens isColon x)
+
 fun mkStatstream player0 player1 tag =
    let
-      val player0 = 
-         String.concatWith "-" (String.tokens (fn x => x = #":") player0) 
-      val player1 = 
-         String.concatWith "-" (String.tokens (fn x => x = #":") player1) 
+      val player0 = enhypenate player0
+      val player1 = enhypenate player1
       val filename = "graph-" ^ player0 ^ "-" ^ player1 ^ "-" ^ tag ^ ".dat"
    in
       if !flagLogStats then SOME (TextIO.openOut filename) else NONE
    end
+
+fun goGraph player0 player1 = 
+   if not (!flagLogStats andalso !Make.flagSubmit) then () else
+   case String.tokens isColon player0 @ String.tokens isColon player1 of
+      l as [ p0, r0, p1, r1 ] =>
+      if Make.file_exists ("graph-" ^ String.concatWith "-" l ^ ".png") 
+      then () else 
+      ignore (OS.Process.system("./submitgraph " ^ String.concatWith " " l))
+    | _ => ()
+
 
 fun setupPlayer player arg state statstream = 
    let 
@@ -254,6 +265,7 @@ fun match player0 player1 =
       val tok = String.tokens (fn c => c = #":")
    in
       (* Potentially record output *)
+      goGraph player0 player1;
       if not (!flagReport) then ()
       else case (tok player0, tok player1) of
          ([ name0, rev0 ], [ name1, rev1 ]) =>
