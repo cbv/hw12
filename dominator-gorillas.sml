@@ -9,6 +9,13 @@ struct
   datatype todo = datatype UnravelProgram.todo
   open CardHelp
 
+  (* Annotate messages and reduce spew *)
+  val lastmsg = ref ""
+  val eprint =
+      fn s => if s = !lastmsg
+              then ()
+              else (eprint ("[GORILLAS] " ^ s ^ "\n"); lastmsg := s)
+
   val L = LTG.LeftApply
   val R = LTG.RightApply  
 
