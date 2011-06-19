@@ -75,7 +75,8 @@ struct
   val oldmedics = Array.array (256, NONE : oldmedic option)
 
   (* XXX: Should use number of bits, but this is close *)
-  fun compare_idx (i, ii) = Int.compare (ii, i)
+  fun compare_idx (i, ii) = Int.compare (Numbers.naive_cost ii, 
+                                         Numbers.naive_cost i)
 
   fun is_critical (i, (resv, dead, vit, idx, score)) =
       (resv andalso dead) orelse
@@ -223,9 +224,9 @@ struct
                 else 
                     let in 
                         eprint ("An elder is no longer with us: " ^
-                                Int.toString i ^ "(" ^ Int.toString src ^
+                                Int.toString i ^ " (" ^ Int.toString src ^
                                 "->" ^ Int.toString target ^
-                                " @ " ^ Int.toString amount);
+                                " @ " ^ Int.toString amount ^ ")");
                         Array.update (oldmedics, i, NONE)
                     end
         in
@@ -245,6 +246,7 @@ struct
             (* first, see what old medics are still valid, and count them up. *)
             val valid_medics = fixup_old_medics gs
             (* val num_valid_medics = length valid_medics *)
+(*
             val () = eprint ("There are " ^ Int.toString (length valid_medics) ^
                              " valid oldmedics:\n  " ^
                              StringUtil.delimit "\n  "
@@ -253,7 +255,8 @@ struct
                                    Int.toString target ^ " @ " ^
                                    Int.toString amount ^ " (in slot " ^
                                    Int.toString i ^ ")") valid_medics))
-                             
+            *)
+                           
             val myside = GS.myside gs
             val mystats = GS.mystats gs
                 
@@ -292,9 +295,6 @@ struct
                      the health amount we'll try to use. *)
                   val (src, heal, actual_src_health) = findsource myside
 
-                  (* XXXX if I already have a valid oldmedic for this target, don't build another! 
-                     Just use the one I have. *)
-
                   (* Maybe should have a lower bound on what it will
                      consider valuable, and back off if there are
                      no current high-value targets? *)
@@ -307,28 +307,109 @@ struct
                                  " idx: " ^ Int.toString idx ^
                                  " score: " ^ rtos score)
                       end
-
-                  val prog = healprogram { src = src, amount = heal, target = best } prog_slot
-
-                  (* Save child pid. If our program dies, we just kill
-                     the child and try again, on the assumption that
-                     there are no other medics. *)
-                  val (stat, child_pid) = EP.emitspawn dos prog
               in
-                  eprint ("New medic task: " ^ Int.toString src ^ " -> " ^
-                          Int.toString best ^ " @ " ^ Int.toString heal ^
-                          " in slot " ^ Int.toString prog_slot ^
-                          ". Program length: " ^ Int.toString (length prog));
+                  case ListUtil.findpartial (fn (om as (_, { target, ... })) =>
+                                             if target = best
+                                             then SOME om
+                                             else NONE) valid_medics of
+                      SOME (oldmedic, { src, target, amount, ... }) =>
+                          let in
+                              eprint ("Just reusing old medic instead of building a new one " ^
+                                      "for " ^ Int.toString target);
+                              UseOldMedic { oldmedic = oldmedic, src = src, target = target,
+                                            amount = amount }
+                          end
+                    | NONE =>
+                       let
+                           val prog = healprogram { src = src, amount = heal, target = best } prog_slot
 
-                  MakeNewMedic { src = src, target = best, stat = stat, pid = child_pid,
-                                 actual = actual_src_health, amount = heal }
+                           (* Save child pid. If our program dies, we just kill
+                              the child and try again, on the assumption that
+                              there are no other medics. *)
+                           val (stat, child_pid) = EP.emitspawn dos prog
+                       in
+                           eprint ("New medic task: " ^ Int.toString src ^ " -> " ^
+                                   Int.toString best ^ " @ " ^ Int.toString heal ^
+                                   " in slot " ^ Int.toString prog_slot ^
+                                   ". Program length: " ^ Int.toString (length prog));
+                           MakeNewMedic { src = src, target = best, stat = stat, pid = child_pid,
+                                          actual = actual_src_health, amount = heal }
+                       end
               end
         end
+
+    fun medic_interrupt dos =
+        let
+            (* Maybe do medic interrupt. *)
+            val gs = DOS.gamestate dos
+            (* first, see what old medics are still valid, and count them up. *)
+            val valid_medics = fixup_old_medics gs
+            (* val num_valid_medics = length valid_medics *)
+                           
+            val myside = GS.myside gs
+            val mystats = GS.mystats gs
+                
+            (* Find a high value slot on my own side to heal. *)
+            val slots = List.tabulate (256, fn i =>
+                                       (i, scoremyslotforhealing dos myside mystats i))
+
+            val critical_slots = List.filter is_critical slots
+        in
+            (*
+            if List.null critical_slots
+            then ()
+            else eprint ("There are " ^ Int.toString (length critical_slots) ^
+                         " critical slots: " ^
+                         StringUtil.delimit ", " (map (fn (i, _) => Int.toString i) critical_slots));
+*)
+
+            (* if we have an old medic for a critical slot, use it. *)
+            case ListUtil.findpartial (fn (i, _) =>
+                                       ListUtil.findpartial
+                                       (fn (om as (_, { target, ... })) =>
+                                        if i = target
+                                        then SOME om
+                                        else NONE) valid_medics) critical_slots of
+                SOME (oldmedic, { src, target, amount, ... }) =>
+                    let 
+                        val myside = GS.myside gs
+                        val health = Array.sub (#2 myside, target)
+                        val src_health = Array.sub (#2 myside, src)
+                    in
+                        if src_health < amount
+                        then
+                            let in
+                                eprint ("Medic interrupt: Source doesn't have " ^ 
+                                        Int.toString amount ^
+                                        " health to heal with.");
+                                if Array.sub (#2 myside, target) <= 0
+                                then 
+                                    let in
+                                        eprint ("But doing instant revive.");
+                                        SOME (DOS.Turn (LTG.RightApply (oldmedic, LTG.I)))
+                                    end
+                                else NONE
+                            end
+                     else
+                        let in
+                            eprint ("Doing medic interrupt for " ^
+                                    "target " ^ Int.toString target ^ "!");
+
+                            (* Otherwise keep healing. *)
+                            SOME (DOS.Turn (LTG.RightApply (oldmedic, LTG.I)))
+                        end
+                    end
+              | NONE => NONE
+        end
+
 
     val mode = ref FindTarget
     fun taketurn dos =
         let val gs = DOS.gamestate dos
         in
+            case medic_interrupt dos of
+              SOME turn => turn
+            | NONE => 
             case !mode of
                 FindTarget =>
                  (case DOS.reserve_slot dos of
@@ -406,13 +487,20 @@ struct
                      if src_health < heal
                      then
                          let in
-                             (* XXX if the target is dead now, we should
-                                still run our program once, since it revives. *)
                              eprint ("Source doesn't have " ^ Int.toString heal ^
                                      " health to heal with.");
                              DOS.release_slot dos myslot;
                              mode := FindTarget;
-                             taketurn dos
+
+                             (* if the target is dead now, we should
+                                still run our program once, since it revives. *)
+                             if Array.sub (#2 myside, target) <= 0
+                             then 
+                                 let in
+                                     eprint ("But doing instant revive.");
+                                     DOS.Turn (LTG.RightApply (myslot, LTG.I))
+                                 end
+                             else taketurn dos
                          end
                      else
                          if health >= HEALTH_GOAL
