@@ -135,13 +135,13 @@ struct
         else 
           case !mode of 
             FindTarget => ()
-          | Healing { target, ... } =>
+          | Healing { target, child, ... } =>
                (* If the target is allocated then run with our usual priority. *)
             if DOS.is_reserved target then
-              (eprint ("");
+              (eprint ("Switching to HIGH prio for slot " ^ Int.toString target);
                DOS.setpriority (DOS.getpid dos) (!initial_priority))
             else (* Otherwise run at low priority. *)
-              (eprint ("");
+              (eprint ("Switching to LOW prio for slot " ^ Int.toString target);
                DOS.setpriority (DOS.getpid dos) (!initial_priority / 2.0))
 
     (* How much health do we expect to have in the source slot

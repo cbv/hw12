@@ -47,7 +47,11 @@ struct
       end
   fun setpriority pid new_priority =
       let val P { priority, ... } = GA.sub processes pid
-      in priority := new_priority
+      in
+        priority := new_priority;
+        GA.appi (fn (child_pid, P { parent = SOME parent_pid, ... }) => 
+                    if parent_pid = pid then setpriority child_pid new_priority else ()
+                  | _ => ()) processes
       end
   fun getname (D { pid, ... }) =
       let val P { name, ... } = GA.sub processes pid
@@ -72,14 +76,15 @@ struct
         val (_, vitality) = GS.myside (gamestate dos)
     in
         Util.for 0 255
-        (fn i => if Array.sub (reserved, Array.sub (Numbers.addressability, i)) orelse
+        (fn i => let val slot = Array.sub (Numbers.addressability, i) in
+                 if Array.sub (reserved, slot) orelse
                     (* Maybe should also prefer slots that have higher
                        health, if we don't care about addressability? *)
-                    Array.sub (vitality, i) <= 0
+                    Array.sub (vitality, slot) <= 0
                  then ()
-                 else (Array.update (reserved, i, true);
-                       reserved_slots := i :: !reserved_slots;
-                       raise Return i));
+                 else (Array.update (reserved, slot, true);
+                       reserved_slots := slot :: !reserved_slots;
+                       raise Return slot) end);
         NONE
     end handle Return i => SOME i
 
@@ -91,14 +96,16 @@ struct
         val (_, vitality) = GS.myside (gamestate dos)
 
         fun try i =
-            if Array.sub (reserved, Array.sub (Numbers.addressability, i)) orelse
+            let val slot = Array.sub (Numbers.addressability, i) in
+              if Array.sub (reserved, slot) orelse
                (* Maybe should also prefer slots that have higher
                   health, if we don't care about addressability? *)
-               Array.sub (vitality, i) <= 0
-            then ()
-            else (Array.update (reserved, i, true);
-                  reserved_slots := i :: !reserved_slots;
-                  raise Return i);
+               Array.sub (vitality, slot) <= 0
+              then ()
+              else (Array.update (reserved, slot, true);
+                    reserved_slots := slot :: !reserved_slots;
+                    raise Return slot)
+            end
     in
         Util.for 64 255 try;
         Util.for 0 63 try;
@@ -243,16 +250,18 @@ struct
                                    then "<killed>" else longname pid)
                                   ^ "@" ^ rtos charge) l) ^ "\n")
                   *)
+
+             val had_chance_to_run = ref []
+             val actual_charge = ref ~1.0
                  
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
                | dosomething ((pid, new_charge) :: t) = 
                  if List.exists (fn p => p = pid) (!killed_this_turn) then dosomething t else
                  let
-                   val P { dominator, charge, ... } = GA.sub processes pid
+                   val P { dominator, ... } = GA.sub processes pid
                    val dos = D { gs = gs, pid = pid }
                  in
-                   (* Charge it whether it runs or not. *)
-                   charge := new_charge; 
+                   had_chance_to_run := pid :: !had_chance_to_run;
                    case #taketurn dominator dos of
                        Can'tRun => dosomething t
                      | Turn turn =>
@@ -262,13 +271,27 @@ struct
                                  ^ " " ^ (if List.exists (fn p => p = pid) (!killed_this_turn)
                                           then "<killed>" else longname pid) ^ "\n");
                          *)
+                         (* Save what was charged. *)
+                         actual_charge := new_charge;
                          turn
                        end
                  end
          in
              dosomething l 
              before
-             (turnnum := !turnnum + 1; 
+             ((* Everyone gets charged, but they only get charged what the
+                 process that ran did.*)
+              if !actual_charge >= 0.0 then
+                app (fn pid =>
+                        if GA.has processes pid then (* It might have died *)
+                          let val P { charge, ... } = GA.sub processes pid
+                          in
+                            (* eprint ("Setting charge of " ^ longname pid
+                                    ^ " to " ^ rtos (!actual_charge) ^ "\n"); *)
+                            charge := !actual_charge end
+                        else ()) (!had_chance_to_run)
+              else ();
+              turnnum := !turnnum + 1; 
               killed_this_turn := [])
          end
     in
