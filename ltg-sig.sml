@@ -71,9 +71,17 @@ sig
 
   val slotisdead : side -> int -> bool
 
+  (* Like turn, but without the slot. *)
+  datatype halfturn =
+      HLeftApply of card 
+    | HRightApply of card
+
   datatype turn = 
       LeftApply of card * int 
     | RightApply of int * card
+
+  (* Adds a slot to a halfturn. *)
+  val halfturn2turn : int -> halfturn -> turn
 
   val turn2str : turn -> string
   val turns2str : turn list -> string

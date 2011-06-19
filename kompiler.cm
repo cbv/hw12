@@ -39,3 +39,6 @@ group is
   kompiler-sig.sml
   kompiler.sml
   timecube.sml
+
+  numbers-sig.sml
+  numbers.sml  

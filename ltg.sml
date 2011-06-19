@@ -391,9 +391,16 @@ struct
                         Array.array (256, 10000))
   fun initialstate () = (initialside (), initialside ())
 
+  datatype halfturn =
+      HLeftApply of card 
+    | HRightApply of card
+
   datatype turn =
       LeftApply of card * int
     | RightApply of int * card
+
+  fun halfturn2turn i (HLeftApply c) = LeftApply (c, i)
+    | halfturn2turn i (HRightApply c) = RightApply (i, c)
 
   exception SlotOutOfBoundsOrDead
 
