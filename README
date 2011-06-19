@@ -92,15 +92,9 @@ created with a priority that controls how often it runs relative to other
 processes.  This priority may be changed dynamically.
 
 In addition to dominators, the "userland" of DOS also provides several other
-services which dominators may use. Backup allows a dominator to maintain a
-copy of an important program in another slot, to reduce the risk of having to
-build something from scratch if a slot gets killed. EmitProgram allows a
-dominator to spawn (and optionally block on) a child thread which, given a
-program, will make the program appear in a specified slot. RobustEmit is a
-version of EmitProgram which maintains incremental backups and automatically
-restores from them when under attack. NumberGenerator provides numbers in
-slots, sometimes more cheaply than building the number from scratch. It looks
-for a slot that already have the desired number or something close to it.
+services which dominators may use. For example, "EmitProgram" allows a dominator
+to spawn (and optionally block on) a child thread which, given a program, will
+make the program appear in a specified slot.
 
 Underlying DOS are two abstraction levels that we created as we understood 
 the problem better. At various points, we wrote contestants against each of
@@ -162,6 +156,16 @@ motivated the following:
 
 performs a series of "shift and add"s to generate all 8 bits. (for example,
 "timecube S S K K" builds the number 15.)
+
+Other "system services" for DOS were also developed, some of which helped some
+of our auxiliary strategies. "Backup" allows a dominator to maintain a
+copy of an important program in another slot, to reduce the risk of having to
+build something from scratch if a slot gets killed. "RobustEmit" is a
+version of EmitProgram which maintains incremental backups and automatically
+restores from them when under attack. "NumberGenerator" provides numbers in
+slots, sometimes more cheaply than building the number from scratch. It looks
+for a slot that already have the desired number or something close to it, and
+could also be extended to make use of a timecube.
 
 
 == The Demonic Tutor ==
