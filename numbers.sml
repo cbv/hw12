@@ -38,7 +38,7 @@ struct
   val max_naive_cost = Array.foldl (fn (x, y) => if x > y then x else y) 0 naive_cost_table
 
   fun from self (given, desired) = 
-(print ("from " ^ Int.toString given ^ " " ^ Int.toString desired ^ "\n");
+      ((* print ("from " ^ Int.toString given ^ " " ^ Int.toString desired ^ "\n"); *)
       if given > desired then NONE
       else if given = desired then SOME []
       else if given = 0 then SOME ((LTG.HLeftApply LTG.Succ) :: valOf (self (1, desired)))
