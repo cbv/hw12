@@ -54,8 +54,25 @@ struct
         NONE
     end handle Return i => SOME i
 
-  (* TODO: This should be smarter. *)
-  val reserve_addressable_slot = reserve_slot
+  (* We choose to skip the first 64 slots since they are easily
+     addressed (unless that's all that's left). *) 
+  fun reserve_addressable_slot dos =
+    let 
+        val (_, vitality) = GS.myside (gamestate dos)
+
+        fun try i =
+            if Array.sub (reserved, i) orelse
+               (* Maybe should also prefer slots that have higher
+                  health, if we don't care about addressability? *)
+               Array.sub (vitality, i) <= 0
+            then ()
+            else (Array.update (reserved, i, true);
+                  raise Return i);
+    in
+        Util.for 64 255 try;
+        Util.for 0 63 try;
+        NONE
+    end handle Return i => SOME i
 
   fun reserve_fixed_slot dos i =
       if Array.sub (reserved, i) then false
