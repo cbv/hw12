@@ -13,7 +13,8 @@ struct
              their_side : LTG.side,
              (* TODO number of turns, scores, etc. *)
              my_stats : stats,
-             their_stats : stats
+             their_stats : stats,
+	     time : int ref
              }
 
   fun first_player (G { first_player = ref b, ... }) = b
@@ -24,13 +25,16 @@ struct
           my_side = LTG.initialside (),
           their_side = LTG.initialside (),
           my_stats = LTG.initialstats (),
-          their_stats = LTG.initialstats () }
+          their_stats = LTG.initialstats (),
+	  time = ref 0}
 
   fun mystats (G { my_stats, ... }) = my_stats
   fun theirstats (G { their_stats, ... }) = their_stats
 
   fun myside (G { my_side, ... }) = my_side
   fun theirside (G { their_side, ... }) = their_side
+
+  fun time (G { time, ... }) = !time
 
   fun printstats stats =
       TextIO.output (TextIO.stdErr, LTG.statstostring stats ^ "\n")
@@ -57,22 +61,24 @@ struct
      turns, ending conditions (?), etc. *)
   fun my_turn (G { is_my_turn = myturn as ref true,
                    my_side, their_side, 
-                   my_stats, their_stats, ... }) turn =
+                   my_stats, their_stats, time, ... }) turn =
       let in
           LTG.taketurnex ((my_side, SOME my_stats), 
                           (their_side, SOME their_stats)) turn;
-          myturn := false
+          myturn := false;
+	  time := !time + 1
       end
     | my_turn _ _ = raise GameState "it's not my turn!"
                    
   fun their_turn (G { is_my_turn = myturn as ref false,
                       my_side, their_side, 
-                      my_stats, their_stats, ... }) turn =
+                      my_stats, their_stats, time, ... }) turn =
       let in
           (* (with perspective swapped) *)
           LTG.taketurnex ((their_side, SOME their_stats),
                           (my_side, SOME my_stats)) turn;
-          myturn := true
+          myturn := true;
+	  time := !time + 1
       end
     | their_turn _ _ = raise GameState "it's not their turn!"
 

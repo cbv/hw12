@@ -23,6 +23,8 @@ sig
   (* WARNING: It is unsafe to modify the returned copies. *)
   val myside : gamestate -> LTG.side
   val theirside : gamestate -> LTG.side
+
+  val time : gamestate -> int
   
   (* Best current practices scoring function. Gives the value of the
      opponent's slot by index as a real number (larger is better)
