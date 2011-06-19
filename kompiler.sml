@@ -360,6 +360,24 @@ in
         fun opt (KApply (KApply (KCard S, KCard K), KCard K)) = KCard I
           | opt (KApply (KCard I, exp)) = opt exp
           | opt (KApply (KCard K, KCard I)) = KCard Put
+         (*
+          based on wjl's comment
+          idea: optimize: "S (K t) (K u) e" to "e (t u)", when e is an effectful
+                           term that returns I and t and u are both values
+
+          | opt (KApply (KApply (KApply (KCard Card.S, 
+                                         KApply (KCard Card.K, t)),
+                                 KApply (KCard Card.K, u)),
+                         e)) =
+            let in
+              (* XXX need to check for that e evals to I *)
+              if pure t andalso pure u then
+                eprint "[Kom] Got magic optimzation!"
+              else ();
+              KApply (opt e, KApply (opt t, opt u))
+            end
+          *)
+
           | opt (KApply (KApply (KCard K, t), u)) =
                 if pure u
                 then opt t
