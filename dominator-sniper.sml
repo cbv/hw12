@@ -117,9 +117,16 @@ struct
     (* This is just for diagnostics. *)
     val was_stuck = ref false
 
+    fun array_sub (a, x) =
+        Array.sub (a, x) handle Subscript =>
+            let in
+                eprint ("BAD SUB " ^ Int.toString x);
+                raise Subscript
+            end
+
     val all256 = List.tabulate (256, fn i => i)
     fun getbestsource src_slot myside =
-        case List.mapPartial (fn i => let val vit = Array.sub(#2 myside, i)
+        case List.mapPartial (fn i => let val vit = array_sub(#2 myside, i)
                                       in if vit < CONSERVATIVE_HEALTH_NEEDED
                                          then NONE
                                          else SOME (i, vit)
@@ -134,10 +141,13 @@ struct
        contain a number. get that number or NONE of something
        is wrong. *)
     fun getindirectint gs cellidx =
+        if cellidx > 256
+        then (eprint ("BAD IDX " ^ Int.toString cellidx); NONE)
+        else
         let
             val myside = GS.myside gs
         in
-            (case Array.sub (#1 myside, cellidx) of
+            (case array_sub (#1 myside, cellidx) of
                  LTG.VInt i => SOME i
                | _ => NONE)
         end
@@ -166,6 +176,13 @@ struct
                     (* eprint ("  ... takes " ^ Int.toString (length p)); *)
                     p
                 end
+
+    fun getindirectidx gs cellidx =
+        case getindirectint gs cellidx of
+            NONE => NONE
+          | SOME i => if i > 255
+                      then NONE
+                      else SOME i
 
     val mode = ref CreateGun
     fun taketurn dos =
@@ -310,11 +327,11 @@ struct
                          val targidx = 255 - targidx
 
                          val myside = GS.myside gs
-                         val srchealth = Array.sub (#2 myside, srcidx)
+                         val srchealth = array_sub (#2 myside, srcidx)
                          
                          val theirside = GS.theirside gs
-                         val targhealth = Array.sub (#2 theirside, targidx)
-                         val num = Array.sub (#1 (GS.myside gs), target_slot)
+                         val targhealth = array_sub (#2 theirside, targidx)
+                         val num = array_sub (#1 (GS.myside gs), target_slot)
                      in
                          was_stuck := false;
                          if targhealth <= 0
