@@ -27,11 +27,12 @@ tracking system).
 == The Kompiler == 
 
 Because we like writing functional programs, not SKI combinator terms, we wrote
-a compiler to cards, the Kompiler, which allowed LTG programs to be written
-using a lambda-like combinator library.  The Kompiler translates lambda-terms
+a compiler to cards, the Kompiler, which allowed LTG programs to be written in
+a higher-level abstract syntax using a lambda-like combinator library (with a
+convenient integer building combinator).  The Kompiler translates lambda-terms
 to card-combinator terms using a call-by-value variant of Curry's "optimized"
-bracket abstraction algorithm which takes into account whether the variable
-to be abstracted over occurs in the body of the abstraction or not:
+bracket abstraction algorithm which takes into account whether the variable to
+be abstracted over occurs in the body of the abstraction or not:
 
     [x] x = I
     [x] V = K V  (if x not free in V and V value)
