@@ -3,35 +3,29 @@
  * and the slot should not be depended upon by anything (i.e. don't ask me to
  * backup slot 0 if you have something that uses what you have in slot 0 and has
  * that slot number baked into it -- unless you intend to restore from the
- * backed-up-into slot into the original slot (get_backup lets you do it however
- * you want.)). *)
+ * backed-up-into slot into the original slot, but that is your job. *)
 (* so the other day I was thinking um wait no what was I talking about did 
  * you hear that? was that a bird? if so that was a really weird bird *)
 signature BACKUP =
 sig
 
-  (* backup internal state *)
-  type backup
+  (* unit -> int is a function to call to let the backup thread know that you
+   * are about to adopt the backed-up slot as its own. when the callback is
+   * called, you now own that cell, and the backup thread goes away. *)
+  (* TODO: the return type of the callback will need to be extended, possibly
+   * polymorphically, to support partial backups during construction. *)
+  datatype 'a status =
+      Progress
+    | Done of ((unit -> int) * 'a)
 
-  (* given gamestate, a slot to take a backup of, and whether to optimise to
-   * make restoration high-prio (i.e. easily addressable), returns a backup
-   * state and the moves it will take to generate the backup *)
-  val create_backup : DOS.dos -> int -> bool -> backup option
-
-  val build_backup : backup -> LTG.turn option
-
-  (* returns the slot number the backup is in, IF the backup is valid *)
-  val get_backup : backup -> int option
-
-  (* did the mans get killed (pass in the slot number) *)
-  val need_restore : DOS.dos -> int -> bool
-
-  (* did the backup itself get killed *)
-  val backup_got_killed : DOS.dos -> backup -> bool
-
-  (* need to release resources -- if you switch to using the backup slot as your
-   * new slot, do not call this, but if you're going away entirely or otherwise
-   * stop needing the backup, call this *)
-  val release_backup : DOS.dos -> backup -> unit
+  (* Generates a backup thread. The thunk is a callback to store data in the
+   * done status flag upon the time of completion of the backup, such as for the
+   * EmitProgram partial backup to know at what point to resume building when
+   * restoring from a backup. *)
+  val backup : DOS.dos -> int -> bool -> (unit -> 'a)
+               -> 'a status ref * DOS.dominator
+  (* Generates and spawns a backup thread. *)
+  val backupspawn : DOS.dos -> int -> bool -> (unit -> 'a)
+                    -> 'a status ref * DOS.pid
 
 end
