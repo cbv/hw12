@@ -2,6 +2,8 @@
 structure LTG :> LTG =
 struct
 
+  val application_count_hook : (int -> unit) option ref = ref NONE
+
   (* TODO: Zombies? Not clear how to account
      for a zombie since it may be my own property... *)
   type stat = { left_applications : int ref,
@@ -378,8 +380,11 @@ struct
                        end
                    | VZombie l => VFn (VZombie (v2 :: l)))
                end
+
+      val rv = eval exp
+      val _ = (case application_count_hook of ref(SOME f) => f(!steps) | _ => ())
     in
-        eval exp
+	rv
     end
 
   fun initialside () = (Array.array (256, VFn VI),

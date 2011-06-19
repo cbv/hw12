@@ -19,6 +19,10 @@ val flagMode = Params.param "duel"
 
 val flagPoll = Params.param "10000"
    (SOME ("--poll", "How often the state is reported (0=never)")) "poll"
+
+val flagLogStats = Params.flag false
+   (SOME ("--logstats", "Log application stats for each player")) "logstats"
+
 val max = 200000
 val flagFreq = ref 20000
 
@@ -46,6 +50,8 @@ fun mkOutstream out_file_desc =
                         initBlkMode = true,
                         chunkSize = 1024,
                         appendMode = true}, IO.NO_BUF))
+
+fun mkStatstream name = if !flagLogStats then SOME (TextIO.openOut (name ^ ".dat")) else NONE
 
 fun setupPlayer player arg state = 
    let 
@@ -75,6 +81,7 @@ fun setupPlayer player arg state =
              pid = pid, 
              instream = mkInstream inServer, 
              outstream = mkOutstream outServer,
+	     statstream = mkStatstream player,
              state = state})
    end
 
@@ -82,6 +89,7 @@ type process = {name: string,
 		pid: PIO.pid, 
                 instream: TextIO.instream,
                 outstream: TextIO.outstream,
+                statstream: TextIO.outstream option,
                 state: LTG.side}
 
 fun winner (proponent, opponent) = 
@@ -164,8 +172,14 @@ fun continue (n, proponent: process, opponent: process) =
       val () = LTGParse.send (#outstream opponent) play
       val () = debug "Done sending in tutor"
 
+      (* MAYBE LOG SOME DATA ABOUT THE MOVE *)
+      val () = LTG.application_count_hook := 
+	       Option.map (fn ss => fn n => TextIO.output(ss, Int.toString n ^ "\n")) 
+			  (#statstream proponent)
+
       (* DO YOU WANT TO PLAY A GAME? *)
       val () = LTG.taketurn (#state proponent, #state opponent) play
+
    in
       continue (n+1, opponent, proponent)
    end

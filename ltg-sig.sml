@@ -88,4 +88,8 @@ sig
   (* Same, but optionally accumulate stats. *)
   val taketurnex : (side * stats option) * (side * stats option) -> turn -> unit
 
+  val application_count_hook : (int -> unit) option ref
+
 end
+
+
