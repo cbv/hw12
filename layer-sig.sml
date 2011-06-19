@@ -34,8 +34,12 @@ sig
      Might change at any point to reflect new heuristics. *)
   val scoreopponentslot : gamestate -> int -> real
 
+  (* Same, bug give a function that computes the distance of any
+     given index, in turns. *)
+  val scoreopponentslot_withdistance : gamestate -> (int -> int) -> int -> real
+
   (* Old versions of scoring function. *)
-  val scoreopponentslot_sniper : gamestate -> int -> real
+  (* val scoreopponentslot_sniper : gamestate -> int -> real *)
 
   (* Prints out all stats, for debugging. 
      This should not be called in submissions, just for debugging! *)

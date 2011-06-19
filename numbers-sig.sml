@@ -12,6 +12,11 @@ sig
      scratch. *)
   val convert_from : { given : int, desired : int } -> LTG.halfturn list
 
+  (* Number of turns it takes to build a slot number. 
+     argument must be in [0, 255]. Remember that you are often
+     building 255 - i to attack the opponent. *)
+  val naive_cost : int -> int
+
 (* TODO
  Builds the given numbers in the given slots, reusing computed values where possible.
   val build_numbers : { int list, slots : int list } -> LTG.turn list

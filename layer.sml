@@ -14,7 +14,7 @@ struct
              (* TODO number of turns, scores, etc. *)
              my_stats : stats,
              their_stats : stats,
-	     time : int ref
+             time : int ref
              }
 
   fun first_player (G { first_player = ref b, ... }) = b
@@ -26,7 +26,7 @@ struct
           their_side = LTG.initialside (),
           my_stats = LTG.initialstats (),
           their_stats = LTG.initialstats (),
-	  time = ref 0}
+          time = ref 0}
 
   fun mystats (G { my_stats, ... }) = my_stats
   fun theirstats (G { their_stats, ... }) = their_stats
@@ -41,13 +41,18 @@ struct
 
   (* TODO: Could also count how often the number of the slot has appeared
      in a cell? *)
-  fun scoreopponentslot_sniper (G { their_side, their_stats, ... }) idx =
+  fun scoreopponentslot_withdistance (G { their_side, their_stats, ... }) dist idx =
       let val s = LTG.statfor their_stats idx
+
+          (* Bonus points if easily addressed,
+             mostly to break ties when cleaning up unused slots. *)
+          val bonus = 256.0 - 4.0 * real (dist idx)
       in
        (* XXX weighted! *)
        if LTG.slotisdead their_side idx
        then ~1000.0
-       else real (LTG.stat_left_applications s) +
+       else bonus + 
+            real (LTG.stat_left_applications s) +
             real (LTG.stat_right_applications s) +
             LTG.stat_damage_done s +
             LTG.stat_healing_done s +
@@ -55,7 +60,8 @@ struct
             real (LTG.stat_gotten s)
       end
 
-  val scoreopponentslot = scoreopponentslot_sniper
+  fun scoreopponentslot gs idx = scoreopponentslot_withdistance gs 
+      (fn i => Numbers.naive_cost (255 - i)) idx
 
   (* XXX These need to take care of the number of
      turns, ending conditions (?), etc. *)
@@ -66,7 +72,7 @@ struct
           LTG.taketurnex ((my_side, SOME my_stats), 
                           (their_side, SOME their_stats)) turn;
           myturn := false;
-	  time := !time + 1
+          time := !time + 1
       end
     | my_turn _ _ = raise GameState "it's not my turn!"
                    
@@ -78,7 +84,7 @@ struct
           LTG.taketurnex ((their_side, SOME their_stats),
                           (my_side, SOME my_stats)) turn;
           myturn := true;
-	  time := !time + 1
+          time := !time + 1
       end
     | their_turn _ _ = raise GameState "it's not their turn!"
 
