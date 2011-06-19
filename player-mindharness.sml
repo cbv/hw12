@@ -72,9 +72,9 @@ struct
   fun tallysupportslots acc v = 
       case v
        of VFn (VAttack [VInt n]) => n::acc
-        | VFn (VAttack [VInt (n), v]) => tallysupportslots (n::acc) v
+        | VFn (VAttack [v, VInt (n)]) => tallysupportslots (n::acc) v
         | VFn (VHelp [VInt (n)]) => n::acc
-        | VFn (VHelp [VInt (n), v]) => tallysupportslots (n::acc) v
+        | VFn (VHelp [v, VInt (n)]) => tallysupportslots (n::acc) v
         | VFn (VK [v]) => tallysupportslots acc v
         | VFn (VS [v]) => tallysupportslots acc v
         | VFn (VS [v1,v2]) => tallysupportslots (tallysupportslots acc v1) v2
@@ -149,9 +149,9 @@ struct
           val myside = GS.myside gs
           val theirside = GS.theirside gs
           val (theirvalues, theirvitalities) = theirside
-(*          val _ = eprint ` Int.toString (!n) ^ ":\n"
-          val _ = printside myside
-          val _ = printside theirside *)
+(*         val _ = eprint ` Int.toString (!n) ^ ":\n"
+         (*  val _ = printside myside *)
+          val _ = printside theirside  *)
           val stats = GS.theirstats gs
           val slots = List.tabulate (256, fn i =>
                                              (i, LTG.statfor stats i))
