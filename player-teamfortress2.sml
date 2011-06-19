@@ -16,8 +16,8 @@ struct
      [ ] Spy           - (make zombies?)
      *)
   val (init, taketurn) =
-      DOS.makelayer [(1.0, Sniper.create ()),
-                     (1.0, Medic.create ())]
+      DOS.makelayer [("Sniper", 1.0, Sniper.create ()),
+                     ("Medic", 1.0, Medic.create ())]
 end
 
 structure Player = LayerFn(PlayerTF2)

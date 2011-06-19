@@ -44,7 +44,7 @@ fun create () =
               val (stat, dom) = EmitProgram.emit 
                                     (Kompiler.compile Timecube.timecube slot)
               val pid = DOS.spawn (SOME (DOS.getpid dos)) 
-                                  (0.1 * (DOS.getpriority dos), dom)
+                                  ("TimecubeEmitter", 0.1 * (DOS.getpriority dos), dom)
             in
 
             end

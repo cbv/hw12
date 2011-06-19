@@ -47,6 +47,7 @@ sig
 
   (* Get my own pid. *)
   val getpid : dos -> pid
+  val getname : dos -> string
   val getpriority : dos -> real
 
   val setpriority : pid -> real -> unit  
@@ -80,24 +81,24 @@ sig
   (* XXX Doesn't free slots or kill children yet *)
   val kill : pid -> unit
 
-  (* Create a new dominator with the given priority. If the optional
+  (* Create a new dominator with the given name and priority. If the optional
      parent dominator's pid is supplied, then if the parent is killed,
      so will this dominator be. 
 
      You should generally use a parent process. The scheduler is not
      good about accounting for unparented processes that start after
      the first round (they can starve other processes). *)
-  val spawn : pid option -> real * dominator -> pid
+  val spawn : pid option -> string * real * dominator -> pid
 
   (* Creates the two functions in the LAYER signature by
      scheduling the argument dominators according to its
      policy. Use like this:
 
-     val (init, taketurn) = DOS.makelayer [(1.0, Ripens.create())]
+     val (init, taketurn) = DOS.makelayer [("Ripens", 1.0, Ripens.create())]
 
      The first element of each pair is the relative priority of
      that strategy, which can be used by DOS for scheduling. *)
-  val makelayer : (real * dominator) list ->
+  val makelayer : (string * real * dominator) list ->
       (GameState.gamestate -> unit) * (GameState.gamestate -> LTG.turn)
 
 end

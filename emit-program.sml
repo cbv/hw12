@@ -49,7 +49,7 @@ struct
   fun emitspawn dos turns = 
       let val (status, dom) = emit turns
           val pid = DOS.spawn (SOME (DOS.getpid dos))
-              (DOS.getpriority dos, dom)
+                              ("EP", DOS.getpriority dos, dom)
       in
           (status, pid)
       end

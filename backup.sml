@@ -107,7 +107,7 @@ struct
   fun backupspawn dos_parent args =
     let val (status, dom) = backup dos_parent args
         val pid = DOS.spawn (SOME (DOS.getpid dos_parent))
-                            (DOS.getpriority dos_parent, dom)
+                            ("Backup", DOS.getpriority dos_parent, dom)
     in (status, pid)
     end
 

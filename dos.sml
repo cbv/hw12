@@ -34,6 +34,7 @@ struct
 
   fun gamestate (D { gs, ... }) = gs
   fun getpid (D { pid, ... }) = pid
+  fun getname _ = "notimpl"
 
   (* PERF: Doesn't need to be linear time.
      PERF: Should perhaps reserve larger slots if the
@@ -142,7 +143,7 @@ struct
 
   val rtos = Real.fmt (StringCvt.FIX (SOME 2))
 
-  fun spawn parent (priority, f) =
+  fun spawn parent (name, priority, f) =
       let 
           val charge = ref (getstartcharge parent priority)
 (*
@@ -165,7 +166,7 @@ struct
           GA.erase processes pid
       end
 
-  fun makelayer (doms : (real * dominator) list) =
+  fun makelayer (doms : (string * real * dominator) list) =
     let
        (* Starting processes *)
        val () = app (ignore o spawn NONE) doms

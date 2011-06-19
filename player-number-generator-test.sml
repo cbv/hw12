@@ -30,8 +30,8 @@ struct
          taketurn dos)
 
   val (init, taketurn) = 
-      DOS.makelayer [(1.0, {preview = preview, taketurn = taketurn}),
-                     (1.0, NumberGenerator.create ())]
+      DOS.makelayer [("Harness", 1.0, {preview = preview, taketurn = taketurn}),
+                     ("NG", 1.0, NumberGenerator.create ())]
 end
 
 structure Player = LayerFn(PlayerNumberGeneratorTest)
