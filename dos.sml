@@ -203,6 +203,10 @@ struct
         GA.appi (fn (child_pid, P { parent = SOME parent_pid, ... }) => 
                     if parent_pid = pid then kill child_pid else ()
                   | _ => ()) processes;
+(* XXX 
+  We thought maybe parents should get their children's slots when
+  children are killed but then we changed our minds
+
         (* If we have parent, move reserved_slots to it. Otherwise, free them. *)
         case parent of 
           SOME parent_pid =>
@@ -212,6 +216,8 @@ struct
             parent_reserved_slots := !reserved_slots @ !parent_reserved_slots
           end
         | NONE => app (release_slot_by_pid pid) (!reserved_slots);
+*)
+        app (release_slot_by_pid pid) (!reserved_slots);
         GA.erase processes pid
       end
 
