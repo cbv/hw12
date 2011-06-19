@@ -61,6 +61,7 @@ group is
    dominator-scout.sml
    dominator-medic.sml
    dominator-sniper.sml
+   dominator-sniper-with-backup.sml
 
  (* broken? *)
  (*   dominator-overripe.sml *)
