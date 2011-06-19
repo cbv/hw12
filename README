@@ -2,10 +2,11 @@ Cult of the Bound Variable
 ICFP 2011 Programming Contest
 
 
-Cult of the Bound Variable, the descendends of the CMU-affiliated team that ran
+Cult of the Bound Variable, the descendants of the CMU-affiliated team that ran
 the 2006 ICFP Programming Contest, is usually a rather large team. This year,
-we were not only large but had active participants in four different cities on 
-three separate continents (Pittsburgh, New York City, Paris, and Bangalore). 
+we were not only large but had active participants in five different cities on 
+three separate continents (Pittsburgh, New York City, Boston, Paris, and
+Bangalore). 
 
 In order to allow many people to participate together and have fun, in many
 recent years our overall design has been "arena" based - we allow different
@@ -39,7 +40,7 @@ named thread abstraction in DOS. The main role of DOS is to handle memory
 partitioning and scheduling for the scarce resource of plays.
 
 Individual dominators can use the operating system to reserve slots for their
-processes, fork, block, for certain events and manipulate their running 
+processes, fork, block for certain events, and manipulate their running 
 priority. There is no memory protection, so dominators have to be careful not 
 to execute functions that write into the slots of other dominators. At every
 turn, DOS runs the "preview" function of every dominator so that the dominators
@@ -53,7 +54,7 @@ the problem better. At various points, we wrote contestents against each of
 these interfaces. At the bottom is the PLAYER abstraction, which is used by the
 code that talks to and from standard output, and knows nothing else. Next is 
 the LAYER abstraction, which abstracts away maintnence of the game state. 
-(There is an alternate CORO_LAYER on top of PLAYER that allows contestents to 
+(There is an alternate CORO_LAYER on top of PLAYER that allows contestants to 
 be coded as coroutines.) 
 
 
@@ -95,7 +96,7 @@ below), then the results of the match will be recorded by a simple RPC
 interface (the ML code would 1) invoke wget to 2) visit a webpage that 3) was
 a php file that stored things in CARDFAX's database.) In order to facilitate
 this kind of play, the tutor essentially had Makefile-like capabaility: it
-checked for the existance of player-leviathan-162.exe, and then built it
+checked for the existence of player-leviathan-162.exe, and then built it
 if it did not exist.
 
 The demonic tutor also had a mode where it would query the database for some 
