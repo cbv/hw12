@@ -55,14 +55,16 @@ fun getExe base =
       val player = parse_player_arg(base) 
       val _ = if (file_exists (save_filename player)) then () else
          case player of
-            REV (_, n) => (OS.Process.system("svn up -r " ^ (Int.toString n));
-                           OS.Process.system("make " ^ (build_target player));
-                           OS.Process.system("mv " ^ (build_filename player)
-                                             ^ " " ^ (save_filename player));
-                           OS.Process.system("svn up");
-                           ())
-          | CUR _ => (OS.Process.system("make " ^ (build_target player));
-                      ())
+            REV (_, n) => 
+            (OS.Process.system("svn up -q -r " ^ (Int.toString n));
+             OS.Process.system("make " ^ (build_target player));
+             OS.Process.system("mv " ^ (build_filename player)
+                               ^ " " ^ (save_filename player));
+             OS.Process.system("svn up -q");
+             ())
+          | CUR _ => 
+            (OS.Process.system("make " ^ (build_target player));
+             ())
 
       val _ = 
          if !flagSubmit andalso not(file_exists (archive_filename player))
