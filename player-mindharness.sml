@@ -15,7 +15,7 @@ struct
   fun a ` b = a b
 
 
-  val helpinc = 64
+  val helpinc = 128
 
   (* Maybe should have a lower bound on what it will
      consider valuable, and just heal/revive if there
@@ -180,7 +180,7 @@ struct
           val (theirvalues, theirvitalities) = theirside
 (*         val _ = eprint ` Int.toString (!n) ^ ":\n"
          (*  val _ = printside myside *)
-          val _ = printside theirside  *)
+          val _ = printside theirside   *)
           val stats = GS.theirstats gs
           val slots = List.tabulate (256, fn i =>
                                              (i, LTG.statfor stats i))

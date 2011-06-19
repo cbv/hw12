@@ -28,6 +28,9 @@ group is
    kompiler-sig.sml
    kompiler.sml
 
+   abstracteval-sig.sml
+   abstracteval.sml
+
    card-help.sml
    macros.sml
 
