@@ -102,7 +102,7 @@ fun generate caller_dos goal =
 
         (* Checks if the slot is live and available; reserves it. *)
         fun check_and_reserve i = 
-            Array.sub (vitality, i) >= 0
+            Array.sub (vitality, i) > 0
             andalso DOS.reserve_fixed_slot caller_dos i
 
         (* Returns the sequence of cards needed to make the given value into
