@@ -122,18 +122,18 @@ Our submitted strategy uses the tried and true Team Fortress 2 class
 composition, which is known to maximize teamwork.  Three members of the Team
 formed our submission:
 
-Scout. The purpose of the scout is to get us into the long game.  It is only
-place during the first 85 or so turns of a game. It builds an option to either
-heal our slot 255 or attack their slot 0, in either case sacrifice our 0 and 1
-slots.  The idea behind attacking slot 0 is that it's often part of naive
-programs, setup phases, or super-short fixed strategies. If it's dead, these
-often fail.  When this option is ready, we decide to take the disruptive
-aggressive strategy or the disruptive conservative strategy.
+  Scout. The purpose of the scout is to get us into the long game.  It
+  is only place during the first 85 or so turns of a game. It builds
+  an option to either heal our slot 255 or attack their slot 0, in
+  either case sacrifice our 0 and 1 slots.  The idea behind attacking
+  slot 0 is that it's often part of naive programs, setup phases, or
+  super-short fixed strategies. If it's dead, these often fail.  When
+  this option is ready, we decide to take the disruptive aggressive
+  strategy or the disruptive conservative strategy.
 
+  Sniper. 
 
-  Sniper
-
-  Medic
+  Medic.
 
 As of 10 hours before the end of the contest, dozens and dozens of players
 had been created, 39 had been registered with the CARDFAX arena (see below),
