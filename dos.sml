@@ -205,33 +205,37 @@ struct
                                end) processes
 
              val l = ref nil
-             val () = GA.appi (fn a => l := a :: !l) processes
-             val l = ListUtil.sort (fn ((_, P { charge, ... }),
-                                        (_, P { charge = charge', ... })) =>
-                                    Real.compare (!charge, !charge')) (!l)
+             (* Compute the total charge that the process would have if we ran
+                it this term.  The favors the higher priority process when two
+                processes have the same current charge. *)
+             val () = GA.appi (fn (pid, P {charge, priority, ... }) =>
+                                  l := (pid, !charge + (1.0 / !priority)) :: !l)
+                              processes
+             val l = ListUtil.sort (ListUtil.bysecond Real.compare) (!l)
 
                  (*
              val () =
                  eprint ("[DOS]: Schedulable: " ^ StringUtil.delimit " "
-                         (map (fn (pid, P { charge, ... }) =>
-                               Int.toString pid ^ "@" ^ rtos (!charge)) l) ^ "\n")
-                 *)
+                         (map (fn (pid, charge) =>
+                               longname pid ^ "@" ^ rtos charge) l) ^ "\n")
+                  *)
 
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
-               | dosomething (((pid, P { dominator, charge,
-                                         priority, ... })) :: t) = 
-                 let val dos = D { gs = gs, pid = pid }
+               | dosomething ((pid : int, new_charge : real) :: t) = 
+                 let
+                   val P { priority, dominator, charge, ... } = GA.sub processes pid
+                   val dos = D { gs = gs, pid = pid }
                  in
                    case #taketurn dominator dos of
                        Can'tRun => dosomething t
                      | Turn turn =>
-                       (* Only change the one that took the move. *)
+                       (* Only charge the one that took the move. *)
                        let in
-                         (* 
-                         eprint ("dos-sched: " ^ Int.toString (!turnnum) 
+                         (*
+                         eprint ("[DOS] sched: " ^ Int.toString (!turnnum) 
                                  ^ " " ^ longname pid ^ "\n");
-                           *)
-                         charge := !charge + (1.0 / !priority);
+                         *)
+                         charge := new_charge;
                          turn
                        end
                  end
