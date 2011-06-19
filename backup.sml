@@ -19,21 +19,11 @@ struct
    * results in us not having to transfer ownership back to the parent.*)
   fun backup dos_parent ({ src, use_addressable, done_callback }) =
     let
-      (* 'dos' is guaranteed (by spoons) to be just global state and a pid. *)
-      fun get_cell_and_moves () =
-        let val ret =
-              if use_addressable then DOS.reserve_addressable_slot dos_parent
-              else DOS.reserve_slot dos_parent
-        in (case ret of
-                 NONE => NONE
-               | SOME dest => SOME (dest, moves_to_copy src dest))
-        end
-
       (* IPC with the parent process *)
       val status = ref Progress
       (* This holds the dest cell that we are backing up into and also the moves
        * remaining to finish the backup. *)
-      val dest_and_moves = ref (get_cell_and_moves ())
+      val dest_and_moves = ref NONE
 
       (* Preview takes care of a few pre-checks:
        * 1 - Do we have an allocated slot for the destination?
@@ -41,7 +31,16 @@ struct
        * Other things, like is the source slot alive, and are we done making the
        * backup, are handled in taketurn. *)
       fun preview dos =
-        let in
+        let
+          fun get_cell_and_moves () =
+            let val ret =
+                  if use_addressable then DOS.reserve_addressable_slot dos
+                  else DOS.reserve_slot dos
+            in (case ret of
+                     NONE => NONE
+                   | SOME dest => SOME (dest, moves_to_copy src dest))
+            end
+        in
           (* If OOMed before, attempt to reallocate. may fail anyway. *)
           if (!dest_and_moves) = NONE then
             (* TODO: Allocating during preview is more rude than in taketurn. *)
@@ -54,7 +53,7 @@ struct
                   if slotisdead dos dest then (* we need to relocate *)
                     let in
                       (* The slot is owned in the parent's name. *)
-                      DOS.release_slot dos_parent dest;
+                      DOS.release_slot dos dest;
                       status := Progress;
                       dest_and_moves := NONE;
                       (* will attempt to reallocate, but can never loop because
@@ -79,7 +78,13 @@ struct
           (* Called by the parent when it adopts the backup *)
           fun finished dos () =
             (case !dest_and_moves of
-                  SOME (dest, _) => (DOS.kill (DOS.getpid dos); dest)
+                  SOME (dest, _) =>
+                    let in
+                      (* Hand-off the slot to the parent and kill self. *)
+                      DOS.transfer_slot dos { dst = dos_parent, slot = dest };
+                      DOS.kill (DOS.getpid dos);
+                      dest
+                    end
                 | NONE => raise Fuck "backup invariant 1 violated")
         in
           (case !dest_and_moves of
