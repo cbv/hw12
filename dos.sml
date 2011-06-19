@@ -88,27 +88,33 @@ struct
         NONE
     end handle Return i => SOME i
 
-  (* We choose to skip the best 64 slots since they are easily
+  (* We choose to skip the best 8 slots since they are easily
      addressed (unless that's all that's left). *) 
   fun reserve_slot (dos as D { pid, ... })  =
     let 
         val P { reserved_slots, ... } = GA.sub processes pid
-        val (_, vitality) = GS.myside (gamestate dos)
+        val (prog, vitality) = GS.myside (gamestate dos)
 
-        fun try i =
+        (* only_empty requires us to use slots that don't have anything
+           in them. First try to reserve barren slots. *)
+        fun try only_empty i =
             let val slot = Array.sub (Numbers.addressability, i) in
               if Array.sub (reserved, slot) orelse
                (* Maybe should also prefer slots that have higher
                   health, if we don't care about addressability? *)
-               Array.sub (vitality, slot) <= 0
+                 Array.sub (vitality, slot) <= 0 orelse
+                 (only_empty andalso
+                  Array.sub (prog, slot) <> LTG.VFn LTG.VI)
               then ()
               else (Array.update (reserved, slot, true);
                     reserved_slots := slot :: !reserved_slots;
                     raise Return slot)
             end
     in
-        Util.for 64 255 try;
-        Util.for 0 63 try;
+        Util.for 8 255 (try true);
+        Util.for 0 7 (try true);
+        Util.for 8 255 (try false);
+        Util.for 0 7 (try false);
         NONE
     end handle Return i => SOME i
 

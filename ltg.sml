@@ -206,8 +206,11 @@ struct
                           val vit = Array.sub(propv, i)
                       in if isdead vit
                          then raise EvalError "get on dead slot"
-                         else Array.sub(propf, i)
-                      (* XXX gotten stats *)
+                         else 
+                             let in
+                                 inc propstats i #gotten;
+                                 Array.sub(propf, i)
+                             end
                       end
                    | VPut => VFn VI
                    | VS [g, f] =>
@@ -384,7 +387,7 @@ struct
       val rv = eval exp
       val _ = (case application_count_hook of ref(SOME f) => f(!steps) | _ => ())
     in
-	rv
+        rv
     end
 
   fun initialside () = (Array.array (256, VFn VI),

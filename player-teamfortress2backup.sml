@@ -18,7 +18,7 @@ struct
   val (init, taketurn) =
       DOS.makelayer [("Scout", 1000.0, Scout.create ()),
                      ("Sniper", 1.0, SniperWithBackup.create ()),
-                     ("Medic", 1.0, Medic.create ())]
+                     ("Medic", 1.0, MedicClassic.create ())]
 end
 
 structure Player = LayerFn(PlayerTF2)

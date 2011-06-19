@@ -100,7 +100,7 @@ struct
                (Card LTG.Attack -- $"src" -- gettarg -- $"i8192")) --
               getsrc -- Int 8192
 
-          val prog = Kompiler.run_and_return_self chargedattack
+          val prog = Kompiler.rrs_ref chargedattack prog_slot
           val () = eprint (Kompiler.src2str prog)
           val insns = Kompiler.compile_never_exponential prog prog_slot
       in
@@ -217,7 +217,14 @@ struct
 
               | BuildingGun { status = ref (EP.Progress _), ... } => DOS.Can'tRun
               (* Hope that medic helps us. *)
-              | BuildingGun { status = ref (EP.Paused _), ... } => DOS.Can'tRun
+              | BuildingGun { status = ref (EP.Paused i), ... } =>
+                      let in
+                          if !was_stuck
+                          then eprint ("My in-progress gun in slot " ^ Int.toString i ^ " is dead!")
+                          else ();
+                          was_stuck := true;
+                          DOS.Can'tRun
+                      end
               | BuildingGun { status = ref EP.Done, gun_slot, target_slot, src_slot } =>
                    let in
                        eprint ("Gun is assembled :D");
@@ -267,7 +274,6 @@ struct
                      val (best_target, _) = ListUtil.max compare_scores slots
 
                      (* Put the number in our targeting slot. *)
-                     (* XXX use spoons's program *)
                      val prog = 
                          putnuminslot gs (255 - best_target) target_slot @
                          putnuminslot gs best_src src_slot

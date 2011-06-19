@@ -23,7 +23,7 @@ struct
   datatype mode =
       (* First need to create the backstab program, which never changes. 
          The backstab program is installed as a zombie. The zombie reads
-         
+         from an addressable slot on my side, which ...
          *)
       CreateBackstab
       (* Once the program is in place, find a target and put it in target_slot. *)

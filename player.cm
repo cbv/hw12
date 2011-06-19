@@ -71,6 +71,7 @@ group is
    (* Tom Fortress 2! Don't mess them up plz :) *)
    dominator-scout.sml
    dominator-medic.sml
+   dominator-medic-classic.sml
    dominator-medic-robust.sml
    dominator-sniper.sml
    dominator-sniper-with-backup.sml

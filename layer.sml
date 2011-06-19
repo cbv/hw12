@@ -57,7 +57,7 @@ struct
             LTG.stat_damage_done s +
             LTG.stat_healing_done s +
             real (LTG.stat_iterations s) +
-            real (LTG.stat_gotten s)
+            50.0 * real (LTG.stat_gotten s)
       end
 
   fun scoreopponentslot gs idx = scoreopponentslot_withdistance gs 
