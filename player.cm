@@ -11,6 +11,9 @@ group is
    sml-lib/util/stringutil-sig.sml
    sml-lib/util/stringutil.sml
 
+   sml-lib/misc/memoize-sig.sml
+   sml-lib/misc/memoize.sml
+
    sml-lib/misc/params-sig.sml
    sml-lib/misc/params.sml
 
