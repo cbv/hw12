@@ -1,7 +1,9 @@
 #!/bin/bash
-# submission hopeless 106
-# builds a tarball and throws it, and it's hash, on the web
-# should be run from Debian Squeeze 64 bit ONLY ONLY OH GOD ONLY
+# Usage: submission hopeless 106
+#
+# REQUIRES that player-hopeless.exe already be present and built correctly!
+# Builds a tarball and throws it, and it's hash, on the web
+# should be run from Debian Squeeze 64 bit ONLY ONLY OH GOD ONLY THAT
 
 player=$1
 rev=$2
