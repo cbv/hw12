@@ -56,12 +56,22 @@ struct
   (* cost is {n} + 2 *)
   fun slownum slot n = (slowzero slot) @ (buildnum slot n)
  
-
   (* 3 *) fun rcomp n card = rap n @ [R n card]
+
+  (* 3m + 6 *)
+  (* f[n] := \x. f[n] m *)
+  fun thunknum n m = rap n @ rcomp n K @ apply_slot_to_int n m
 
   (* f[n] = rrs_ref(f[m]), expects slot n to be Id *)
   (* cost is 13 + 3m + 3n *)
-  fun fast_rr n m = fastload n Get @ [ L K n, L S n] @ rcomp n K @ apply_slot_to_int n n @ [L K n, L S n] @ apply_slot_to_slot n m
+  fun fast_rr n m = fastload n Get @ thunknum n n @ [L K n, L S n] @ apply_slot_to_slot n m
+
+  (* f[a] = f[b] *)
+  (* {b} + 2 *) fun fastcp a b = fastnum a b @ [L Get a]
+
+  (* f[m] = rrs_ref(f[m]), expects slot n to be Id *)
+  (* cost is 16 + 3m + 3n + {n} *)
+  fun fast_rrr n m = fast_rr n m @ fastcp m n @ clear n
 
   datatype num = IMM of int | REG of int
 
