@@ -76,11 +76,10 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
 
   (* Zombie performs \_ . Zombie daemon_install (Copy daemon_code) *)
   (* daemon_install is the number, in the _enemy's_ numbering system, of the slot on _our_ side where the daemon will be installed. daemon_code is the number, in _our_ numbering system, of the slot on _our_ side where the daemon program is kept. *)
-  fun zombie dmg_slot zomb_slot dem_slot zombie_code = let val exp =
+  fun zombie dmg_slot dem_slot daemon_code zombie_code = let val exp =
       \"slot" ` \"_" ` (seq
           (Card Zombie -- Int dem_slot
-                       -- (\"_" ` Card Zombie -- Int zomb_slot
-                                              -- ((Card Get -- Int zombie_code) -- (Card Succ -- $"slot")))) 
+                       -- ((Card Copy -- Int daemon_code) -- (Card Succ -- $"slot")))
           (Card Help -- (Card Dbl -- $"slot")
                      -- (Card Succ -- (Card Dbl -- $"slot"))
                      -- (Card Copy -- Int dmg_slot))) 
@@ -91,9 +90,10 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
   (* Daemon performs \_ . Zombie zombie_install (Get zombie_code) *)
   (* zombie_install is the number, in _our_ numbering system, of the slot on _their_ side where the zombie will be installed. zombie_code is the number, in _our_ numbering system, of the slot on _our_ side where the zombie program is kept. *)
   fun daemon zombie_install zombie_code daemon_code = let
-      val exp = \"_" ` Card Zombie -- Int zombie_install -- (Card Get -- Int zombie_code)
+      val exp = \"slot" ` \"_" ` Card Zombie -- Int zombie_install 
+                                             -- ((Card Get -- Int zombie_code) -- $"slot")
     in
-      Kompiler.compile_no_clear_rev exp daemon_code
+      Kompiler.compile exp daemon_code
     end
 
   fun zombie_loader zombie_code loader_code zombie_install = Kompiler.compile_no_clear_rev (rrs_ref (
@@ -123,7 +123,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       8292 *)
 
   val strategy = let
-      val tgt = 0
+      val daemon_code = 0
       val endslot = 1 (* number of the end slot, i.e. 255 *)
       val dmg = 2
       val zombie_code = 3
@@ -135,6 +135,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val daemon_install = 0 (* our slot 255, in enemy's numbering system *)
       val zombie_install = 255 (* their slot zero, in our numbering system *)
 
+(*
       val make_255 = fastnum endslot 255
       val make_10000 = fastnum dmg 10000
       val helpme = help_me dmg endslot scratch_slot
@@ -144,6 +145,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val dam2 = dbl dmg
       val go = (Kompiler.compile (Card Zombie -- Int 0 -- (Card Get --
       Int zombie_code)) loader)
+*)
  
       val result = ref (
         fastnum endslot 255 @
@@ -153,13 +155,14 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         [L Get dmg_back] @
         dbl dmg @
         shootem dmg 0 0 scratch_slot @
-        zombie dmg_back 0 0 zombie_code @
-        slownum scratch_slot zombie_code @
+        zombie dmg_back 0 daemon_code zombie_code @
+        daemon 0 zombie_code daemon_code @
+        slownum scratch_slot daemon_code @
         [L Get scratch_slot] @
         [R scratch_slot Z] @
-        (Kompiler.compile (Card Zombie -- Int 0 -- (Card Get -- Int scratch_slot))
-        loader))
+        [R scratch_slot I] )
 
+(*
       val _ = print ("255: " ^ (is (length make_255)) ^
                      " hit: " ^ (is (length hitthem)) ^ 
                      " 10k: " ^ (is (length make_10000)) ^ 
@@ -168,13 +171,14 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
                      " dam2: " ^ (is (length dam2)) ^ 
                      " zom: " ^ (is (length zom)) ^ 
                      " go: " ^ (is (length go)) ^ "\n")
+*)
      
     in
       result
     end
 
 
-  fun taketurn _ = case (!strategy) of nil => L Z 0
+  fun taketurn _ = case (!strategy) of nil => L I 0
     | today::future => let 
       val _ = strategy := future
     in
