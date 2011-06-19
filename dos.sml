@@ -72,7 +72,7 @@ struct
         val (_, vitality) = GS.myside (gamestate dos)
     in
         Util.for 0 255
-        (fn i => if Array.sub (reserved, i) orelse
+        (fn i => if Array.sub (reserved, Array.sub (Numbers.addressability, i)) orelse
                     (* Maybe should also prefer slots that have higher
                        health, if we don't care about addressability? *)
                     Array.sub (vitality, i) <= 0
@@ -83,7 +83,7 @@ struct
         NONE
     end handle Return i => SOME i
 
-  (* We choose to skip the first 64 slots since they are easily
+  (* We choose to skip the best 64 slots since they are easily
      addressed (unless that's all that's left). *) 
   fun reserve_slot (dos as D { pid, ... })  =
     let 
@@ -91,7 +91,7 @@ struct
         val (_, vitality) = GS.myside (gamestate dos)
 
         fun try i =
-            if Array.sub (reserved, i) orelse
+            if Array.sub (reserved, Array.sub (Numbers.addressability, i)) orelse
                (* Maybe should also prefer slots that have higher
                   health, if we don't care about addressability? *)
                Array.sub (vitality, i) <= 0
@@ -151,6 +151,8 @@ struct
       (* This should always succeed *)
       ignore (reserve_fixed_slot dst slot orelse raise DOS ("Failed transfer"))
     end
+
+  fun is_researved i = Array.sub (reserved, i)
 
   (* How many game turns have passed. *)
   val turnnum = ref 0

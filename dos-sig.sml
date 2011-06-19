@@ -89,6 +89,9 @@ sig
   (* Transfer ownership of a slot to |dst|. *)                           
   val transfer_slot : dos -> {dst : dos, slot : int} -> unit
 
+  (* Indicates whether or not a slot is reserved. *)
+  val is_researved : int -> bool
+
   (* Kill a running dominator. *)
   (* XXX Doesn't free slots or kill children yet *)
   val kill : pid -> unit

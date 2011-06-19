@@ -27,6 +27,14 @@ struct
       Array.tabulate (256, fn n => length (Array.sub (compiled_number_table, n)))
   fun naive_cost n = Array.sub (naive_cost_table, n)
 
+  val addressability =
+      let
+        val l = Array.foldli (fn (i, cost, acc) => (i, cost) :: acc) nil naive_cost_table
+        val l = ListUtil.stablesort (ListUtil.bysecond Int.compare) l
+      in
+        Array.fromList (map #1 l)
+      end
+
   val max_naive_cost = Array.foldl (fn (x, y) => if x > y then x else y) 0 naive_cost_table
 
   fun convert_from { given : int, desired : int} = 
