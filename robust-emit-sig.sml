@@ -22,7 +22,7 @@ sig
      instead, it will assume the turns all operate on the same slot, and
      generate them in a custom slot. (An exception will be thrown if that
      invariant is not held.) *)
-  val emit : emit_args -> status ref * DOS.dominator
+  val emit : DOS.dos -> emit_args -> status ref * DOS.dominator
 
   (* Emit at the process's current priority, returning the pid. *)
   val emitspawn : DOS.dos -> emit_args -> status ref * DOS.pid
