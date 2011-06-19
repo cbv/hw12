@@ -1,5 +1,10 @@
 (* The spy lays in wait. He tries to zombie opponent cards that
-   are dead. *)
+   are dead. 
+
+
+   n.b.: Not implemented yet. Doesn't even compile!
+   Sorry for committing -tom7
+*)
 structure Spy :> DOMINATOR =
 struct
   structure GS = GameState
