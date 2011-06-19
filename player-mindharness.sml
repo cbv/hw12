@@ -15,6 +15,8 @@ struct
   fun a ` b = a b
 
 
+  val helpinc = 64
+
   (* Maybe should have a lower bound on what it will
      consider valuable, and just heal/revive if there
      are no current high-value targets. *)
@@ -39,6 +41,7 @@ struct
   (* We're going to want to transfer life from the slot with the most
      life to the slot with the least.
      XXX? In case of tie, favor the lower numbers.
+
    *)
   fun findhighlowhealth side = 
       let val vitalities = #2 side
@@ -57,9 +60,18 @@ struct
           if lowvalue <= 0 then SOME (low) else NONE
       end
 
+  fun helpableslot (values, vitalities) = 
+      let 
+          val vlist = List.tabulate (256, fn i => (i,Array.sub (vitalities,i)))
+          val livevlist = List.filter (fn x => #2 x > helpinc  ) vlist
+          val (low, lowvalue) = ListUtil.min compare_healths livevlist
+      in
+          if lowvalue <= 0 then SOME (low) else NONE
+      end
+
   fun findreviverslot side = 
       let val vitalities = #2 side
-          val vlist = List.tabulate (253, fn i => (i,Array.sub (vitalities,i + 3)))
+          val vlist = List.tabulate (252, fn i => (i,Array.sub (vitalities,i + 4)))
           val (max, _) = ListUtil.max compare_healths vlist
       in
           max
@@ -124,11 +136,27 @@ struct
       (compile (Int s) 0) @ 
       applyregs
 
-  val prog = \ "x" ( Card (Attack)  -- (Int 0) -- $"x" -- (Int 2048)     ) 
-  val prog2 = \ "x" (\ "y"  ( Card (Attack)  -- $"x" -- $"y" -- (Int 2048)  )   ) 
+  (* assumes the helper is in slot 3 *)
+  fun helperizeslot n = 
+      (compile (Int 3) 1) @   (* first load the attacker *)
+      [LeftApply (Get, 1)] @
+      (compile (Int n) 0) @  
+      applyregs 
 
-  val opening = (compile prog2 2)
+  val attacker = \ "x" (\ "y"  ( Card (Attack)  -- $"x" -- $"y" -- (Int 2048)  )   ) 
 
+  val helper = 
+      fix ` \ "f" ` \ "n" ( Card S -- Card Help --  Card I -- 
+                                 $"n" -- Int helpinc -- ( $"f" -- $"n" ) )
+
+
+  val opening = (compile attacker 2)
+
+  val buildhelper = ( compile helper 3 )
+
+  val buildhelperins = ref buildhelper
+
+  val helperbuilt = ref false
 
   val oldinscontext = ref []
   val instructions = ref opening
@@ -138,9 +166,10 @@ struct
   val reviving = ref false;
 
   val _ = eprint "this is mindharness\n"
-(*  val _ = eprint ((Int.toString ` List.length prog) ^ "\n")
-  val _ = eprint ((Int.toString ` List.length prog2) ^ "\n")
+(*  val _ = eprint ((Int.toString ` List.length (compile helper1 0)) ^ "\n")
+  val _ = eprint ((Int.toString ` List.length (compile helper2 0)) ^ "\n")
 *)
+
 
 
 
@@ -159,6 +188,9 @@ struct
           val reviverslot = findreviverslot myside
           val (best, _) = ListUtil.max compare_scores slots
           val ((high, highval), ( low, lowval)) = findhighlowhealth myside
+          val helpthisone = case helpableslot myside 
+                             of NONE => high
+                              | SOME(x) => x
       in case (finddeadslot myside, !reviving)
           of (SOME(dead), false) =>
            ( reviving := true;
@@ -170,7 +202,12 @@ struct
                if List.null (!instructions)    
                then (  case findattackslot theirvalues
                         of NONE => 
-                           instructions := compile (Int 0) 0
+                           (case !buildhelperins
+                             of ins::inses => (instructions := [ins]; buildhelperins := inses)
+                              | nil => ( helperbuilt := true;
+                                         instructions := helperizeslot helpthisone)
+                                         
+                           )
                          | SOME(s) => (
                            instructions := attackslot (255 - s)  high
                            )

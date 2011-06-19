@@ -77,7 +77,7 @@ struct
      | VGet => "Get"
      | VPut => "Put"
      | VS nil => "S"
-     | VS l => "(S " ^ StringUtil.delimit " " (map valtos l) ^ ")"
+     | VS l => "(S " ^ StringUtil.delimit " " (map valtos  l) ^ ")"
      | VK nil => "K"
      | VK l => "(K " ^ StringUtil.delimit " " (map valtos l) ^ ")"
      | VInc => "Inc"
