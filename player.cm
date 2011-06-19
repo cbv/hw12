@@ -52,6 +52,9 @@ group is
    backup-sig.sml
    backup.sml
 
+   robust-emit-sig.sml
+   robust-emit.sml
+
    (* All dominators should be here, since
       any DOS-based player may reference them. *)
    dominator-ripens.sml
