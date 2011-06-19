@@ -21,9 +21,6 @@ fun a ` b = a b
 
   (* This one doesn't pay any attention to the
      game state. *)
-  fun init _ = let
-        val _ = print "HELLO WORLD\n"
-        val exp = [] (*zombie_help_0_0_copy_0 1*)
 (*
         val exp = Lambda("X", Lambda("Y", Apply(Var("X"), Apply(Var "Y", Card Card.Zero))))
 *)
@@ -54,17 +51,21 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         val _ = print ((Kompiler.src2str exp) ^ "\n")
         val x = Kompiler.compile_no_clear_rev exp 3
 *)
-  fun zombie dmg_slot dem_slot daemon_code zombie_code = let val exp =
-      \"slot" ` \"_" ` (seq
+  fun zombie tgt_slot dmg_slot dem_slot daemon_code zombie_code = let val exp =
+      \"_" ` \"_" ` (seq
           (Card Zombie -- Int dem_slot
-                       -- ((Card Copy -- Int daemon_code) -- (Card Succ -- $"slot")))
-          (Card Help -- (Card Dbl -- $"slot")
-                     -- (Card Succ -- (Card Dbl -- $"slot"))
+                       -- ((Card Copy -- Int daemon_code) -- (Card Succ -- (Card Get -- Int tgt_slot))))
+          (Card Help -- (Card Dbl -- (Card Get -- Int tgt_slot))
+                     -- (Card Succ -- (Card Dbl -- (Card Get -- Int tgt_slot)))
                      -- (Card Copy -- Int dmg_slot))) 
     in
       Kompiler.compile exp zombie_code
     end
-        val exp = zombie 1 0 0 2
+
+  fun init _ = let
+        val _ = print "HELLO WORLD\n"
+        val exp = [] (*zombie_help_0_0_copy_0 1*)
+        val exp = zombie 0 1 0 0 2
         val _ = print ((LTG.turns2str exp) ^ "\n")
      in
         ()
@@ -76,6 +77,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
   (* Zombie performs \_ . Zombie daemon_install (Copy daemon_code) *)
   (* daemon_install is the number, in the _enemy's_ numbering system, of the slot on _our_ side where the daemon will be installed. daemon_code is the number, in _our_ numbering system, of the slot on _our_ side where the daemon program is kept. *)
   (* 1 0 0 2 *)
+(*
   fun zombie dmg_slot dem_slot daemon_code zombie_code = let val exp =
       \"slot" ` \"_" ` (seq
           (Card Zombie -- Int dem_slot
@@ -87,6 +89,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       Kompiler.compile exp zombie_code
     end
 
+*)
   (* Daemon performs \_ . Zombie zombie_install (Get zombie_code) *)
   (* zombie_install is the number, in _our_ numbering system, of the slot on _their_ side where the zombie will be installed. zombie_code is the number, in _our_ numbering system, of the slot on _our_ side where the zombie program is kept. *)
   fun daemon zombie_install zombie_code daemon_code = let
@@ -121,7 +124,7 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       val dmg_back = 4
       val loader = 5   
       val scratch_slot = 6
-      val scratch_slot_2 = 7
+      val tgt = 0
 
       val daemon_install = 0 (* our slot 255, in enemy's numbering system *)
       val zombie_install = 255 (* their slot zero, in our numbering system *)
@@ -148,9 +151,11 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         ("dmg_back", slownum dmg_back dmg @ [L Get dmg_back]),
         ("dbl dmg", dbl dmg_back),
         ("shootem", shootem dmg_back 0 0 scratch_slot),
-        ("zombie", zombie dmg 0 daemon_code zombie_code),
+        ("zombie", zombie tgt dmg 0 daemon_code zombie_code),
         ("daemon", daemon 0 zombie_code daemon_code),
-        ("launch", slownum scratch_slot daemon_code @ [L Get scratch_slot] @ [R scratch_slot Z] @ [R scratch_slot I])
+        ("loadctr", fastnum tgt 0),
+        ("launch", slownum scratch_slot daemon_code @ [L Get scratch_slot] @ [R scratch_slot Z] @ [R scratch_slot I]),
+        ("c&c", rep 128 (succ tgt))
       ])
 
 (*
