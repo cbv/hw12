@@ -199,6 +199,7 @@ struct
                                      (if a2 then " 2" else "") ^
                                      " with " ^ Int.toString (length rest) ^
                                      " more moves...");
+                             DOS.release_all_slots dos;
                              DOS.kill (DOS.getpid dos);
                              DOS.Can'tRun
                          end
@@ -214,6 +215,7 @@ struct
                  in
                      eprint ("Attacking!");
                      (* No matter what, we're done. *)
+                     DOS.release_all_slots dos;
                      DOS.kill (DOS.getpid dos);
 
                      (* XXX actually decide *)

@@ -319,7 +319,7 @@ struct
                           Can'tRun
                      end
                  else
-                   (case (getindirectint gs src_slot, getindirectint gs target_slot) of
+                   (case (getindirectidx gs src_slot, getindirectidx gs target_slot) of
                       (SOME srcidx, SOME targidx) =>
                      let 
                          (* Because it's the opponent, the value stored in the

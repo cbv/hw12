@@ -203,6 +203,7 @@ struct
                    in
                      eprint ("New task: " ^ Int.toString src ^ " -> " ^
                              Int.toString best ^ " @ " ^ Int.toString heal ^
+                             " in slot " ^ Int.toString prog_slot ^
                              ". Program length: " ^ Int.toString (length prog));
 
                      mode := Healing { myslot = prog_slot,
