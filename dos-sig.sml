@@ -77,6 +77,9 @@ sig
      or anything like that. *)
   val release_slot : dos -> int -> unit
 
+  (* Transfer ownership of a slot to |dst|. *)                           
+  val transfer_slot : dos -> {dst : dos, slot : int} -> unit
+
   (* Kill a running dominator. *)
   (* XXX Doesn't free slots or kill children yet *)
   val kill : pid -> unit

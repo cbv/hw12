@@ -19,6 +19,7 @@ struct
                      taketurn : dos -> dosturn }
   datatype process = 
       P of { reserved_slots : int list ref,
+             name : string,
              priority : real ref,
              parent : pid option,
              dominator : dominator,
@@ -34,7 +35,6 @@ struct
 
   fun gamestate (D { gs, ... }) = gs
   fun getpid (D { pid, ... }) = pid
-  fun getname _ = "notimpl"
 
   (* PERF: Doesn't need to be linear time.
      PERF: Should perhaps reserve larger slots if the
@@ -87,6 +87,13 @@ struct
         else raise DOS ("Released unreserved slot " ^ Int.toString i)
     end
 
+  fun transfer_slot _ {dst, slot} =
+    let in
+        if Array.sub (reserved, slot)
+        then ()
+        else raise DOS ("Transfered unreserved slot " ^ Int.toString slot)
+    end
+
   (* Indexed by pid. *)
   val processes = GA.empty () : process GA.growarray
   fun getpriority (D { pid, ... }) =
@@ -96,6 +103,10 @@ struct
   fun setpriority pid new_priority =
       let val P { priority, ... } = GA.sub processes pid
       in priority := new_priority
+      end
+  fun getname (D { pid, ... }) =
+      let val P { name, ... } = GA.sub processes pid
+      in name
       end
 
   (* XXX This scheduler is pretty bad! A process can get arbitrarily far
@@ -151,6 +162,7 @@ struct
                            rtos (!charge) ^ "\n")
 *)
           val pid = GA.update_next processes (P { reserved_slots = ref nil,
+                                                  name = name,
                                                   priority = ref priority,
                                                   parent = parent,
                                                   dominator = f,
