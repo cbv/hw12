@@ -15,6 +15,11 @@
     foreach($p0match as $p1 => $row) {
       $match = $row['id'];
 
+      $player[$match]['img_util'] =
+         "/graphs/" . $global_players[$p0][0] . "-" . $global_players[$p0][1]
+         . "-" . $global_players[$p1][0] . "-" . $global_players[$p1][1] 
+         . ".png";
+
       # Row, row, row your table
       if($id == $row['p0']) {
         # Store data for correctly sorting matches
@@ -30,6 +35,10 @@
         else
           $player[$match]['color'] = "f00";
         
+        $player[$match]['redo'] = 
+           "<a style='color: #" . $player[$match]['color']
+           . "' href='delete.php?p0=" . $p0 . "&p1=" . $p1 . "'>";
+
         $player[$match]['p0'] = "<center><i>---- me ----</i></center>";
         $player[$match]['p1'] = "<a href='player.php?id=" . $p1 . "'"
                                 . " style='color: #" . $player[$match]['color']
@@ -51,6 +60,10 @@
         else
           $player[$match]['color'] = "f00";
         
+        $player[$match]['redo'] = 
+           "<a style='color: #" . $player[$match]['color']
+           . "' href='delete.php?p0=" . $p0 . "&p1=" . $p1 . "'>";
+
         $player[$match]['p0'] = "<a href='player.php?id=" . $p0 . "'"
                                 . " style='color: #" . $player[$match]['color']
                                 . "'>" . player($row['p0']) . "</a>";
@@ -116,6 +129,7 @@ Average score
   <td style="width: 70px; background: ada; font-weight: bold">Their live</td>
   <td style="width: 70px; background: ada; font-weight: bold">Rounds</td>
   <td style="width: 70px; background: ada; font-weight: bold">Score</td>
+  <td style="width: 200px; background: ada; font-weight: bold">Tools</td>
  </tr>
 <?php
   $gray = 0;
@@ -150,6 +164,10 @@ Average score
       echo "  " . $td . $row['theirlive'] . "</td>\n";
       echo "  " . $td . $row['rounds'] . "</td>\n";
       echo "  " . $td . $row['score'] . "</td>\n";
+      echo "  " . $td 
+         . "(<a style='color: #" . $row['color'] 
+         . "' href='" . $row['img_util'] . "'>img</a>) "
+         . "(" . $row['redo'] . "redo</a>)</td>\n";
       echo " </tr>\n";
     }
   }

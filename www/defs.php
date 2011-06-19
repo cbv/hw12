@@ -40,8 +40,10 @@ function get_scores($where = "") {
   $win1 = "(dead0 + zomb0 > dead1 + zomb1)";
   $ko0 = "(rounds < 200000 && " . $win0 . ")";
   $ko1 = "(rounds < 200000 && " . $win1 . ")";
-  $score0 = "(2 * " . $win0 . " + 4 * " . $ko0 . " + " . $tie . ") as s0"; 
-  $score1 = "(2 * " . $win1 . " + 4 * " . $ko1 . " + " . $tie . ") as s1"; 
+  $score0 = "(2 * " . $win0 . " + 4 * " . $ko0 . " + " . $tie 
+            . " - 10000 * (dead0 + zomb0 > 500)) as s0"; 
+  $score1 = "(2 * " . $win1 . " + 4 * " . $ko1 . " + " . $tie 
+            . " - 10000 * (dead1 + zomb1 > 500)) as s1"; 
 
   # Query the database
   $query = "select min(id), player0, player1, count(id), avg(rounds), ";
