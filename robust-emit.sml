@@ -28,7 +28,7 @@ struct
     | Backed of { slot : int, turnsleft : LTG.turn list, tick_count : int,
                   backups : backups }
 
-  fun emit ({ turns, use_addressable, backup_stride }) =
+  fun emit dos_parent ({ turns, use_addressable, backup_stride }) =
       let 
           val icr = 1.0 / real (length turns + 1)
           val progress = ref 0.0
@@ -115,13 +115,13 @@ struct
                         in
                           (* b0 is "more recent", so check it first *)
                           case !(#1 b0) of
-                               Backup.Done done_info =>
-                                 use_backup done_info b1
+                               Backup.Done done_info => use_backup done_info b1
                              | _ =>
                                  (case !(#1 b1) of
                                        Backup.Done done_info => (* use older *)
                                          use_backup done_info b0
-                                     | _ => DOS.Can'tRun (* fucked *))
+                                     | _ => (* fucked *)
+                                       (status := Paused slot; DOS.Can'tRun))
                         end
                       (* we are not dead; perform as normal *)
                       else
@@ -131,6 +131,8 @@ struct
                               let
                                 val b0new = spawn_new_backup slot
                               in
+                                (* eprint ("RobustEmit kicking backups at tick " ^
+                                       Int.toString (tick_count + 1) ^ "\n"); *)
                                 DOS.kill (#2 b1);
                                 { b0 = b0new, b1 = b0,
                                   b_trigger = b_trigger + backup_stride }
@@ -140,6 +142,8 @@ struct
                         in
                           (case turnsleft of
                                 nil => (status := Done slot;
+                                        DOS.transfer_slot dos
+                                          { dst = dos_parent, slot = slot };
                                         DOS.kill (DOS.getpid dos); DOS.Can'tRun)
                               | (t :: rest) =>
                                   let
@@ -150,7 +154,11 @@ struct
                                   in
                                     progress := !progress + icr;
                                     (* update status field *)
-                                    if List.null rest then status := Done slot
+                                    if List.null rest then
+                                      (status := Done slot;
+                                       DOS.transfer_slot dos
+                                         { dst = dos_parent, slot = slot };
+                                       DOS.kill (DOS.getpid dos))
                                     else status := Progress (!progress);
                                     build_state :=
                                       Backed { slot = slot, turnsleft = rest,
@@ -165,11 +173,11 @@ struct
           (status, { preview = preview, taketurn = taketurn })
       end
 
-  fun emitspawn dos (args as { turns, use_addressable, backup_stride }) = 
+  fun emitspawn dos_parent (args as { turns, use_addressable, backup_stride }) = 
       let
-        val (status, dom) = emit args
-        val pid = DOS.spawn (SOME (DOS.getpid dos))
-                            ("EP", DOS.getpriority dos, dom)
+        val (status, dom) = emit dos_parent args
+        val pid = DOS.spawn (SOME (DOS.getpid dos_parent))
+                            ("RE", DOS.getpriority dos_parent, dom)
         (* invariant checking - all slots should be the same *)
         fun checkturn slot (LTG.LeftApply (_, i)) =
             if not (slot = i) then raise (Fuck "bad turns list") else ()
