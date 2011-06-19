@@ -185,8 +185,6 @@ struct
           pid
       end
 
-  (* A list of processes that have been killed this turn.  They should not
-  have another chance to run. *)
   val killed_this_turn = ref []
 
   fun kill pid =
@@ -194,20 +192,20 @@ struct
         val P { charge, parent, ... } = GA.sub processes pid
       in
         killed_this_turn := pid :: !killed_this_turn;
-
+(*
         (* Kill off any children first. Note that killing each of these
-          children will pass charges to us. *)
+          children will pass any charges to us. *)
         GA.appi (fn (child_pid, P { parent = SOME parent_pid, ... }) => 
                     if parent_pid = pid then kill child_pid else ()
                   | _ => ()) processes;
-        (* Pass on our charges to our parent. *)
+        (* Pass on any of our charges to our parent. *)
         case parent of
           SOME parent_pid =>
           let val P { charge = parent_charge, ... } = GA.sub processes pid 
           in parent_charge := !parent_charge + !charge
           end
         | NONE => ();
-
+*)
         (* eprint "XXX NOTE: Kill does not free slots, yet!!\n"; *)
         GA.erase processes pid
       end
@@ -239,12 +237,12 @@ struct
                               processes
              val l = ListUtil.sort (ListUtil.bysecond Real.compare) (!l)
 
-                 (**)
+                 (*
              val () =
                  eprint ("[DOS]: Schedulable: " ^ StringUtil.delimit " "
                          (map (fn (pid, charge) =>
                                longname pid ^ "@" ^ rtos charge) l) ^ "\n")
-                  (**)
+                  *)
 
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
                | dosomething ((pid, new_charge) :: t) = 
@@ -258,19 +256,16 @@ struct
                      | Turn turn =>
                        (* Only charge the one that took the move. *)
                        let in
-                         (**)
+                         (*
                          eprint ("[DOS] sched: " ^ Int.toString (!turnnum) 
                                  ^ " " ^ longname pid ^ "\n");
-                         (**)
+                         *)
                          charge := new_charge;
                          turn
                        end
                  end
          in
-             dosomething l 
-             before
-             (turnnum := !turnnum + 1; 
-              killed_this_turn := [])
+             dosomething l before (turnnum := !turnnum + 1; killed_this_turn := [])
          end
     in
        (dos_init, dos_taketurn)
