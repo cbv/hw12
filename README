@@ -82,6 +82,16 @@ their internal memory. Then, DOS selects a single process and runs a "taketurn"
 function that allows a single dominator, as determined by the scheduler, to
 either run or declare that it is blocked and has nothing to do.
 
+In addition to dominators, the "userland" of DOS also provides several other
+services which dominators may use. Backup allows a dominator to maintain a
+copy of an important program in another slot, to reduce the risk of having to
+build something from scratch if a slot gets killed. EmitProgram allows a
+dominator to spawn and block on a child thread which, given a program, will
+make the program appear in a specified slot. RobustEmit is a version of
+EmitProgram which maintains incremental backups and automatically restores
+from them when under attack. NumberGenerator provides numbers in slots,
+sometimes more cheaply than building the number from scratch.
+
 Underlying DOS are two abstraction levels that we created as we understood 
 the problem better. At various points, we wrote contestants against each of
 these interfaces. At the bottom is the PLAYER abstraction, which is used by the
@@ -90,20 +100,43 @@ the LAYER abstraction, which abstracts away maintnence of the game state.
 (There is an alternate CORO_LAYER on top of PLAYER that allows contestants to 
 be coded as coroutines.) 
 
-
-== Individual Players == 
+== Individual Players and Strategies == 
 
 A player differentiated itself from the global infrastructure based on the
 content of a file player-*.sml in the root of the repository. Some of these
 were very simple, and relied entirely on capabilities built into the shared
 infrastructure.
 
-<Anybody want to write about their players?>
+Our submitted strategy uses the tried and true Team Fortress 2 class
+composition, which is known to maximize teamwork.
 
 As of 10 hours before the end of the contest, dozens and dozens of players
 had been created, 39 had been registered with the CARDFAX arena (see below),
 and 22 were currently being tracked in the arena as potential candidates for
 submission.
+
+Descriptions of other strategies that did not make it into the final strategy
+follow.
+
+The timecube is a combinator which generates an arbitrary number 0-255 in four
+card plays. We considered that, once all the important programs for a strategy
+were built, a lot of the game's remaining work would in generating numbers. The
+idea that each of the general combinators I, S, K, and Put could represent 2
+bits of an 8-bit number, and in four turns, all 8 bits could be specified,
+motivated the following:
+
+    a = S (K Succ)
+    b = S (K (S (K Succ) Succ))
+    four x = x Put I (x (K a) b I)
+
+'four' maps x in [K, I, Put, S] to [(+0),(+1),(+2),(+3)], and:
+
+    quad x = Dbl (Dbl x)
+    timecube x y z w =
+        four x (quad (four y (quad (four z (quad (four w Zero))))))
+
+performs a series of "shift and add"s to generate all 8 bits. (for example,
+"timecube S S K K" builds the number 15.)
 
 
 == The Demonic Tutor ==
