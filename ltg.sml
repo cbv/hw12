@@ -289,8 +289,10 @@ struct
                                          if semantics = NORMAL
                                          then 
                                              let in
-                                                 eprint ("Did " ^ Int.toString (vito - newvito) ^
-                                                         " damage!");
+                                                 if DEBUG
+                                                 then eprint ("Did " ^ Int.toString (vito - newvito) ^
+                                                              " damage!")
+                                                 else ();
                                                  incbyr propstats curslot 
                                                    #damage_done (real (vito - newvito))
                                              end
@@ -330,8 +332,10 @@ struct
                                             if semantics = NORMAL
                                             then 
                                                 let in
-                                                    eprint ("Did " ^ Int.toString (newwitp - witp) ^
-                                                            " healing!");
+                                                    if DEBUG
+                                                    then eprint ("Did " ^ Int.toString (newwitp - witp) ^
+                                                                 " healing!")
+                                                    else ();
                                                     incbyr propstats curslot 
                                                       #healing_done 
                                                       (real (newwitp - witp))
