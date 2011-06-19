@@ -108,6 +108,14 @@ struct
       let val P { name, ... } = GA.sub processes pid
       in name
       end
+  fun longname pid =
+      let val P { parent, name, ... } = GA.sub processes pid
+      in case parent of
+           NONE => name
+         | SOME pid => longname pid ^ "." ^ name
+      end
+
+  val turnnum = ref 0
 
   (* XXX This scheduler is pretty bad! A process can get arbitrarily far
      behind (ahead) and then hog the CPU. Should recenter? *)
@@ -210,22 +218,25 @@ struct
                  *)
 
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
-               | dosomething (((pid, P { dominator, charge, 
+               | dosomething (((pid, P { dominator, charge,
                                          priority, ... })) :: t) = 
                  let val dos = D { gs = gs, pid = pid }
                  in
                    case #taketurn dominator dos of
                        Can'tRun => dosomething t
                      | Turn turn =>
-                           (* Only move the one that took the move
-                              to the tail. *)
-                           let in
-                               charge := !charge + (1.0 / !priority);
-                               turn
-                           end
+                       (* Only change the one that took the move. *)
+                       let in
+                         (* 
+                         eprint ("dos-sched: " ^ Int.toString (!turnnum) 
+                                 ^ " " ^ longname pid ^ "\n");
+                           *)
+                         charge := !charge + (1.0 / !priority);
+                         turn
+                       end
                  end
          in
-             dosomething l
+             dosomething l before turnnum := !turnnum + 1
          end
     in
        (dos_init, dos_taketurn)
