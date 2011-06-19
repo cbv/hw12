@@ -3,14 +3,6 @@ struct
 
 open LTG;
 
-  datatype abstractvalue =
-           AbstractValue 
-         | AbstractInt of int
-         | Concrete of LTG.value
-
-  datatype abstractexp =
-     AbsApp of abstractexp * abstractexp
-   | AV of abstractvalue
 
 
   datatype unknownvalue =
@@ -21,14 +13,17 @@ open LTG;
   | UnknownSlotValue of int
   (* ... ? *)
 
+  fun unknownvalue2str u = 
+      case u of
+          Unknown => "unknown"
+        | UnknownInt (i) => "unknownint(" ^ Int.toString i ^ ")"
+        | UnknownSlotValue(i) => "unknownslotvalue(" ^ Int.toString i ^ ")"
+
   datatype abstractfunction =
      AVI
    | AVSucc
    | AVDbl
    | AVGet
-     (* n.b. appears to allow partial application,
-        but the partial application is always equivalent
-        to VI, so we just use that. *)
    | AVPut
    | AVS of abstractvalue list
    | AVK of abstractvalue list
@@ -46,6 +41,28 @@ open LTG;
    | AVFn of abstractfunction
    | AVUnknown of unknownvalue
 
+  fun abstractfunction2str f = 
+      case f of
+          AVI => "I"
+        | AVSucc => "Succ"
+        | AVDbl => "Dbl"
+        | AVGet => "Get"
+        | AVPut => "Put"
+        | AVS(l) => "(S " ^ StringUtil.delimit " " (map abstractvalue2str  l) ^ ")"
+        | AVK(l) =>  "(K " ^ StringUtil.delimit " " (map abstractvalue2str  l) ^ ")"
+        | AVInc => "Inc"
+        | AVDec => "Dec"
+        | AVAttack(l) => "(Attack " ^ StringUtil.delimit " " (map abstractvalue2str l) ^ ")"
+        | AVHelp(l) => "(Help " ^ StringUtil.delimit " " (map abstractvalue2str l) ^ ")"
+        | AVCopy => "Copy"
+        | AVRevive => "Revive"
+        | AVZombie(l) => "(Zombie " ^ StringUtil.delimit " " (map abstractvalue2str l) ^ ")"
+
+  and abstractvalue2str v =
+      case v of
+          AVInt(i) => Int.toString(i)
+        | AVFn(f) => abstractfunction2str f
+        | AVUnknown u => unknownvalue2str u
 
   datatype abstractexp =
      AApp of abstractexp * abstractexp
@@ -57,8 +74,18 @@ open LTG;
   | EHelp of abstractvalue list
   | EInc of abstractvalue
   | EDec of abstractvalue
-  | ERevive
+  | ERevive of abstractvalue
   (* .... *)
+
+  fun effect2str e = 
+      case e of 
+          EAttack(l) => "(Attack " ^ StringUtil.delimit " " (map abstractvalue2str l) ^ ")"
+        | EHelp(l) => "(Help " ^ StringUtil.delimit " " (map abstractvalue2str l) ^ ")"
+        | EInc(v) => "(Inc " ^ abstractvalue2str v ^ ")"
+        | EDec(v) => "(Dec " ^ abstractvalue2str v ^ ")"
+        | ERevive(v) => "(Revive " ^ abstractvalue2str v ^ ")"
+
+
 
   fun concrete2abstractfunction (f: function) : abstractfunction = 
       case f 
@@ -82,7 +109,7 @@ open LTG;
        of VInt n => AVInt n
         | VFn f => AVFn (concrete2abstractfunction f)
 
-
+  val abstractify = concrete2abstractvalue
 
   fun clamp n = if n > 65535
                 then 65535
@@ -101,12 +128,13 @@ open LTG;
     | expectslotnumber _ = raise AbsEvalError ("Slot number non-numeric")
 
 
+
   (* Evaluate an expression, returning its
      value. May raise exception AbsEvalError. May
      have side effects. *)
-  fun evalwithstate2 semantics (((propf, propv) : side), 
+  fun evalwithstate semantics (((propf, propv) : side), 
                                 ((oppf,  oppv) : side))
-                    (exp : abstractexp) : (abstractvalue * effect list) =
+                    (exp : abstractexp) : (abstractvalue option * effect list) =
     let
       (* XXX Definitely a potential for off-by-one errors here.
          Need to validate against the reference simulator? *)
@@ -247,9 +275,16 @@ open LTG;
                         | AVZombie l => AVFn (AVZombie (v2 :: l)))
                    | _ => raise AbsEvalError "unimplemented"
                end
+      val retexp = SOME(eval exp )   handle AbsEvalError s => NONE
+                                          | AbsEvalLimit => NONE;
     in
-        (eval exp, !effects)
+        (retexp, !effects)
     end
 
+(*
+  fun abseval (((propf, propv) : side), 
+               ((oppf,  oppv) : side))
+              (exp : abstractexp) : (abstractvalue * effect list) =
+*)
 
 end
