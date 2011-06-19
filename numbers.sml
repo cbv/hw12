@@ -37,26 +37,30 @@ struct
 
   val max_naive_cost = Array.foldl (fn (x, y) => if x > y then x else y) 0 naive_cost_table
 
-  fun convert_from { given : int, desired : int} = 
-      let
-        fun from given = 
-            if given > desired then NONE
-            else if given = desired then SOME []
-            else 
-              (case (from (given * 2), from (given + 1)) of
-                 (SOME hts, NONE) => SOME ((LTG.HLeftApply LTG.Dbl) :: hts)
-               | (NONE, SOME hts) => SOME ((LTG.HLeftApply LTG.Succ) :: hts)
-               | (SOME htsdbl, SOME htssucc) =>
-                 if length htssucc < length htssucc
-                 then SOME ((LTG.HLeftApply LTG.Succ) :: htssucc)
-                 else SOME ((LTG.HLeftApply LTG.Dbl) :: htsdbl)
-               | (NONE, NONE) => NONE)
-      in
+  fun from self (given, desired) = 
+(print ("from " ^ Int.toString given ^ " " ^ Int.toString desired ^ "\n");
+      if given > desired then NONE
+      else if given = desired then SOME []
+      else if given = 0 then SOME ((LTG.HLeftApply LTG.Succ) :: valOf (self (1, desired)))
+      else 
+        (case (self (given * 2, desired), self (given + 1, desired)) of
+           (SOME hts, NONE) => SOME ((LTG.HLeftApply LTG.Dbl) :: hts)
+         | (NONE, SOME hts) => SOME ((LTG.HLeftApply LTG.Succ) :: hts)
+         | (SOME htsdbl, SOME htssucc) =>
+           if length htssucc < length htsdbl
+           then SOME ((LTG.HLeftApply LTG.Succ) :: htssucc)
+           else SOME ((LTG.HLeftApply LTG.Dbl) :: htsdbl)
+         | (NONE, NONE) => NONE)
+)
+  val from = Memoize.memoizerec (Memoize.idx_tabler (fn (x, y) => x * 256 + y) 0 (256 * 256)) from
+
+  fun convert_from { given : int, desired : int } = 
+      let in
         if desired >= 256 orelse given >= 256 orelse given > desired 
         then (* Just run the compiler. *)
           unslotify (Kompiler.compile (Kompiler.Int desired) 0)
         else (* Try to search for a good reuse first. *)
-          case Memoize.memoize (Memoize.idx_tabler (fn x => x) given 256) from given of
+          case from (given, desired) of
             SOME hts => rev hts
           | NONE => Array.sub (compiled_number_table, desired)
       end
@@ -64,28 +68,13 @@ struct
   datatype card = datatype Card.card
   datatype halfturn = datatype LTG.halfturn
   fun test () = 
-      let val x = [convert_from {given = 10, desired = 4},
+      let val x = [convert_from {given = 0, desired = 1},
+                   convert_from {given = 10, desired = 4},
                    convert_from {given = 10, desired = 10},
                    convert_from {given = 10, desired = 20},
                    convert_from {given = 10, desired = 21},
                    convert_from {given = 10, desired = 32},
                    convert_from {given = 9999, desired = 8191}]
-          val _ = x = [[HLeftApply Put,HRightApply Zero,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Dbl],
-                       [],
-                       [HLeftApply Dbl],[HLeftApply Succ,HLeftApply Dbl],
-                       [HLeftApply Succ,HLeftApply Succ,HLeftApply Succ,HLeftApply Succ,
-                        HLeftApply Succ,HLeftApply Succ,HLeftApply Succ,HLeftApply Succ,
-                        HLeftApply Succ,HLeftApply Succ,HLeftApply Succ,HLeftApply Succ,
-                        HLeftApply Dbl],
-                       [HLeftApply Put,HRightApply Zero,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Succ,HLeftApply Dbl,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Succ,HLeftApply Dbl,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Succ,HLeftApply Dbl,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Succ,HLeftApply Dbl,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Succ,HLeftApply Dbl,HLeftApply Succ,HLeftApply Dbl,
-                        HLeftApply Succ,HLeftApply Dbl,HLeftApply Succ]]
-                   orelse raise Kompiler.Kompiler "You broke Numbers.convert_from."
       in
         x
       end
