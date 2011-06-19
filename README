@@ -110,6 +110,7 @@ the LAYER abstraction, which abstracts away maintnence of the game state.
 (There is an alternate CORO_LAYER on top of PLAYER that allows contestants to 
 be coded as coroutines.) 
 
+
 == Individual Players and Strategies == 
 
 A player differentiated itself from the global infrastructure based on the
