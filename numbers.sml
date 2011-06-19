@@ -38,7 +38,6 @@ struct
   val max_naive_cost = Array.foldl (fn (x, y) => if x > y then x else y) 0 naive_cost_table
 
   fun from self (given, desired) = 
-      ((* print ("from " ^ Int.toString given ^ " " ^ Int.toString desired ^ "\n"); *)
       if given > desired then NONE
       else if given = desired then SOME []
       else if given = 0 then SOME ((LTG.HLeftApply LTG.Succ) :: valOf (self (1, desired)))
@@ -51,7 +50,7 @@ struct
            then SOME ((LTG.HLeftApply LTG.Succ) :: htssucc)
            else SOME ((LTG.HLeftApply LTG.Dbl) :: htsdbl)
          | (NONE, NONE) => NONE)
-)
+
   val from = Memoize.memoizerec (Memoize.idx_tabler (fn (x, y) => x * 256 + y) 0 (256 * 256)) from
 
   fun convert_from { given : int, desired : int } = 
