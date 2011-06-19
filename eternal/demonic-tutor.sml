@@ -51,9 +51,18 @@ fun mkOutstream out_file_desc =
                         chunkSize = 1024,
                         appendMode = true}, IO.NO_BUF))
 
-fun mkStatstream name = if !flagLogStats then SOME (TextIO.openOut (name ^ ".dat")) else NONE
+fun mkStatstream player0 player1 tag =
+   let
+      val player0 = 
+         String.concatWith "-" (String.tokens (fn x => x = #":") player1) 
+      val player1 = 
+         String.concatWith "-" (String.tokens (fn x => x = #":") player1) 
+      val filename = "graph-" ^ player0 ^ "-" ^ player1 ^ "-" ^ tag ^ ".dat"
+   in
+      if !flagLogStats then SOME (TextIO.openOut filename) else NONE
+   end
 
-fun setupPlayer player arg state = 
+fun setupPlayer player arg state statstream = 
    let 
       val exe = Make.getExe player
 
@@ -81,12 +90,12 @@ fun setupPlayer player arg state =
              pid = pid, 
              instream = mkInstream inServer, 
              outstream = mkOutstream outServer,
-	     statstream = mkStatstream player,
+             statstream = statstream,
              state = state})
    end
 
 type process = {name: string,
-		pid: PIO.pid, 
+                pid: PIO.pid, 
                 instream: TextIO.instream,
                 outstream: TextIO.outstream,
                 statstream: TextIO.outstream option,
@@ -199,8 +208,10 @@ fun match player0 player1 =
    let 
       (* Setup state *)
       val () = print ("Preparing " ^ player0 ^ " vs " ^ player1 ^ "\n")
-      val process0 = setupPlayer player0 "0" (LTG.initialside ())
-      val process1 = setupPlayer player1 "1" (LTG.initialside ())
+      val ss0 = mkStatstream player0 player1 "0" 
+      val ss1 = mkStatstream player0 player1 "1" 
+      val process0 = setupPlayer player0 "0" (LTG.initialside ()) ss0
+      val process1 = setupPlayer player1 "1" (LTG.initialside ()) ss1
 
       (* Run *)
       val () = print ("Starting " ^ player0 ^ " vs " ^ player1 ^ "\n")
