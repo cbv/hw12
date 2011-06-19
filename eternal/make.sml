@@ -4,6 +4,7 @@ structure Make:> sig
    (* Takes a base, like "hopeless" or "hopeless:102" and returns
     * a path to player-hopeless.exe or player-hopeless-102.exe *)
    val getExe: string -> string
+   exception MakeFailed
 end = struct
 
 val flagSubmit = Params.flag false 
@@ -12,6 +13,8 @@ val flagSubmit = Params.flag false
 datatype player_file = CUR of string | REV of string * int
 
 exception BadPlayer
+
+exception MakeFailed
 
 fun parse_player_arg s =
    case String.tokens (fn x => x = #":") s of
@@ -72,6 +75,7 @@ fun getExe base =
       val filename = OS.Path.joinDirFile {dir = OS.FileSys.getDir (),
                                           file = save_filename player}
    in
-      filename
+      if file_exists filename then filename
+      else raise MakeFailed
    end
 end

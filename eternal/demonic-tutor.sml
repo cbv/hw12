@@ -183,13 +183,13 @@ fun usage stat =
 (* Runs a single match between two players *)
 fun match player0 player1 = 
    let 
-      val () = print ("Starting " ^ player0 ^ " vs " ^ player1 ^ "\n")
-
       (* Setup state *)
+      val () = print ("Preparing " ^ player0 ^ " vs " ^ player1 ^ "\n")
       val process0 = setupPlayer player0 "0" (LTG.initialside ())
       val process1 = setupPlayer player1 "1" (LTG.initialside ())
 
       (* Run *)
+      val () = print ("Starting " ^ player0 ^ " vs " ^ player1 ^ "\n")
       val (rounds, final0, final1) = continue (0, process0, process1)
   
       (* Cleanup *)
@@ -234,7 +234,7 @@ fun match player0 player1 =
            | _ => ())
        | _ => () 
       ; printquiet "Done.\n\n"
-   end
+   end handle Make.MakeFailed => print "BUILD FAILED. NOTHING CAN BE DONE.\n\n"
       
 (* uses time as a substitute for randomness *)
 fun pick n =
