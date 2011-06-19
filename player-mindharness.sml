@@ -64,9 +64,12 @@ struct
       let 
           val vlist = List.tabulate (256, fn i => (i,Array.sub (vitalities,i)))
           val livevlist = List.filter (fn x => #2 x > helpinc  ) vlist
-          val (low, lowvalue) = ListUtil.min compare_healths livevlist
       in
-          if lowvalue <= 0 then SOME (low) else NONE
+          if List.null livevlist
+          then NONE
+          else let val (low, lowvalue) = ListUtil.min compare_healths livevlist
+               in if lowvalue <= 0 then SOME (low) else NONE
+               end
       end
 
   fun findreviverslot side = 
