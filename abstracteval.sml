@@ -282,7 +282,7 @@ open LTG;
     end
 
 
-  fun evalwithstate1 semantics (prop : side, 
+  fun evalwithstate1 d semantics (prop : side, 
                                 (opp : side))
                       (exp : abstractexp) : (effect list) =
       let  fun aux exp1 depth acc = 
@@ -299,7 +299,7 @@ open LTG;
                            end
                          )
       in
-          aux exp 20 nil
+          aux exp d nil
       end
 
 

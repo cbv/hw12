@@ -63,8 +63,10 @@ sig
                        -> (abstractvalue option * effect list)
 
 (* computes (abstract) effects of side1 repeatedly evaluating this expression 
-  until we get an atomic value *)
-  val evalwithstate1 :  LTG.semantics -> LTG.side * LTG.side -> abstractexp 
+  until we get an atomic value.
+  first argument is limit to how many times to repeat
+ *)
+  val evalwithstate1 :  int -> LTG.semantics -> LTG.side * LTG.side -> abstractexp 
                         -> (effect list)
 
 end

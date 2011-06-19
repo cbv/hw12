@@ -43,10 +43,10 @@ struct
                   val _ = eprint "it has the following effects\n"
                   val abscode = AV ` abstractify code
                   val reseffects =
-                      evalwithstate1 NORMAL (theirside, myside) abscode
+                      evalwithstate1 30 NORMAL (theirside, myside) abscode
                   val _ = eprint `
                            StringUtil.delimit ", " (map effect2str reseffects)
-                  val _ = eprint "\n"
+                  val _ = eprint "\n\n"
               in () end
               )         
             | NONE => ()          
