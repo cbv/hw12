@@ -54,7 +54,7 @@ fun mkOutstream out_file_desc =
 fun mkStatstream player0 player1 tag =
    let
       val player0 = 
-         String.concatWith "-" (String.tokens (fn x => x = #":") player1) 
+         String.concatWith "-" (String.tokens (fn x => x = #":") player0) 
       val player1 = 
          String.concatWith "-" (String.tokens (fn x => x = #":") player1) 
       val filename = "graph-" ^ player0 ^ "-" ^ player1 ^ "-" ^ tag ^ ".dat"
