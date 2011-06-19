@@ -38,6 +38,35 @@ infixr 1 `
 fun a ` b = a b
 
 fun seq a b = (\"_" ` b) -- a
+(* ((\_. b) a)* == (\_. b)* a*
+                == ([x] b)* a* *)
+(*
+    dec 0; dec 1 == S (K Dec) (K 1) (Dec 0)
+                --> S (K Dec) (K 1) I       // boom
+                --> K Dec I (K 1 I)
+                --> Dec (K 1 I)
+                --> Dec 1
+                --> I                       // boom
+
+    dec 0; attack 1 0 0 == S (K (Attack 1 0)) (K 0) (Dec 0)
+                       --> S (K (Attack 1 0)) (K 0) I       // boom
+                       --> K (Attack 1 0) I (K 0 I)
+                       --> K (Attack 1 0) I 0
+                       --> Attack 1 0 0
+                       --> I                                // boom
+
+    idea: optimize: "S (K t) (K u) e" to "e (t u)", when e is an effectful
+        term that returns I and t and u are both values
+
+    S (K t) (K u) e -->  S (K t) (K u) I        // effect
+                    -->  K t I (K u I)
+                    --> t u
+                    -->* whatever               // effects?
+
+    e (t u) -->  I (t u)        // effect
+            -->* I whatever     // effects?
+            -->  whatever
+*)
 
 (* seqlist : src list -> src
 *  seqlist [x1...xn] implements (x1; ... ; xn) *)
@@ -95,41 +124,7 @@ fun src2kil s =
           let
             fun contains x (KVar y) = x = y
               | contains x (KCard _) = false
-              | contains x (KApply (s1, s2)) =
-                  contains x s1 orelse contains x s2
-
-            (* purity of combinator terms.
-
-               these terms have side effects:
-
-                get i       (read effect only)
-                inc i
-                dec i
-                attack i j n
-                help i j n
-                copy i      (read effect only)
-                revive i
-                zombie i x
-
-               any term containing one of these terms as a subterm
-               has side effects.
-
-              (XXX What about the side effect of causing errors? 
-               maybe we want to just have the behavior that the
-               optimizer is allowed to optimize away errors. -tom7)
-
-              all other terms are pure. *)
-            (* XXX OBSOLETE -- the current optimizer does not use this -wjl *)
-            fun pure (KApply (KCard Card.Get, _)) = false
-              | pure (KApply (KCard Card.Inc, _)) = false
-              | pure (KApply (KCard Card.Dec, _)) = false
-              | pure (KApply (KApply (KApply (KCard Card.Attack, _), _), _)) = false
-              | pure (KApply (KApply (KApply (KCard Card.Help, _), _), _)) = false
-              | pure (KApply (KCard Card.Copy, _)) = false
-              | pure (KApply (KCard Card.Revive, _)) = false
-              | pure (KApply (KApply (KCard Card.Zombie, _), _)) = false
-              | pure (KApply (s1, s2)) = pure s1 andalso pure s2
-              | pure _ = true
+              | contains x (KApply (s, t)) = contains x s orelse contains x t
 
             (* PERF: might instead make the translation return whether or not
                the result is a value, to avoid exponential double traversal.. *)
@@ -325,10 +320,46 @@ in
            purposes -wjl *)
         fun effectless (KCard _) = true
           | effectless _ = false
+        (* purity of combinator terms.
+
+           these terms have side effects:
+
+            get i       (read effect only)
+            inc i
+            dec i
+            attack i j n
+            help i j n
+            copy i      (read effect only)
+            revive i
+            zombie i x
+
+           any term containing one of these terms as a subterm
+           has side effects.
+
+          (XXX What about the side effect of causing errors? 
+           maybe we want to just have the behavior that the
+           optimizer is allowed to optimize away errors. -tom7)
+
+          all other terms are pure. *)
+        (* XXX OBSOLETE -- the current optimizer does not use this -wjl *)
+        fun pure (KApply (KCard Card.Get, _)) = false
+          | pure (KApply (KCard Card.Inc, _)) = false
+          | pure (KApply (KCard Card.Dec, _)) = false
+          | pure (KApply (KApply (KApply (KCard Card.Attack, _), _), _)) = false
+          | pure (KApply (KApply (KApply (KCard Card.Help, _), _), _)) = false
+          | pure (KApply (KCard Card.Copy, _)) = false
+          | pure (KApply (KCard Card.Revive, _)) = false
+          | pure (KApply (KApply (KCard Card.Zombie, _), _)) = false
+          | pure (KApply (s1, s2)) = pure s1 andalso pure s2
+          | pure _ = true
 
         fun opt (KApply (KApply (KCard S, KCard K), KCard K)) = KCard I
           | opt (KApply (KCard I, exp)) = opt exp
           | opt (KApply (KCard K, KCard I)) = KCard Put
+          | opt (KApply (KApply (KCard K, t), u)) =
+                if pure u
+                then opt t
+                else KApply (KApply (KCard K, opt t), opt u)
             (* ... *)
           | opt (KApply (i1, i2)) = KApply (opt i1, opt i2)
           | opt (KVar v) = raise Kompiler ("unbound var in optimizer? " ^ v)
