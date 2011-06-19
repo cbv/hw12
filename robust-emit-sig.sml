@@ -13,7 +13,8 @@ sig
       (* Finished emitting. The int is the slot number we used. *)
     | Done of int
 
-  (* Pass in something reasonable for backup_stride. 20 is a good bet. *)
+  (* Pass in something reasonable for backup_stride. 20 to 50 percent
+   * of the input program's length is a solid bet. *)
   type emit_args = { turns : LTG.turn list, use_addressable : bool,
                      backup_stride : int }
 
