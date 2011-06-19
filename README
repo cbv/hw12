@@ -125,13 +125,31 @@ formed our submission:
   this option is ready, we decide to take the disruptive aggressive
   strategy or the disruptive conservative strategy.
 
-  Sniper. The sniper builds a big "gun," a value that can be applied
-  again and again to attack an arbitrary slot of the opponent.  It
-  uses many interations of "help" to boost the life of a proponent
-  slot followed by two "attack" cards.  It does not deal with recovery
-  of its own slots directly, but leaves these tasks to the Medic.
+  Sniper. The sniper creates a weapon that can kill an unhealed
+  opponent in a single turn. It reads its target from a separate slot.
+  The weapon is rather large (it takes about 700 slots to build), but
+  once it's built, we can dispatch the entire field in an average of
+  about 2 moves per opponent slot. It targets high-value opponent
+  slots first (based on how often the opponent uses those slots, reads
+  from them, how much damage they've done, etc.). The gun strategy is
+  to use an auxiliary slot with at least 8192 vitality. We self-heal
+  on that slot 21 times, which guarantees that we have enough to do
+  two Attacks of magnitude 8192, with a net benefit to the vitality of
+  the attacker. When it moves between slots, it uses the optimal path
+  for updating its target number; for example, if the previous target
+  was 63 and the new one is 128, then it just applies Succ to the
+  target slot and then Dbl.
 
-  Medic.
+  Medic. The medic finds high-value targets on its own team and heals
+  them. It builds a one-off program to do each round of healing (which
+  minimizes the start-up time) which just uses Revive target; Help
+  (src, target); Help (target, src) for a net benefit of about 11%. It
+  does some fancy stuff to try to estimate the magnitude of healing,
+  and to reuse old medics that happen to have been abandoned, and
+  interrupt in-progress medic building to heal or revive critical
+  slots.
+
+  The other six Team Fortress 2 characters were never implemented. :)
 
 As of 10 hours before the end of the contest, dozens and dozens of players
 had been created, 39 had been registered with the CARDFAX arena (see below),
