@@ -107,7 +107,8 @@ fun src2kil s =
     let
       (* helper function to encode numbers *)
       fun T_int 0 = KCard Card.Zero
-        | T_int n = if n mod 2 = 0 then
+        | T_int n = if n < 0 then raise (Kompiler "Int of negative number!") else
+                    if n mod 2 = 0 then
                        KApply (KCard Card.Dbl, T_int (n div 2))
                      else KApply (KCard Card.Succ, T_int (n - 1))
 
@@ -294,8 +295,11 @@ fun kil2turns_wjl init k i = SOME (init @ twig2turns (kil2twig_limited k) i)
 (* NB: kil2turns_wjl will return NONE if it takes more than 100*n steps
    to convert a kil of size n *)
 fun kil2turns init k i =
-    let val tspoons = kil2turns_spoons init k i
+    let val _ = eprint "TRYING SPOONS\n"
+        val tspoons = kil2turns_spoons init k i
+        val _ = eprint "TRYING WOMBAT\n"
         val twjl_o = kil2turns_wjl init k i
+        val _ = eprint "MOVING RIGHT ALONG\n"
     in
         case twjl_o of
             NONE => tspoons
@@ -382,9 +386,21 @@ in
     end
 end
 
-fun compile s i =
+fun compile s i = let
+      val _ = eprint "KILING\n"
+      val kil = src2kil s 
+      val _ = eprint "OPTING\n"
+      val opt = optimize kil
+      val _ = eprint "TRUNING\n"
+      val turns = kil2turns [L(Card.Put, i)] opt i
+      val _ = eprint "RETURNING\n"
+   in
+      turns
+   end
+(*
     kil2turns [L(Card.Put, i)]
               (optimize (src2kil s)) i
+*)
 
 fun compile_never_exponential s i = compile s i
     (*
