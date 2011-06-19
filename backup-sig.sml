@@ -12,8 +12,6 @@ sig
   (* unit -> int is a function to call to let the backup thread know that you
    * are about to adopt the backed-up slot as its own. when the callback is
    * called, you now own that cell, and the backup thread goes away. *)
-  (* TODO: the return type of the callback will need to be extended, possibly
-   * polymorphically, to support partial backups during construction. *)
   datatype 'a status =
       Progress
     | Done of ((unit -> int) * 'a)
