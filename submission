@@ -10,15 +10,20 @@ rev=$2
 
 rm -Rf submit
 mkdir submit
+mkdir submit/src
 cp README submit/README
 cp player-$player-$rev.exe submit/run
 cp pretend-install submit/install
 chmod a+x submit/install
-svn export -r$rev svn://R_E_D_A_C_T_E_D/icfp/hw12 submit/src
+
+svn export -q svn://R_E_D_A_C_T_E_D/icfp/hw12 submit/src/current-ish
+svn export -q -r$rev svn://R_E_D_A_C_T_E_D/icfp/hw12 submit/src/rev$rev
+
 pushd submit
 tar czvf ../player-$player-$rev.tgz install run src
 popd
 rm -Rf submit
 sha512sum player-$player-$rev.tgz > player-$player-$rev.sha512
+
 scp player-$player-$rev.tgz R_E_D_A_C_T_E_D:/home/www/www/balls
 scp player-$player-$rev.sha512 R_E_D_A_C_T_E_D:/home/www/www/balls
