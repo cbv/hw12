@@ -70,10 +70,13 @@ struct
       infixr 0 andthen
 
       fun boot dos = let
-	  fun slot() = Option.valOf (DOS.reserve_addressable_slot dos)
-	  fun install x = let 
+	  fun slot() = (* HAX *) let val c = !counter in counter := c + 1; c end
+	  fun install (s, x) = let 
 	      val n = slot()
-	      val _ = eprint ("Allocated slot " ^ Int.toString n ^ "!\n")
+(*	      val _ = eprint (s ^ ":\n")
+	      val _ = eprint ( (K.kil2str(K.src2kil x)) ^ "\n")
+	      val _ = eprint ( Int.toString(length(K.compile (K.rrs_ref x n) n)) ^ "\n")
+	      val _ = eprint ( Int.toString(length(K.compile (\ "_" ` x) n)) ^ "\n") *)
 	      val _ = codes := (K.rrs_ref x n, n) :: !codes
 	  in
 	      n
@@ -83,9 +86,12 @@ struct
 	  small := slot();
 	  med := slot();
 	  loc := slot();
-	  helpSmall := install (help ` Int battery ` Int battery ` getr small);
-	  ass := install (attack ` Int battery ` getr loc ` getr med);
-	  slosher := install (put (help ` Int battery ` Int battery ` getr big) (help ` Int battery ` Int battery ` getr big));
+	  helpSmall := install ("hs", help ` Int battery ` Int battery ` getr small);
+	  ass := install ("ass", attack ` Int battery ` getr loc ` getr med);
+	  slosher := install ("slosher", 
+			      put (help ` Int battery ` Int battery ` getr big)
+				  (help ` Int battery ` Int battery ` getr big));
+
 	  warm := true;
 	  ()
       end
