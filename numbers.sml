@@ -52,7 +52,8 @@ struct
                  else SOME ((LTG.HLeftApply LTG.Dbl) :: htsdbl)
                | (NONE, NONE) => NONE)
       in
-        if desired >= 256 then (* Just run the compiler. *)
+        if desired >= 256 orelse given >= 256 orelse given > desired 
+        then (* Just run the compiler. *)
           unslotify (Kompiler.compile (Kompiler.Int desired) 0)
         else (* Try to search for a good reuse first. *)
           case Memoize.memoize (Memoize.idx_tabler (fn x => x) given 256) from given of
