@@ -75,7 +75,8 @@ open LTG;
   | EInc of abstractvalue
   | EDec of abstractvalue
   | ERevive of abstractvalue
-  (* .... *)
+  | EZombie of abstractvalue
+
 
   fun effect2str e = 
       case e of 
@@ -84,6 +85,7 @@ open LTG;
         | EInc(v) => "(Inc " ^ abstractvalue2str v ^ ")"
         | EDec(v) => "(Dec " ^ abstractvalue2str v ^ ")"
         | ERevive(v) => "(Revive " ^ abstractvalue2str v ^ ")"
+        | EZombie(v) => "(Zombie " ^ abstractvalue2str v ^ ")"
 
 
 
@@ -202,38 +204,8 @@ open LTG;
                         | AVS l => (AVFn (AVS (v2 :: l)))
                         | AVK [x] => x
                         | AVK l => AVFn (AVK (v2 :: l))
-                        | AVInc =>
-                          let val i = expectslotnumber v2
-                              val vit = Array.sub(propv, i)
-                          in (if isdead vit
-                              then ()
-                              else (case semantics of
-                                        NORMAL =>
-                                        let in
-                                            Array.update (propv, i, clamp (vit + 1))
-                                        end
-                                      | ZOMBIE => Array.update (propv, i, vit - 1)));
-                             AVFn AVI
-                          end
-                        | AVDec => 
-                          let val i = expectslotnumber v2
-                              val oppi = 255 - i
-                              val vit = Array.sub(oppv, oppi)
-                          in (if isdead vit
-                              then ()
-                              else (case semantics of
-                                        NORMAL => 
-                                        let in
-                                            if !tracing
-                                            then eprint ("DEC " ^ Int.toString i ^
-                                                         "\n")
-                                            else ();
-                                            Array.update (oppv, oppi, vit - 1)
-                                        end
-                                      | ZOMBIE => Array.update (oppv, oppi,
-                                                                clamp (vit + 1))));
-                             AVFn AVI
-                          end
+                        | AVInc => (addeffect(EInc v2); AVFn AVI)
+                        | AVDec => (addeffect(EDec v2); AVFn AVI )
                         | AVAttack [j, i] => ( addeffect(EAttack [v2,j,i]);
                                                AVFn AVI 
                                              )
@@ -247,31 +219,8 @@ open LTG;
                           let val i = expectslotnumber v2
                           in AVUnknown Unknown   (* Array.sub (oppf, i) *)
                           end
-                        | AVRevive =>
-                          let val i = expectslotnumber v2
-                              val vit = Array.sub (propv, i)
-                          in (if isdead vit
-                              then 
-                                  let in
-                                      (* Does increment health. Maybe should
-                                              be a separate counter too though? *)
-                                      Array.update (propv, i, 1)
-                                  end
-                              else ());
-                             AVFn AVI
-                          end
-                        | AVZombie [i] =>
-                          let val i = expectslotnumber i
-                              val oppi = 255 - i
-                              val vito = Array.sub (oppv, oppi)
-                          in
-                              (if isdead vito
-                               then (Array.update (oppv, oppi, ~1) ;
-                                     eprint "oops\n"
-                                    (*   Array.update (oppf, oppi, v2 )  *))  
-                               else raise AbsEvalError "zombie on living slot");
-                              AVFn AVI
-                          end
+                        | AVRevive => (addeffect(ERevive v2); AVFn AVI)
+                        | AVZombie [i] => (addeffect(EZombie v2); AVFn AVI)
                         | AVZombie l => AVFn (AVZombie (v2 :: l)))
                    | _ => AVUnknown Unknown
                end
