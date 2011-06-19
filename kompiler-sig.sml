@@ -50,6 +50,10 @@ sig
   (* Compiles a source expression into a turn-list that will create
      that expression in the given slot. *)
   val compile : src -> int -> LTG.turn list
+
+  (* You may get worse answers, but avoids rare exponential blowup. *)
+  val compile_never_exponential : src -> int -> LTG.turn list
+
   (* As above, but doesn't clear the content of the slot first.  If the given
     turns are played, src will be left-applied to the current content of the
     slot. *)

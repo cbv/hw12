@@ -300,6 +300,10 @@ end
 fun compile s i =
     kil2turns [L(Card.Put, i)]
               (optimize (src2kil s)) i
+fun compile_never_exponential s i =
+    kil2turns_spoons [L(Card.Put, i)]
+                     (optimize (src2kil s)) i
+
 fun compile_no_clear s i =
     kil2turns [L(Card.K, i), L(Card.I, i), L(Card.S, i)]
               (optimize (src2kil s)) i
