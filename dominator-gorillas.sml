@@ -65,6 +65,10 @@ struct
       fun getr n  = get (Int (!n))
       fun setr n m  = (Int m, !n)
 
+      fun andthen (x, y) = (\ "_" ` y) -- x
+      (* fun andthen (x, y) = put x y *)
+      infixr 0 andthen
+
       fun boot dos = let
 	  fun slot() = Option.valOf (DOS.reserve_addressable_slot dos)
 	  fun install x = let 
@@ -80,7 +84,7 @@ struct
 	  med := slot();
 	  loc := slot();
 	  helpSmall := install (help ` Int battery ` Int battery ` getr small);
-	  ass := install (attack ` Int battery ` getr loc ` getr med);
+	  ass := install (attack ` Int battery ` getr loc ` getr med andthen help ` Int battery ` Int battery ` getr small );
 	  slosher := install (put (help ` Int battery ` Int battery ` getr big) (help ` Int battery ` Int battery ` getr big));
 	  warm := true;
 	  ()
