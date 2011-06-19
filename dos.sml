@@ -39,11 +39,9 @@ struct
   fun gamestate (D { gs, ... }) = gs
   fun getpid (D { pid, ... }) = pid
 
-  (* PERF: Doesn't need to be linear time.
-     PERF: Should perhaps reserve larger slots if the
-     user hasn't asked for an addressable one. *)
+  (* PERF: Doesn't need to be linear time. *)
   exception Return of int
-  fun reserve_slot dos =
+  fun reserve_addressable_slot dos =
     let 
         val (_, vitality) = GS.myside (gamestate dos)
     in
@@ -60,7 +58,7 @@ struct
 
   (* We choose to skip the first 64 slots since they are easily
      addressed (unless that's all that's left). *) 
-  fun reserve_addressable_slot dos =
+  fun reserve_slot dos =
     let 
         val (_, vitality) = GS.myside (gamestate dos)
 
