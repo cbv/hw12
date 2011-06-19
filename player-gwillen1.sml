@@ -63,7 +63,7 @@ fun a ` b = a b
       val result = ref (
         print_and_cat [
         ("10k", fastnum dmg 10000),
-        ("dblshot", fast_doubleshot 10 0 1 2 0),
+        ("dblshot", fast_doubleshot 10 dmg 4 5 0),
         ("loadctr", fastnum tgt 0),
         ("zombie", zombie tgt dmg zmb),
         ("loader", zombie_loader zmb loader),
