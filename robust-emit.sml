@@ -153,6 +153,12 @@ struct
                                         DOS.Turn (LTG.RightApply (slot, c))
                                   in
                                     progress := !progress + icr;
+                                    (* update state - has to happen before the
+                                     * possible killing self. *)
+                                    build_state :=
+                                      Backed { slot = slot, turnsleft = rest,
+                                               tick_count = tick_count + 1,
+                                               backups = kick_backups backups };
                                     (* update status field *)
                                     if List.null rest then
                                       (status := Done slot;
@@ -160,10 +166,6 @@ struct
                                          { dst = dos_parent, slot = slot };
                                        DOS.kill (DOS.getpid dos))
                                     else status := Progress (!progress);
-                                    build_state :=
-                                      Backed { slot = slot, turnsleft = rest,
-                                               tick_count = tick_count + 1,
-                                               backups = kick_backups backups };
                                     maketurn t
                                   end)
                         end
