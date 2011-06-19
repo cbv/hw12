@@ -26,17 +26,21 @@ struct
       Array.tabulate (256, fn n => length (Array.sub (compiled_number_table, n)))
   fun naive_cost n = Array.sub (naive_cost_table, n)
 
+  val max_naive_cost = Array.foldl (fn (x, y) => if x > y then x else y) 0 naive_cost_table
+
   (* The sequence of cards that should be left applied to a cell that
      currently contains |given| to change the contents of the cell to
      |desired|.  At worst, it will just return the cards that start from
      scratch. *)
   fun convert_from { given : int, desired : int} = 
       let
-        fun from given desired = 
-            if given > desired then NONE
+        fun from depth given desired = 
+            if depth > max_naive_cost then NONE
+            else if given > desired then NONE
             else if given = desired then SOME []
             else 
-              (case (from (given + 1) desired, from (given * 2) desired) of
+              (case (from (depth + 1) (given + 1) desired, 
+                     from (depth + 1) (given * 2) desired) of
                    (SOME hts, NONE) => SOME ((LTG.HLeftApply LTG.Succ) :: hts)
                  | (NONE, SOME hts) => SOME ((LTG.HLeftApply LTG.Dbl) :: hts)
                  | (SOME htssucc, SOME htsdbl) =>
@@ -45,7 +49,7 @@ struct
                    else SOME ((LTG.HLeftApply LTG.Dbl) :: htsdbl)
                  | (NONE, NONE) => NONE)
       in
-        case from given desired of
+        case from 0 given desired of
           SOME hts => rev hts
         | NONE => Array.sub (compiled_number_table, desired)
       end
