@@ -39,68 +39,6 @@ struct
   fun gamestate (D { gs, ... }) = gs
   fun getpid (D { pid, ... }) = pid
 
-  (* PERF: Doesn't need to be linear time. *)
-  exception Return of int
-  fun reserve_addressable_slot dos =
-    let 
-        val (_, vitality) = GS.myside (gamestate dos)
-    in
-        Util.for 0 255
-        (fn i => if Array.sub (reserved, i) orelse
-                    (* Maybe should also prefer slots that have higher
-                       health, if we don't care about addressability? *)
-                    Array.sub (vitality, i) <= 0
-                 then ()
-                 else (Array.update (reserved, i, true);
-                       raise Return i));
-        NONE
-    end handle Return i => SOME i
-
-  (* We choose to skip the first 64 slots since they are easily
-     addressed (unless that's all that's left). *) 
-  fun reserve_slot dos =
-    let 
-        val (_, vitality) = GS.myside (gamestate dos)
-
-        fun try i =
-            if Array.sub (reserved, i) orelse
-               (* Maybe should also prefer slots that have higher
-                  health, if we don't care about addressability? *)
-               Array.sub (vitality, i) <= 0
-            then ()
-            else (Array.update (reserved, i, true);
-                  raise Return i);
-    in
-        Util.for 64 255 try;
-        Util.for 0 63 try;
-        NONE
-    end handle Return i => SOME i
-
-  fun reserve_fixed_slot dos i =
-      if Array.sub (reserved, i) then false
-      else (Array.update (reserved, i, true);
-            true)
-
-  fun reserve_fixed_slots dos l =
-      if List.exists (fn i => Array.sub (reserved, i)) l
-      then false
-      else (app (fn i => Array.update (reserved, i, true)) l;
-            true)
-
-  fun release_slot _ i =
-    let in
-        if Array.sub (reserved, i)
-        then Array.update (reserved, i, false)
-        else raise DOS ("Released unreserved slot " ^ Int.toString i)
-    end
-
-  fun transfer_slot _ {dst, slot} =
-    let in
-        if Array.sub (reserved, slot)
-        then ()
-        else raise DOS ("Transfered unreserved slot " ^ Int.toString slot)
-    end
-
   (* Indexed by pid. *)
   val processes = GA.empty () : process GA.growarray
   fun getpriority (D { pid, ... }) =
@@ -115,12 +53,104 @@ struct
       let val P { name, ... } = GA.sub processes pid
       in name
       end
+  fun getslots (D { pid, ... }) =
+      let val P { reserved_slots, ... } = GA.sub processes pid
+      in !reserved_slots
+      end
   fun longname pid =
       let val P { parent, name, ... } = GA.sub processes pid
       in case parent of
            NONE => name
          | SOME pid => longname pid ^ "." ^ name
       end
+
+  (* PERF: Doesn't need to be linear time. *)
+  exception Return of int
+  fun reserve_addressable_slot (dos as D { pid, ... })  =
+    let 
+        val P { reserved_slots, ... } = GA.sub processes pid
+        val (_, vitality) = GS.myside (gamestate dos)
+    in
+        Util.for 0 255
+        (fn i => if Array.sub (reserved, i) orelse
+                    (* Maybe should also prefer slots that have higher
+                       health, if we don't care about addressability? *)
+                    Array.sub (vitality, i) <= 0
+                 then ()
+                 else (Array.update (reserved, i, true);
+                       reserved_slots := i :: !reserved_slots;
+                       raise Return i));
+        NONE
+    end handle Return i => SOME i
+
+  (* We choose to skip the first 64 slots since they are easily
+     addressed (unless that's all that's left). *) 
+  fun reserve_slot (dos as D { pid, ... })  =
+    let 
+        val P { reserved_slots, ... } = GA.sub processes pid
+        val (_, vitality) = GS.myside (gamestate dos)
+
+        fun try i =
+            if Array.sub (reserved, i) orelse
+               (* Maybe should also prefer slots that have higher
+                  health, if we don't care about addressability? *)
+               Array.sub (vitality, i) <= 0
+            then ()
+            else (Array.update (reserved, i, true);
+                  reserved_slots := i :: !reserved_slots;
+                  raise Return i);
+    in
+        Util.for 64 255 try;
+        Util.for 0 63 try;
+        NONE
+    end handle Return i => SOME i
+
+  fun reserve_fixed_slot (D { pid, ... }) i =
+    let val P { reserved_slots, ... } = GA.sub processes pid
+    in
+      if Array.sub (reserved, i) then false
+      else (Array.update (reserved, i, true);
+            reserved_slots := i :: !reserved_slots;
+            true)
+    end
+
+  fun reserve_fixed_slots (D { pid, ... })  l =
+    let val P { reserved_slots, ... } = GA.sub processes pid
+    in
+      if List.exists (fn i => Array.sub (reserved, i)) l
+      then false
+      else (app (fn i => (Array.update (reserved, i, true);
+                          reserved_slots := i :: !reserved_slots)) l;
+            true)
+    end
+
+  fun release_slot_by_pid pid i =
+    let val P { reserved_slots, ... } = GA.sub processes pid
+        val rest =
+            case ListUtil.extract (fn j => i = j) (!reserved_slots) of 
+              SOME (_, rest) => rest
+            | NONE => raise DOS ("Releasing slot " ^ Int.toString i ^ " not owned by you")
+    in
+        if Array.sub (reserved, i)
+        then (Array.update (reserved, i, false);
+              reserved_slots := rest)
+        else raise DOS ("Released unreserved slot " ^ Int.toString i)
+    end
+  fun release_slot (D { pid, ... }) i = release_slot_by_pid pid i
+
+  fun release_all_slots (dos as D { pid, ... }) = 
+    let val P { reserved_slots, ... } = GA.sub processes pid
+    in
+      app (release_slot dos) (!reserved_slots)
+    end
+
+  fun transfer_slot dos {dst, slot} =
+    let in
+      release_slot dos slot 
+      handle DOS _ => raise DOS ("Transfered unreserved slot " ^ Int.toString slot);
+      (* This should always succeed *)
+      ignore (reserve_fixed_slot dst slot orelse raise DOS ("Failed transfer"))
+    end
 
   (* How many game turns have passed. *)
   val turnnum = ref 0
@@ -157,13 +187,21 @@ struct
 
   fun kill pid =
       let        
-        val P { parent, ... } = GA.sub processes pid
+        val P { parent, reserved_slots, ... } = GA.sub processes pid
       in
         killed_this_turn := pid :: !killed_this_turn;
         GA.appi (fn (child_pid, P { parent = SOME parent_pid, ... }) => 
                     if parent_pid = pid then kill child_pid else ()
                   | _ => ()) processes;
-        (* eprint "XXX NOTE: Kill does not free slots, yet!!\n"; *)
+        (* If we have parent, move reserved_slots to it. Otherwise, free them. *)
+        case parent of 
+          SOME parent_pid =>
+          let val P { reserved_slots = parent_reserved_slots, ... } = 
+                  GA.sub processes parent_pid
+          in
+            parent_reserved_slots := !reserved_slots @ !parent_reserved_slots
+          end
+        | NONE => app (release_slot_by_pid pid) (!reserved_slots);
         GA.erase processes pid
       end
 

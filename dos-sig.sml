@@ -75,10 +75,16 @@ sig
   (* Same, but takes all or none. *)
   val reserve_fixed_slots : dos -> int list -> bool
 
+  (* Returns all slots you currently own. *)
+  val getslots : dos -> int list
+
   (* Indicate that we no longer need the slot, so it can be
      returned by reserve_*_slot. Doesn't change the contents
      or anything like that. *)
   val release_slot : dos -> int -> unit
+
+  (* Gives up all the slots this process has reserved. *)
+  val release_all_slots : dos -> unit
 
   (* Transfer ownership of a slot to |dst|. *)                           
   val transfer_slot : dos -> {dst : dos, slot : int} -> unit
