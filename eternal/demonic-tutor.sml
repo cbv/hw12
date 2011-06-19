@@ -260,6 +260,15 @@ fun go args =
       case (!flagMode, args) of
          ("duel", [ player0, player1 ]) => match player0 player1
 
+       | ("costress", [ player1 ]) => 
+         let 
+            val contestants = 
+               String.tokens Char.isSpace
+                  (RPC.rpc "http://R_E_D_A_C_T_E_D/arena/contestants.php" [])
+         in 
+            List.app (fn x => match x player1) contestants
+         end
+
        | ("stress", [ player0 ]) => 
          let 
             val contestants = 
