@@ -36,7 +36,7 @@ The Dominator Operating System is a response to the competing demands of
 needing to do several things (defense, short-term offense, long-term offense)
 well. It allows a contestant to be made of several Dominators, the aggressively
 named thread abstraction in DOS. The main role of DOS is to handle memory
-partitioning and 
+partitioning and scheduling for the scarce resource of plays.
 
 Individual dominators can use the operating system to reserve slots for their
 processes, fork, block, for certain events and manipulate their running 
