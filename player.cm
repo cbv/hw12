@@ -42,6 +42,7 @@ group is
    emit-program-sig.sml
    emit-program.sml
 
+   timecube.sml
    number-generator-sig.sml
    number-generator.sml
 

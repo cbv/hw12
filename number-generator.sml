@@ -22,7 +22,10 @@ type work = {caller_dos : DOS.dos,
 val queue = ref [] : work list ref
 
 (* Keep track of whether or not someone has started us. *)
-datatype global_status = NotRunning | Running 
+datatype global_status 
+  = NotRunning
+  | WaitingForTimecuve of EmitProgram.status
+  | Running 
 val global_status = ref NotRunning
 
 (* Hard code some useful values?
@@ -31,8 +34,22 @@ val global_status = ref NotRunning
 
 fun create () =
     let
-      fun preview _ = global_status := Running
-                      
+      fun preview dos = global_status := Running
+(*
+ XXX Don't build the timecube until later in the game.
+          case !global_status of
+            NotRunning => 
+            let
+              if DOS.reserve_fixed_slot 2 then
+              val (stat, dom) = EmitProgram.emit 
+                                    (Kompiler.compile Timecube.timecube slot)
+              val pid = DOS.spawn (SOME (DOS.getpid dos)) 
+                                  (0.1 * (DOS.getpriority dos), dom)
+            in
+
+            end
+            | _ => ()
+*)
       fun taketurn dos =
           let in
             case !queue of
@@ -69,9 +86,9 @@ fun create () =
     end
 
 fun generate caller_dos goal =
-    if (!global_status) <> Running then 
+    case !global_status of NotRunning =>
       raise NumberGenerator "You must start the number generator service."
-    else
+    | _ =>
       let 
         (* val () = eprint ("NG: got request for " ^ Int.toString goal ^ "\n") *)
         val gs = DOS.gamestate caller_dos
