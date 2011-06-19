@@ -16,14 +16,20 @@ sig
       Progress
     | Done of ((unit -> int) * 'a)
 
-  (* Generates a backup thread. The thunk is a callback to store data in the
-   * done status flag upon the time of completion of the backup, such as for the
-   * EmitProgram partial backup to know at what point to resume building when
-   * restoring from a backup. *)
-  val backup : DOS.dos -> int -> bool -> (unit -> 'a)
-               -> 'a status ref * DOS.dominator
+  (* src is which slot number to take a backup from;
+   * use_addressable is whether to try to use an easily-addressable slot for the
+   * backup or not ("high priority location");
+   * The done_callback can be used to return user-specific state taken from the
+   * exact time the backup was finished; its return value will be stored in the
+   * Done status flag ref. this is useful for such as doing partial backups
+   * inside of EmitProgram; the "'a" could be the remaining moves needed to
+   * finish building at the time the backup was completed. *)
+  type 'a backup_args =
+    { src : int, use_addressable : bool, done_callback : unit -> 'a }
+
+  (* Generates a backup thread. *)
+  val backup : DOS.dos -> 'a backup_args -> 'a status ref * DOS.dominator
   (* Generates and spawns a backup thread. *)
-  val backupspawn : DOS.dos -> int -> bool -> (unit -> 'a)
-                    -> 'a status ref * DOS.pid
+  val backupspawn : DOS.dos -> 'a backup_args -> 'a status ref * DOS.pid
 
 end
