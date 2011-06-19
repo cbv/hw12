@@ -54,6 +54,17 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         val _ = print ((Kompiler.src2str exp) ^ "\n")
         val x = Kompiler.compile_no_clear_rev exp 3
 *)
+  fun zombie dmg_slot dem_slot daemon_code zombie_code = let val exp =
+      \"slot" ` \"_" ` (seq
+          (Card Zombie -- Int dem_slot
+                       -- ((Card Copy -- Int daemon_code) -- (Card Succ -- $"slot")))
+          (Card Help -- (Card Dbl -- $"slot")
+                     -- (Card Succ -- (Card Dbl -- $"slot"))
+                     -- (Card Copy -- Int dmg_slot))) 
+    in
+      Kompiler.compile exp zombie_code
+    end
+        val exp = zombie 1 0 0 2
         val _ = print ((LTG.turns2str exp) ^ "\n")
      in
         ()
@@ -62,20 +73,9 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
   val _ = init ()
 
 
-(*
-  (* Zombie performs \_.Help (2*(Copy tgt)) (2(Copy tgt)+1) (Copy dmg) *)
-  fun zombie tgt dmg slot = let
-      val exp = \"_" ` Card Help -- (Card Dbl -- (Card Copy -- Int tgt)) -- (Card Succ -- (Card Dbl -- (Card Copy -- Int tgt))) -- (Card Copy -- Int dmg) 
-    in
-      (* this should be named like, compile_assume_identity *)
-      Kompiler.compile_no_clear_rev exp slot
-    end
-*)
-
-  (* WARINING WARNING WARINING: 255-x *)
-
   (* Zombie performs \_ . Zombie daemon_install (Copy daemon_code) *)
   (* daemon_install is the number, in the _enemy's_ numbering system, of the slot on _our_ side where the daemon will be installed. daemon_code is the number, in _our_ numbering system, of the slot on _our_ side where the daemon program is kept. *)
+  (* 1 0 0 2 *)
   fun zombie dmg_slot dem_slot daemon_code zombie_code = let val exp =
       \"slot" ` \"_" ` (seq
           (Card Zombie -- Int dem_slot
@@ -96,15 +96,6 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
       Kompiler.compile exp daemon_code
     end
 
-  fun zombie_loader zombie_code loader_code zombie_install = Kompiler.compile_no_clear_rev (rrs_ref (
-    Card Zombie -- Int zombie_install -- (Card Get -- Int zombie_code)
-(*
-      fastload s Zombie @
-      apply s Z @
-      apply_slot_to_slot s zombie) s
-*)
-  ) loader_code) loader_code
-
   val is = Int.toString
 
   (* help 255 0 10000 ; assumes 10000 is in slot dmg ; uses slot scratch which must be I *)
@@ -124,9 +115,9 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
 
   val strategy = let
       val daemon_code = 0
-      val endslot = 1 (* number of the end slot, i.e. 255 *)
-      val dmg = 2
-      val zombie_code = 3
+      val endslot = 3 (* number of the end slot, i.e. 255 *)
+      val dmg = 1
+      val zombie_code = 2
       val dmg_back = 4
       val loader = 5   
       val scratch_slot = 6
@@ -134,33 +125,33 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
 
       val daemon_install = 0 (* our slot 255, in enemy's numbering system *)
       val zombie_install = 255 (* their slot zero, in our numbering system *)
+    
+      fun print_and_cat' [] = []
+        | print_and_cat' ((lbl, asm)::rest) = let
+            val _ = print (lbl ^ ": " ^ (is (length asm)) ^ "\n")
+          in
+            asm @ (print_and_cat' rest)
+          end
 
-(*
-      val make_255 = fastnum endslot 255
-      val make_10000 = fastnum dmg 10000
-      val helpme = help_me dmg endslot scratch_slot
-      val copydam = slownum dmg_back dmg @[L Get dmg]
-      val hitthem = shootem dmg 0 0 scratch_slot 
-      val zom = zombie dmg 0 0 zombie_code 
-      val dam2 = dbl dmg
-      val go = (Kompiler.compile (Card Zombie -- Int 0 -- (Card Get --
-      Int zombie_code)) loader)
-*)
+      fun print_and_cat x = let 
+            val result = print_and_cat' x
+            val _ = print ("TOTAL: " ^ (is (length result)) ^ "\n\n")
+          in
+            result
+           end
  
       val result = ref (
-        fastnum endslot 255 @
-        fastnum dmg 10000 @
-        help_me dmg endslot scratch_slot @
-        slownum dmg_back dmg @
-        [L Get dmg_back] @
-        dbl dmg @
-        shootem dmg 0 0 scratch_slot @
-        zombie dmg_back 0 daemon_code zombie_code @
-        daemon 0 zombie_code daemon_code @
-        slownum scratch_slot daemon_code @
-        [L Get scratch_slot] @
-        [R scratch_slot Z] @
-        [R scratch_slot I] )
+        print_and_cat [
+        ("255", fastnum endslot 255),
+        ("10k", fastnum dmg 10000),
+        ("helpme", help_me dmg endslot scratch_slot),
+        ("dmg_back", slownum dmg_back dmg @ [L Get dmg_back]),
+        ("dbl dmg", dbl dmg_back),
+        ("shootem", shootem dmg_back 0 0 scratch_slot),
+        ("zombie", zombie dmg 0 daemon_code zombie_code),
+        ("daemon", daemon 0 zombie_code daemon_code),
+        ("launch", slownum scratch_slot daemon_code @ [L Get scratch_slot] @ [R scratch_slot Z] @ [R scratch_slot I])
+      ])
 
 (*
       val _ = print ("255: " ^ (is (length make_255)) ^
