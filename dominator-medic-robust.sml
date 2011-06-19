@@ -1,6 +1,7 @@
 (* The medic looks for cells that are hurt or dead,
    and heals or revives them. Uses a strategy similar
    to the sniper. *)
+(* Now uses RobustEmit. - Ben *)
 structure MedicRobust :> DOMINATOR =
 struct
   structure GS = GameState
@@ -198,10 +199,11 @@ struct
                      val (stat, child_pid) =
                        RE.emitspawn dos { turns = prog, use_addressable = true,
                                           backup_stride =
-                                            (List.length prog) div 4 }
+                                            (List.length prog) div 8 }
                    in
                      eprint ("New task: " ^ Int.toString src ^ " -> " ^
                              Int.toString best ^ " @ " ^ Int.toString heal ^
+                             " in slot <unknown slot>" ^
                              ". Program length: " ^ Int.toString (length prog));
 
                      mode := Healing { child = child_pid,
@@ -264,6 +266,7 @@ struct
               | Healing { status = ref (RE.Paused _), child, ... } =>
                  let in
                      eprint ("Medic: My child RobustEmit was interrupted. Killing.");
+                     (* Killing RE releases the slot(s) we were being built in. *)
                      DOS.kill child;
                      mode := FindTarget;
                      taketurn dos
