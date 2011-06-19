@@ -185,11 +185,29 @@ struct
           pid
       end
 
+  val killed_this_turn = ref []
+
   fun kill pid =
-      let
+      let        
+        val P { charge, parent, ... } = GA.sub processes pid
       in
-          (* eprint "XXX NOTE: Kill does not free slots nor kill children, yet!!\n"; *)
-          GA.erase processes pid
+        killed_this_turn := pid :: !killed_this_turn;
+(*
+        (* Kill off any children first. Note that killing each of these
+          children will pass any charges to us. *)
+        GA.appi (fn (child_pid, P { parent = SOME parent_pid, ... }) => 
+                    if parent_pid = pid then kill child_pid else ()
+                  | _ => ()) processes;
+        (* Pass on any of our charges to our parent. *)
+        case parent of
+          SOME parent_pid =>
+          let val P { charge = parent_charge, ... } = GA.sub processes pid 
+          in parent_charge := !parent_charge + !charge
+          end
+        | NONE => ();
+*)
+        (* eprint "XXX NOTE: Kill does not free slots, yet!!\n"; *)
+        GA.erase processes pid
       end
 
   fun makelayer (doms : (string * real * dominator) list) =
@@ -227,7 +245,8 @@ struct
                   *)
 
              fun dosomething nil = LTG.LeftApply (LTG.I, 0) (* Idle! *)
-               | dosomething ((pid : int, new_charge : real) :: t) = 
+               | dosomething ((pid, new_charge) :: t) = 
+                 if List.exists (fn p => p = pid) (!killed_this_turn) then dosomething t else
                  let
                    val P { priority, dominator, charge, ... } = GA.sub processes pid
                    val dos = D { gs = gs, pid = pid }
@@ -246,7 +265,7 @@ struct
                        end
                  end
          in
-             dosomething l before turnnum := !turnnum + 1
+             dosomething l before (turnnum := !turnnum + 1; killed_this_turn := [])
          end
     in
        (dos_init, dos_taketurn)
