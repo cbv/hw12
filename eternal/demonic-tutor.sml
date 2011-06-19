@@ -87,6 +87,7 @@ fun setupPlayer player arg state statstream =
          (PIO.close outPlayer
           ; PIO.close inPlayer
           ; {name = player,
+             broke = ref false,
              pid = pid, 
              instream = mkInstream inServer, 
              outstream = mkOutstream outServer,
@@ -95,6 +96,7 @@ fun setupPlayer player arg state statstream =
    end
 
 type process = {name: string,
+                broke: bool ref,
                 pid: PIO.pid, 
                 instream: TextIO.instream,
                 outstream: TextIO.outstream,
@@ -110,13 +112,15 @@ fun playerData player =
     let 
         val vita = #2 (#state player) 
     in
-	Array.foldr 
-	    (fn (x, (vitality, live, dead, zombie)) => 
-		if x > 0 
-		then (vitality + IntInf.fromInt x, live + 1, dead, zombie)
-		else if x = 0
-		then (vitality, live, dead + 1, zombie)
-		else (vitality, live, dead, zombie + 1)) (0, 0, 0, 0) vita
+        if !(#broke player) then (0, 0, 100000, 100000)
+        else 
+           Array.foldr 
+              (fn (x, (vitality, live, dead, zombie)) => 
+              if x > 0 
+              then (vitality + IntInf.fromInt x, live + 1, dead, zombie)
+              else if x = 0
+              then (vitality, live, dead + 1, zombie)
+              else (vitality, live, dead, zombie + 1)) (0, 0, 0, 0) vita
     end
 
 (*
@@ -160,6 +164,8 @@ fun report (n, proponent, opponent) =
       ; printPlayerData player1
    end
 
+exception Broke of int * process * process
+
 fun continue (n, proponent: process, opponent: process) =
    if n = max orelse winner (proponent, opponent)
    then (report (n, proponent, opponent); 
@@ -174,11 +180,28 @@ fun continue (n, proponent: process, opponent: process) =
       (* GET THE MOVE *)
       val () = debug "Receiving in tutor"
       val play = LTGParse.rcv (#instream proponent)
+         handle LTGParse.LTGIO s => 
+            if n mod 2 = 0 
+            then (err ("PLAYER 0 FUCKED UP: " ^ s ^ " (bad send)")
+                  ; #broke proponent := true
+                  ; raise Broke (n, proponent, opponent))
+            else (err ("PLAYER 1 FUCKED UP: " ^ s ^ " (bad send)")
+                  ; #broke opponent := true
+                  ; raise Broke (n, opponent, proponent))
+
       val () = debug "Done receiving in tutor"
 
       (* SEND THE MOVE *)
       val () = debug "Sending in tutor"
       val () = LTGParse.send (#outstream opponent) play
+         handle LTGParse.LTGIO s => 
+            if n mod 2 = 0 
+            then (err ("PLAYER 1 FUCKED UP: " ^ s ^ " (bad recv)")
+                  ; #broke opponent := true
+                  ; raise Broke (n, proponent, opponent))
+            else (err ("PLAYER 0 FUCKED UP: " ^ s ^ " (bad recv)")
+                  ; #broke proponent := true
+                  ; raise Broke (n, opponent, proponent))
       val () = debug "Done sending in tutor"
 
       (* MAYBE LOG SOME DATA ABOUT THE MOVE *)
@@ -216,7 +239,8 @@ fun match player0 player1 =
       (* Run *)
       val () = print ("Starting " ^ player0 ^ " vs " ^ player1 ^ "\n")
       val (rounds, final0, final1) = continue (0, process0, process1)
-  
+         handle Broke data => data
+ 
       (* Cleanup *)
       val () = PP.kill (PP.K_PROC (#pid process0), Posix.Signal.kill)
       val () = PP.kill (PP.K_PROC (#pid process1), Posix.Signal.kill)
