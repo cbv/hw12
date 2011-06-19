@@ -112,7 +112,7 @@ fun playerData player =
     let 
         val vita = #2 (#state player) 
     in
-        if !(#broke player) then (0, 0, 100000, 100000)
+        if !(#broke player) then (0, 0, 256, 256)
         else 
            Array.foldr 
               (fn (x, (vitality, live, dead, zombie)) => 
