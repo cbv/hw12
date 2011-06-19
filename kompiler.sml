@@ -45,6 +45,9 @@ fun seqlist [] = Card (Card.I)
   | seqlist [a] = a
   | seqlist (a::ays) = (\"_" ` (seqlist ays)) -- a 
 
+(* XXX this has never been tested! spoons should check it out. *)
+fun elet (var : string, value : src, exp : src) = Apply(Lambda(var, exp), value)
+
 fun fix s = let
   val minifix = \"x" ` $"f" -- (\"y" ` $"x" -- $"x" -- $"y")
   val Z = \"f" ` minifix -- minifix (* " make fontify happy *)

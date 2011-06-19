@@ -72,6 +72,24 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
     end
 *)
 
+  (* zslot: where we keep the zombie code *)
+  fun zombieexp zslot = \"n" ` \"offset" ` \"_" ` 
+      elet ([
+        ("off", $"offset" -- $"n"),
+        ("zom", \"target" ` Card Zombie -- $"target"
+                                       -- ((Card Get -- Int dslot) -- $"target"
+								   -- \"x" ` $"offset"
+								   -- ($"offset" -- $"x")))],
+      (*in*)
+        seqlist [
+          $"zom" -- (Card Dbl -- $"n"),
+          $"zom" -- (Card Succ -- (Card Dbl -- $"n")),
+          (Card Help -- $"off" -- $"off" -- Int 8192)
+        ]
+      (*end*)
+  )
+
+  val _ = print ("new zombie exp length is " ^ (Int.toString (length (Kompiler.compile_no_clear_rev (zombieexp 0) 0))) ^ "\n")
   (* WARINING WARNING WARINING: 255-x *)
 
   (* Zombie performs \_ . Zombie daemon_install (Copy daemon_code) *)

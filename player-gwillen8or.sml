@@ -7,7 +7,7 @@ structure Gwillen8Or :> LAYER =
 struct
   structure GS = GameState
 
-  open Kompiler
+(*  open Kompiler *)
   open Macros
 
 open LTG
@@ -76,14 +76,16 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
 
   (* Zombie performs \_ . Zombie daemon_install (Copy daemon_code) *)
   (* daemon_install is the number, in the _enemy's_ numbering system, of the slot on _our_ side where the daemon will be installed. daemon_code is the number, in _our_ numbering system, of the slot on _our_ side where the daemon program is kept. *)
-  fun zombie dmg_slot zomb_slot dem_slot zombie_code = let
-      val exp = \"balls" ` (fix (\"f" ` \"slot" ` (Kompiler.seq (Card Zombie -- Int dem_slot -- 
-      (\"_" ` Card Zombie -- Int zomb_slot -- (\"blah" ` $"f" -- (Card Succ --
-      $"slot")))) 
-      (Card Help -- (Card Dbl -- $"slot") -- (Card Succ -- (Card Dbl --
-      $"slot")) -- (Card Copy -- Int dmg_slot))))) -- Int 0 
+  fun zombie dmg_slot zomb_slot dem_slot zombie_code = let val exp =
+      \"slot" ` \"_" ` (seq
+          (Card Zombie -- Int dem_slot
+                       -- (\"_" ` Card Zombie -- Int zomb_slot
+                                              -- ((Card Get -- Int zombie_code) -- (Card Succ -- $"slot")))) 
+          (Card Help -- (Card Dbl -- $"slot")
+                     -- (Card Succ -- (Card Dbl -- $"slot"))
+                     -- (Card Copy -- Int dmg_slot))) 
     in
-      Kompiler.compile_no_clear_rev exp zombie_code
+      Kompiler.compile exp zombie_code
     end
 
   (* Daemon performs \_ . Zombie zombie_install (Get zombie_code) *)
@@ -111,12 +113,12 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
                     apply scratch Z @
                     apply_slot_to_slot scratch dmg
                          
-  fun shootem (dmg_cell : int) (enemy_cell : int (*reg containing target*))
+  fun shootem (dmg_cell : int) (tgt : int)
     (mine1 : int) (scratch2 : int) : LTG.turn list =
       clear scratch2 @
       fastload scratch2 Attack @
       apply_slot_to_int scratch2 mine1 @
-      apply_slot_to_int scratch2 enemy_cell @
+      apply_slot_to_int scratch2 tgt @
       apply_slot_to_slot scratch2 dmg_cell (* executes Attack minescratch2 enemy
       8292 *)
 
@@ -148,11 +150,14 @@ fun for_g = ` \ "x" ` (Card Card.Put) -- (g -- $"x") -- (\ "_" ` for_g -- (Card 
         fastnum dmg 10000 @
         help_me dmg endslot scratch_slot @
         slownum dmg_back dmg @
-        [L Get dmg] @
+        [L Get dmg_back] @
         dbl dmg @
         shootem dmg 0 0 scratch_slot @
-        zombie dmg 0 0 zombie_code @
-        (Kompiler.compile (Card Zombie -- Int 0 -- (Card Get -- Int zombie_code))
+        zombie dmg_back 0 0 zombie_code @
+        slownum scratch_slot zombie_code @
+        [L Get scratch_slot] @
+        [R scratch_slot Z] @
+        (Kompiler.compile (Card Zombie -- Int 0 -- (Card Get -- Int scratch_slot))
         loader))
 
       val _ = print ("255: " ^ (is (length make_255)) ^
