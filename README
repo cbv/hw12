@@ -28,7 +28,40 @@ tracking system).
 
 Because we like writing functional programs, not SKI combinator terms, we wrote
 a compiler to cards, the Kompiler, which allowed LTG programs to be written
-using a lambda-like combinator library. <don't know what else to say here>
+using a lambda-like combinator library.  The Kompiler translates lambda-terms
+to card-combinator terms using a call-by-value variant of Curry's "optimized"
+bracket abstraction algorithm which takes into account whether the variable
+to be abstracted over occurs in the body of the abstraction or not:
+
+    [x] x = I
+    [x] V = K V  (if x not free in V and V value)
+    [x] V x = V  (if x not free in V and V value)
+    [x] M1 M2 = S ([x] M1) ([x] M2)
+
+This algorithm produces *vastly* smaller terms than the naive approach given
+in the contest task description in many common cases by omitting needless
+applications of S.  (An interesting bug in an early version of the Kompiler
+omitted the value checks, causing effects to happen too early, or worse, to be
+discarded entirely -- including the effect of non-termination!)
+
+After producing a combinator term, the Kompiler "linearizes" a term, turning it
+into an equivalent term that can be created by only left- and right-applications
+to constant cards.  Two of our team members had dramatically different ideas for
+linearization, both based on the core idea of eliminating parentheses using S
+and K:
+
+        t (u v)
+    === (K t v) (u v)
+    === S (K t) u v
+
+In the case that either u or v is a card, the last term is "more linear" now
+than the given one, and linearization can proceed on the remainder, either v
+or u.
+
+Each linearization strategy produced smaller terms in different cases, so in
+the end, we decided to just run both and pick the smaller output.  We
+recognized early on that producing small terms is paramount, since every left-
+or right- application spent building a large term costs an entire turn of play.
 
 
 == Dominators and the Dominator Operating System ==
@@ -50,7 +83,7 @@ function that allows a single dominator, as determined by the scheduler, to
 either run or declare that it is blocked and has nothing to do.
 
 Underlying DOS are two abstraction levels that we created as we understood 
-the problem better. At various points, we wrote contestents against each of
+the problem better. At various points, we wrote contestants against each of
 these interfaces. At the bottom is the PLAYER abstraction, which is used by the
 code that talks to and from standard output, and knows nothing else. Next is 
 the LAYER abstraction, which abstracts away maintnence of the game state. 
@@ -107,7 +140,7 @@ under-tested pair of players and automatically run a test ("autotutor").
 
 CARDFAX is the 2011 arena; it mimics the unofficial duel server provided by
 the organizers (though it uses the official 6/2/1/0 contest scoring and keeps
-the scores of everyone against everyone else). It is the descendent of the
+the scores of everyone against everyone else). It is the descendant of the
 2010 CARFAX, the 2009 Orbiting Arena, and the 2004 Arena Eternal. CARDFAX
 stored and reported the results of all matches, and had a view of all the 
 matchups for each player.
