@@ -378,9 +378,59 @@ fun test () = (
 val e = Lambda ("x", Lambda ("y", Lambda ("z", $"x" -- (Card Card.Attack -- $"x" -- $"y" -- $"z"))));
 
 fun tomtest () =
-    let in
-        eprint (kil2str (src2kil (Lambda("x", Lambda ("y", Var "y")))));
-        eprint "\n"
+    let 
+        val getsrc = Card LTG.Get -- Int 5
+        val gettarg = Card LTG.Get -- Int 8
+        val amount = 8192
+
+        (* XXX this is totally not done *)
+        (* 365 *)
+        val helpy_indirect1 =
+            (\"amount" `
+             (Card LTG.Revive -- gettarg) --
+             (* First heal from source to target.
+                This drains a lot of src's health, but gives even
+                more to target. Doing this in reverse then restores
+                health to src, but leaves target with any excess. *)
+             (Card LTG.Help -- getsrc -- gettarg -- $"amount") --
+             (Card LTG.Help -- gettarg -- getsrc -- $"amount")) --
+            Int amount
+
+        (* also 365 *)
+        val helpy_indirect2 =
+             (Card LTG.Revive -- gettarg) --
+             ((\"amount" `
+               (Card LTG.Help -- getsrc -- gettarg -- $"amount") --
+               (Card LTG.Help -- gettarg -- getsrc -- $"amount")) -- Int amount)
+
+        val getamount = Card LTG.Get -- Int 8
+
+        val helpy_indirect3 =
+            (Card LTG.Revive -- gettarg) --
+            (Card LTG.Help -- gettarg -- gettarg -- getamount) --
+            (Card LTG.Help -- gettarg -- gettarg -- getamount)
+
+        val target = 123
+        val src = 0
+
+        val helpy_indirect =
+            (\"src" ` \"target" ` \"amount" `
+             (Card LTG.Revive -- $"target") --
+             (* First heal from source to target.
+                This drains a lot of src's health, but gives even
+                more to target. Doing this in reverse then restores
+                even more health to src, but leaves target
+                with any excess. *)
+             (* XXX Should try to do this more times? *)
+             (Card LTG.Help -- $"src" -- $"target" -- $"amount") --
+             (Card LTG.Help -- $"target" -- $"src" -- $"amount")) --
+            Int src -- Int target -- Int amount
+
+
+        val prog = (* run_and_return_self *) helpy_indirect
+        val insns = compile prog 231
+    in
+        eprint ("Length of program: " ^ Int.toString (length insns) ^ "\n")
     end
 
 end

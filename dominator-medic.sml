@@ -60,6 +60,14 @@ struct
             real (LTG.stat_gotten s)))
       end
 
+  (* Keep track of old medics we made. We prefer to reuse them
+     then to build new ones. *)
+  type oldmedic = { src : int, target : int, amount : int,
+                    (* Expected program. If it's changed, then
+                       we can't use it. *)
+                    prog : LTG.value }
+  val oldmedics = Array.array (256, NONE : oldmedic option)
+
   (* XXX: Should use number of bits, but this is close *)
   fun compare_idx (i, ii) = Int.compare (ii, i)
 
