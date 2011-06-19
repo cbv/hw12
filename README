@@ -168,6 +168,22 @@ for a slot that already have the desired number or something close to it, and
 could also be extended to make use of a timecube.
 
 
+We also implemented an abstract evaluator that allows us to determine
+possible effects of our opponent's code. For example, given a game
+state in which the opponent has value 12288 in slot 2 and this piece
+of code in another slot:
+
+(S (K (S (K (S (K (S (K (S (K (S (K (S (K I) (S (S (Attack 7) (S (K Get) (K 2)))))) 
+   (S Zombie))))) S)))) S)) K),
+
+the abstract evaluator can determine that two possible effects which
+the opponent can achieve are (Zombie unknown unknown) and (Attack
+12288 unknown 7). (Note that argument order is reversed here and
+immediately above, due to a quirk of our implementaion. Sorry.) From
+this information we might conclude that we should attack our
+opponent's slot 7 to reduce its vitality below 12288.
+
+
 == The Demonic Tutor ==
 
 The Demonic Tutor (named after a Magic: The Gathering card --

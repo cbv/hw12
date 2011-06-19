@@ -15,6 +15,18 @@ struct
   fun a ` b = a b
 
 
+
+  fun printside (values, vitalities) = 
+      let 
+          val _ = eprint "values :\n"
+          val _ = Util.for 0 255 (fn i => eprint ((valtos ` Array.sub(values, i) ) ^ " "))
+          val _ = eprint "\n" 
+          val _ = eprint "vitalities :\n"
+          val _ = Util.for 0 255 (fn i => eprint ((Int.toString ` Array.sub(vitalities, i) ) ^ " "))
+          val _ = eprint "\n"
+      in () end
+
+
   fun iscode(v) = 
       case v of
           VFn(VI) => false
@@ -72,6 +84,62 @@ struct
           val _ = eprint "\n"
       in () end
  
+
+  fun dohelp helperslot j = 
+    []
+  
+
+  fun buildapplier slot = 
+      [LeftApply (K, slot),
+       LeftApply (S, slot),
+       RightApply (slot, Get) ]
+
+  (* assume that the slot starts with I *)
+  fun copyapplier slot = 
+      [RightApply (slot, Zero), 
+       LeftApply (Succ, slot),
+       LeftApply (Get, slot)]
+
+  val prog1 =  \ "x" ` Card (Help) -- (Card Get -- (Int 2)) -- (Card Get -- (Int 4)) -- $"x"
+
+  val opening = 
+      (Macros.fastnum 0 8192) @
+      ( compile prog1 1) @
+      (buildapplier 1) @
+      (copyapplier 3) @
+      (Macros.fastnum 2 1) @ 
+      (Macros.fastnum 4 0)
+
+
+  val nextthing = 
+      [RightApply (3, Zero)] @
+      (copyapplier 3) @
+      [ LeftApply (Succ,2),
+        LeftApply (Succ,4)]
+
+  val instructions  = ref opening
+
+  fun countins prog = List.length (compile prog 0)
+
+
+  val _ = eprint ` "opening inses: " ^ Int.toString (List.length opening) ^ "\n"
+
+
+  val reviving = ref false
+
+  fun updateinstructions gs = 
+      let
+          val myside = GS.myside gs
+          val theirside = GS.theirside gs
+          val (theirvalues, theirvitalities) = theirside
+      in 
+          if List.null (!instructions)    
+          then instructions := nextthing
+          else ()
+      end
+
+
+
   fun init gs =  ()
   fun taketurn gs =
       let
@@ -79,10 +147,20 @@ struct
           val _ = eprint ` "\nturn " ^ Int.toString (!n) ^ ": "
           val myside = GS.myside gs
           val theirside = GS.theirside gs
+(*          val _ = printside myside *)
           val _ = doevals gs
           val _ = examinenumbers gs
+          val () = updateinstructions gs
+          val (ins,inses) = (List.hd (!instructions), List.tl (!instructions))
+          val _ = instructions := inses
+          val _ = case ins 
+                   of LeftApply (Revive, n) => ()
+                      (* reviving := false;
+                        instructions := (!oldinscontext)
+                      *)
+                    | _ =>  ()
       in
-          RightApply(0, I)
+          ins
       end
 
 
