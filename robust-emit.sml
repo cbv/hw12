@@ -9,16 +9,26 @@ struct
     | Paused of int
     | Done of int
 
-  type emit_args = { turns : LTG.turn list, use_addressable : bool }
+  type emit_args = { turns : LTG.turn list, use_addressable : bool,
+                     backup_stride : int }
+
+  (* We will use two backups and flip between the two, so we always have a
+   * backup on hand even while refreshing to a latest backup. (Note: Killing
+   * the backups can still foil us, but we won't get foiled if they only
+   * target the main slot.) *)
+  type backup_status = ((LTG.turn list * int) Backup.status ref * DOS.pid)
+
+  (* Trigger indicates the next time a backup should be kicked. *)
+  type backups = { b0 : backup_status, b1 : backup_status, b_trigger : int }
 
   datatype build_state =
       (* no slot allocated; hence no backup thread running *)
       Init of { turnsleft : LTG.turn list }
       (* after a slot is allocated, a backup thread should be spawned *)
-    | Backed of { slot : int, turnsleft : LTG.turn list,
-                  backup_status : (LTG.turn list * real) Backup.status ref }
+    | Backed of { slot : int, turnsleft : LTG.turn list, tick_count : int,
+                  backups : backups }
 
-  fun emit ({ turns, use_addressable }) =
+  fun emit ({ turns, use_addressable, backup_stride }) =
       let 
           val icr = 1.0 / real (length turns + 1)
           val progress = ref 0.0
@@ -28,7 +38,8 @@ struct
 
           fun get_turnsleft () =
             (case !build_state of
-                  Backed { turnsleft, ... } => (turnsleft, !progress)
+                  Backed { turnsleft, tick_count, ... } =>
+                    (turnsleft, tick_count)
                 | _ => raise (Fuck "backup callback called in wrong state"))
 
           fun preview _ = ()
@@ -37,13 +48,18 @@ struct
             let
               (* To spawn a new backup thread for the given slot *)
               fun spawn_new_backup slot =
+                Backup.backupspawn dos
+                  { src = slot, use_addressable = use_addressable,
+                    done_callback = get_turnsleft }
+              fun two_new_backups ticks slot =
                 let
-                  val (backup_status, _) =
-                    Backup.backupspawn dos
-                      { src = slot, use_addressable = use_addressable,
-                        done_callback = get_turnsleft }
+                  val b0 as (b0p,_) = spawn_new_backup slot
+                  val b1 as (b1p,_) = spawn_new_backup slot
                 in
-                  backup_status
+                  (* b0 should always be the "more recent" backup. Right now,
+                   * that means "farther in the future than b1". *)
+                  b0p := Backup.Waiting; b1p := Backup.Waiting;
+                  { b0 = b0, b1 = b1, b_trigger = ticks + backup_stride }
                 end
             in
               (case !build_state of
@@ -56,66 +72,100 @@ struct
                         (case ret of
                               NONE => DOS.Can'tRun (* Nothing to do ... *)
                             | SOME slot =>
-                                let
-                                  val backup_status = spawn_new_backup slot
-                                in
+                                let in
                                   (* kick the state machine *)
                                   build_state :=
                                     Backed { slot = slot, turnsleft = turnsleft,
-                                             backup_status = backup_status };
+                                             tick_count = 0,
+                                             backups = two_new_backups 0 slot };
                                   taketurn dos
                                 end)
                       end
-                    (* TODO: start new backups periodically...
-                     * the state should have another field that's a counter that
-                     * counts to 20 or so and then starts backup again *)
-                  | Backed { slot, turnsleft, backup_status } =>
+                  (* Usual case. *)
+                  | Backed { slot, turnsleft, tick_count,
+                             backups as { b0, b1, b_trigger } } =>
                       (* Check if we are got got? *)
                       if LTG.slotisdead (GS.myside (DOS.gamestate dos)) slot then
-                        case !backup_status of
-                             Backup.Progress => DOS.Can'tRun (* nothing to do *)
-                           | Backup.Done (get_slot, (newturns,newprogress)) =>
-                               let (* switching to a backup. *)
-                                 val newslot = get_slot ()
-                                 val newbackup_status = spawn_new_backup newslot
-                               in
-                                 progress := newprogress;
-                                 build_state :=
-                                   Backed { slot = newslot,
-                                            turnsleft = newturns,
-                                            backup_status = newbackup_status };
-                                 DOS.release_slot dos slot;
-                                 taketurn dos
-                               end
+                        let
+                          (* A function to transfer the build process to the
+                           * backup slot and begin "afresh" *)
+                          fun use_backup (get_slot,(newturns,newticks))
+                                         other_backup =
+                            let
+                              val newslot = get_slot () (* Kill the used guy *)
+                              val newbackups = two_new_backups newticks newslot
+                            in
+                              eprint ("RobustEmit killed in slot " ^
+                                      Int.toString slot ^ " at " ^
+                                      Int.toString tick_count ^
+                                      "steps; using backup in " ^
+                                      Int.toString newslot ^ " from " ^
+                                      Int.toString newticks ^ " steps\n");
+                              progress := (Real.fromInt newticks) * icr;
+                              build_state :=
+                                Backed { slot = newslot, turnsleft = newturns,
+                                         tick_count = newticks,
+                                         backups = newbackups };
+                              (* Free our old slot, which is dead. *)
+                              DOS.release_slot dos slot;
+                              (* Kill the unused guy *)
+                              DOS.kill (#2 other_backup);
+                              taketurn dos
+                            end
+                        in
+                          (* b0 is "more recent", so check it first *)
+                          case !(#1 b0) of
+                               Backup.Done done_info =>
+                                 use_backup done_info b1
+                             | _ =>
+                                 (case !(#1 b1) of
+                                       Backup.Done done_info => (* use older *)
+                                         use_backup done_info b0
+                                     | _ => DOS.Can'tRun (* fucked *))
+                        end
                       (* we are not dead; perform as normal *)
                       else
-                        (* TODO: increment counter around here or something *)
-                        (case turnsleft of
-                              nil => (status := Done slot;
-                                      DOS.kill (DOS.getpid dos); DOS.Can'tRun)
-                            | (t :: rest) =>
-                                let
-                                  fun maketurn (LTG.LeftApply (c, _)) =
-                                      DOS.Turn (LTG.LeftApply (c, slot))
-                                    | maketurn (LTG.RightApply (_, c)) =
-                                      DOS.Turn (LTG.RightApply (slot, c))
-                                in
-                                  progress := !progress + icr;
-                                  (* update status field *)
-                                  if List.null rest then status := Done slot
-                                  else status := Progress (!progress);
-                                  build_state :=
-                                    Backed { slot = slot, turnsleft = rest,
-                                             backup_status = backup_status };
-                                  maketurn t
-                                end)
+                        let
+                          fun kick_backups { b0, b1, b_trigger } =
+                            if tick_count + 1 = b_trigger then
+                              let
+                                val b0new = spawn_new_backup slot
+                              in
+                                DOS.kill (#2 b1);
+                                { b0 = b0new, b1 = b0,
+                                  b_trigger = b_trigger + backup_stride }
+                              end
+                            else
+                              { b0 = b0, b1 = b1, b_trigger = b_trigger }
+                        in
+                          (case turnsleft of
+                                nil => (status := Done slot;
+                                        DOS.kill (DOS.getpid dos); DOS.Can'tRun)
+                              | (t :: rest) =>
+                                  let
+                                    fun maketurn (LTG.LeftApply (c, _)) =
+                                        DOS.Turn (LTG.LeftApply (c, slot))
+                                      | maketurn (LTG.RightApply (_, c)) =
+                                        DOS.Turn (LTG.RightApply (slot, c))
+                                  in
+                                    progress := !progress + icr;
+                                    (* update status field *)
+                                    if List.null rest then status := Done slot
+                                    else status := Progress (!progress);
+                                    build_state :=
+                                      Backed { slot = slot, turnsleft = rest,
+                                               tick_count = tick_count + 1,
+                                               backups = kick_backups backups };
+                                    maketurn t
+                                  end)
+                        end
               )
             end
       in
           (status, { preview = preview, taketurn = taketurn })
       end
 
-  fun emitspawn dos (args as { turns, use_addressable }) = 
+  fun emitspawn dos (args as { turns, use_addressable, backup_stride }) = 
       let
         val (status, dom) = emit args
         val pid = DOS.spawn (SOME (DOS.getpid dos))

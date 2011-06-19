@@ -13,7 +13,9 @@ sig
       (* Finished emitting. The int is the slot number we used. *)
     | Done of int
 
-  type emit_args = { turns : LTG.turn list, use_addressable : bool }
+  (* Pass in something reasonable for backup_stride. 20 is a good bet. *)
+  type emit_args = { turns : LTG.turn list, use_addressable : bool,
+                     backup_stride : int }
 
   (* Create the dominator. Must be spawned by the caller. 
      The child dominator will ignore the slots that the turn list modifies;

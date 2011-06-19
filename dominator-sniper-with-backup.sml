@@ -123,15 +123,7 @@ struct
                    if LTG.slotisdead (GS.myside gs) gun_slot
                    then (* Gun is dead, restore from backup, maybe? *)
                        case !backup
-                       of B.Progress =>
-                           let in
-                               if !was_stuck
-                               then eprint ("Gun slot is dead!")
-                               else ();
-                               was_stuck := true;
-                               Can'tRun
-                           end
-                        | B.Done (cb, ()) =>
+                       of B.Done (cb, ()) =>
                            let
                                val newgun = cb ()
                                val (newbackup, backup_pid) = B.backupspawn dos { src = newgun, use_addressable = false, done_callback = fn () => () }
@@ -140,6 +132,14 @@ struct
                                was_stuck := false;
                                mode := FindTarget { gun_slot = newgun, target_slot = target_slot, backup = newbackup };
                                taketurn dos
+                           end
+                        | _ =>
+                           let in
+                               if !was_stuck
+                               then eprint ("Gun slot is dead!")
+                               else ();
+                               was_stuck := true;
+                               Can'tRun
                            end
                    else if LTG.slotisdead (GS.myside gs) target_slot
                    then
@@ -187,15 +187,7 @@ struct
                  if LTG.slotisdead (GS.myside gs) gun_slot
                  then 
                      case !backup
-                     of B.Progress =>
-                         let in
-                             if !was_stuck
-                             then eprint ("Gun slot is dead!")
-                             else ();
-                             was_stuck := true;
-                             Can'tRun
-                         end
-                      | B.Done (cb, ()) =>
+                     of B.Done (cb, ()) =>
                          let
                              val newgun = cb ()
                              val (newbackup, backup_pid) = B.backupspawn dos { src = newgun, use_addressable = false, done_callback = fn () => () }
@@ -209,6 +201,14 @@ struct
                                                  target_slot = target_slot,
                                                  backup = newbackup };
                              taketurn dos
+                         end
+                      | _ =>
+                         let in
+                             if !was_stuck
+                             then eprint ("Gun slot is dead!")
+                             else ();
+                             was_stuck := true;
+                             Can'tRun
                          end
                  else if LTG.slotisdead (GS.myside gs) target_slot
                  then

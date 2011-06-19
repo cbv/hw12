@@ -13,7 +13,8 @@ sig
    * are about to adopt the backed-up slot as its own. when the callback is
    * called, you now own that cell, and the backup thread goes away. *)
   datatype 'a status =
-      Progress
+      Waiting (* can be used to tell us "don't do anything yet" *)
+    | Progress
     | Done of ((unit -> int) * 'a)
 
   (* src is which slot number to take a backup from;

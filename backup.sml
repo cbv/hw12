@@ -3,7 +3,7 @@ struct
 
   exception Fuck of string
 
-  datatype 'a status = Progress | Done of ((unit -> int) * 'a)
+  datatype 'a status = Waiting | Progress | Done of ((unit -> int) * 'a)
 
   type 'a backup_args =
     { src : int, use_addressable : bool, done_callback : unit -> 'a }
@@ -47,9 +47,10 @@ struct
             dest_and_moves := get_cell_and_moves ()
           else ();
           (* Did the backup get killed *)
-          (case !dest_and_moves of
-                NONE => ()
-              | SOME (dest, _) =>
+          (case (!status,!dest_and_moves) of
+                (Waiting,_) => ()
+              | (_,NONE) => ()
+              | (_,SOME (dest, _)) =>
                   if slotisdead dos dest then (* we need to relocate *)
                     let in
                       (* The slot is owned in the parent's name. *)
@@ -71,7 +72,7 @@ struct
           (* Invariant check: "Done" and the move list being [] are linked. *)
           fun check_done_status () =
             case !status of
-                 Progress => raise Fuck "backup invariant 2 violated" | _ => ()
+                 Done _ => () | _ => raise Fuck "backup invariant 2 violated"
           (* Takes a step. *)
           fun do_backup_move dest m rest =
             (dest_and_moves := SOME (dest, rest); DOS.Turn m)
@@ -87,12 +88,13 @@ struct
                     end
                 | NONE => raise Fuck "backup invariant 1 violated")
         in
-          (case !dest_and_moves of
-                NONE => DOS.Can'tRun
+          (case (!status,!dest_and_moves) of
+                (Waiting,_) => DOS.Can'tRun
+              | (_,NONE) => DOS.Can'tRun
               (* Indicates that we are done building. *)
-              | SOME (dest, []) => (check_done_status (); DOS.Can'tRun)
+              | (_,SOME (dest, [])) => (check_done_status (); DOS.Can'tRun)
               (* The final move, which will complete the backup. *)
-              | SOME (dest, m::[]) =>
+              | (_, SOME (dest, m::[])) =>
                   if slotisdead dos src then DOS.Can'tRun
                   else
                     let in
@@ -100,7 +102,7 @@ struct
                       do_backup_move dest m []
                     end
               (* Still in progress. *)
-              | SOME (dest, m::rest) =>
+              | (_, SOME (dest, m::rest)) =>
                   if slotisdead dos src then DOS.Can'tRun
                   else do_backup_move dest m rest
           )
