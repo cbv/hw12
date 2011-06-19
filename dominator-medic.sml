@@ -261,7 +261,8 @@ struct
                              end
                  end
 
-              (* Optimistically hope that someone will heal it? *)
+              (* This is pretty bad news, since nobody will be around to
+                 heal it. We'll kill the program and try again... *)
               | Healing { status = ref (EP.Paused _), child, myslot, ... } =>
                  let in
                      eprint ("Medic: My child EmitProgram was interrupted. Killing.");

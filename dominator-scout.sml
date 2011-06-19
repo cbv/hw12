@@ -81,6 +81,32 @@ struct
                 ($"card" -- (Card LTG.Succ -- Card LTG.Zero) -- $"twofivefive" -- $"eightoneninetwo"))
                -- Int 255 -- Int 8192)
 
+          (* Must be reserved! *)
+          val slotwith255 = 0
+          val slotwith8192 = 1
+          val slotwithcard = 2
+
+          val get255 = (Card LTG.Get -- Int slotwith255)
+          val get8192 = (Card LTG.Get -- Int slotwith8192)
+          val getcard = (Card LTG.Get -- Int slotwithcard)
+
+          (* This is the current favorite. 
+             TODO: If it looks like slot 0 is not being used, then apply
+             Heal instead. *)
+          val fastoption =
+              Macros.fastnum 0 255 @
+              Macros.fastnum 1 0 @
+              [Macros.L LTG.Get 1] @  (* Loads the 255 from slot 0 *)
+              Macros.succ 1 @
+              Macros.rep 5 (Macros.dbl 1) @ (* double until we have 8192 *)
+              
+              (* XXX make this decision dynamically *)
+              Macros.fastload 2 LTG.Attack @
+
+              Kompiler.compile
+              ((getcard -- Int 0 -- get255 -- get8192) --
+               (getcard -- Int 1 -- get255 -- get8192)) slot
+
           (* Still too slow. *)
           val turtle =
               (\"twofivefive" `
@@ -96,7 +122,7 @@ struct
 
           val doubletap = prelude 255 @ proceed LTG.Attack
               
-          val prog = doubletap
+          val prog = fastoption
       in
           (* eprint ("Opening: " ^ Kompiler.src2str prog);
              Kompiler.compile prog slot *)
@@ -122,7 +148,7 @@ struct
         let val gs = DOS.gamestate dos
             fun utoh () =
                 let in
-                    eprint "Scout can't run because it can't get slots 0 and 1 at the very start.";
+                    eprint "Scout can't run because it can't get slots 0 and 1 and 2 at the very start.";
                     eprint "This is bad! The scout is intended to run first.";
                     eprint "Suiciding...";
                     DOS.kill (DOS.getpid dos);
