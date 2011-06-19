@@ -206,8 +206,8 @@ fun continue (n, proponent: process, opponent: process) =
 
       (* MAYBE LOG SOME DATA ABOUT THE MOVE *)
       val () = LTG.application_count_hook := 
-	       Option.map (fn ss => fn n => TextIO.output(ss, Int.toString n ^ "\n")) 
-			  (#statstream proponent)
+         Option.map (fn ss => fn n => TextIO.output(ss, Int.toString n ^ "\n")) 
+            (#statstream proponent)
 
       (* DO YOU WANT TO PLAY A GAME? *)
       val () = LTG.taketurn (#state proponent, #state opponent) play
